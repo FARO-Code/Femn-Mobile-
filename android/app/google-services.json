@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "832544989118",
+    "project_id": "femn-9cabb",
+    "storage_bucket": "femn-9cabb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:832544989118:android:8c0dbaef2ec19bdaae63ef",
+        "android_client_info": {
+          "package_name": "com.blueparticle.femn"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAH-t2jr5YJYqF-yH1ONdbr0MLucrBb-DI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:832544989118:android:313ad83b4e753868ae63ef",
+        "android_client_info": {
+          "package_name": "com.example.femn"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAH-t2jr5YJYqF-yH1ONdbr0MLucrBb-DI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
