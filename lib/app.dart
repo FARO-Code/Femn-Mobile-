@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:femn/colors.dart'; // <--- IMPORT YOUR COLORS FILE
 
 // Firebase Services
 final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -516,6 +517,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.backgroundDeep,
       body: PageView.builder(
         controller: _pageController,
         itemCount: _onboardingPages.length + 1,
@@ -553,6 +555,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
+              color: AppColors.textHigh,
             ),
             textAlign: TextAlign.center,
           ),
@@ -561,7 +564,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             page['description'],
             style: const TextStyle(
               fontSize: 16,
-              color: Colors.grey,
+              color: AppColors.textMedium,
             ),
             textAlign: TextAlign.center,
           ),
@@ -569,8 +572,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ElevatedButton(
             onPressed: _nextPage,
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.primaryLavender,
+              foregroundColor: AppColors.backgroundDeep, // Dark text on Lavender
               minimumSize: const Size(double.infinity, 50),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(25),
@@ -584,7 +587,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               onPressed: () {
                 _pageController.jumpToPage(_onboardingPages.length);
               },
-              child: const Text('Skip'),
+              child: const Text('Skip', style: TextStyle(color: AppColors.textMedium)),
             ),
           const Spacer(),
         ],
@@ -594,8 +597,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _buildInterestsPage() {
     return Scaffold(
+      backgroundColor: AppColors.backgroundDeep,
       appBar: AppBar(
-        title: const Text('Pick your interests'),
+        title: const Text('Pick your interests', style: TextStyle(color: AppColors.textHigh)),
+        backgroundColor: AppColors.backgroundDeep,
+        elevation: 0,
+        iconTheme: IconThemeData(color: AppColors.primaryLavender),
       ),
       body: Column(
         children: [
@@ -603,7 +610,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             padding: EdgeInsets.all(16),
             child: Text(
               'Select at least 5 interests to personalize your experience',
-              style: TextStyle(fontSize: 16),
+              style: TextStyle(fontSize: 16, color: AppColors.textMedium),
               textAlign: TextAlign.center,
             ),
           ),
@@ -624,10 +631,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   label: Text(interest),
                   selected: isSelected,
                   onSelected: (_) => _selectInterest(interest),
-                  selectedColor: Colors.red.withOpacity(0.2),
-                  checkmarkColor: Colors.red,
+                  backgroundColor: AppColors.elevation,
+                  selectedColor: AppColors.secondaryTeal, // Teal for selected state
+                  checkmarkColor: Colors.white,
                   labelStyle: TextStyle(
-                    color: isSelected ? Colors.red : Colors.black,
+                    color: isSelected ? Colors.white : AppColors.textHigh,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide.none,
                   ),
                 );
               },
@@ -648,8 +660,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     }
                   : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
+                backgroundColor: AppColors.primaryLavender,
+                foregroundColor: AppColors.backgroundDeep,
+                disabledBackgroundColor: AppColors.elevation,
+                disabledForegroundColor: AppColors.textDisabled,
                 minimumSize: const Size(double.infinity, 50),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(25),
@@ -715,10 +729,17 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     final authProvider = Provider.of<AuthProvider>(context);
 
     return Scaffold(
+      backgroundColor: AppColors.backgroundDeep,
       appBar: AppBar(
-        title: const Text('FEMN'),
+        backgroundColor: AppColors.backgroundDeep,
+        elevation: 0,
+        title: const Text('FEMN', style: TextStyle(color: AppColors.textHigh, fontWeight: FontWeight.bold)),
+        iconTheme: IconThemeData(color: AppColors.primaryLavender),
         bottom: TabBar(
           controller: _tabController,
+          indicatorColor: AppColors.primaryLavender,
+          labelColor: AppColors.primaryLavender,
+          unselectedLabelColor: AppColors.textMedium,
           tabs: const [
             Tab(text: 'Sign In'),
             Tab(text: 'Sign Up'),
@@ -740,39 +761,36 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          TextField(
+          _buildTextField(
             controller: _emailController,
-            decoration: const InputDecoration(
-              labelText: 'Email',
-              border: OutlineInputBorder(),
-            ),
+            label: 'Email',
+            icon: Icons.email,
             keyboardType: TextInputType.emailAddress,
           ),
           const SizedBox(height: 16),
-          TextField(
+          _buildTextField(
             controller: _passwordController,
-            decoration: const InputDecoration(
-              labelText: 'Password',
-              border: OutlineInputBorder(),
-            ),
+            label: 'Password',
+            icon: Icons.lock,
             obscureText: true,
           ),
           const SizedBox(height: 24),
           if (authProvider.error != null)
             Text(
               authProvider.error!,
-              style: const TextStyle(color: Colors.red),
+              style: const TextStyle(color: AppColors.error),
             ),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: authProvider.isLoading ? null : _signIn,
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.primaryLavender,
+              foregroundColor: AppColors.backgroundDeep,
               minimumSize: const Size(double.infinity, 50),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             child: authProvider.isLoading
-                ? const CircularProgressIndicator()
+                ? const CircularProgressIndicator(color: AppColors.backgroundDeep)
                 : const Text('Sign In'),
           ),
         ],
@@ -785,51 +803,76 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          TextField(
+          _buildTextField(
             controller: _nameController,
-            decoration: const InputDecoration(
-              labelText: 'Full Name',
-              border: OutlineInputBorder(),
-            ),
+            label: 'Full Name',
+            icon: Icons.person,
           ),
           const SizedBox(height: 16),
-          TextField(
+          _buildTextField(
             controller: _emailController,
-            decoration: const InputDecoration(
-              labelText: 'Email',
-              border: OutlineInputBorder(),
-            ),
+            label: 'Email',
+            icon: Icons.email,
             keyboardType: TextInputType.emailAddress,
           ),
           const SizedBox(height: 16),
-          TextField(
+          _buildTextField(
             controller: _passwordController,
-            decoration: const InputDecoration(
-              labelText: 'Password',
-              border: OutlineInputBorder(),
-            ),
+            label: 'Password',
+            icon: Icons.lock,
             obscureText: true,
           ),
           const SizedBox(height: 24),
           if (authProvider.error != null)
             Text(
               authProvider.error!,
-              style: const TextStyle(color: Colors.red),
+              style: const TextStyle(color: AppColors.error),
             ),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: authProvider.isLoading ? null : _signUp,
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.primaryLavender,
+              foregroundColor: AppColors.backgroundDeep,
               minimumSize: const Size(double.infinity, 50),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             child: authProvider.isLoading
-                ? const CircularProgressIndicator()
+                ? const CircularProgressIndicator(color: AppColors.backgroundDeep)
                 : const Text('Sign Up'),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool obscureText = false,
+    TextInputType? keyboardType,
+  }) {
+    return TextField(
+      controller: controller,
+      style: TextStyle(color: AppColors.textHigh),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: AppColors.textMedium),
+        prefixIcon: Icon(icon, color: AppColors.primaryLavender),
+        filled: true,
+        fillColor: AppColors.elevation,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.primaryLavender),
+        ),
+      ),
+      obscureText: obscureText,
+      keyboardType: keyboardType,
     );
   }
 }
@@ -856,14 +899,19 @@ class _MainAppScreenState extends State<MainAppScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.backgroundDeep,
       body: _screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: AppColors.surface,
         currentIndex: _currentIndex,
         onTap: (index) {
           setState(() {
             _currentIndex = index;
           });
         },
+        selectedItemColor: AppColors.primaryLavender,
+        unselectedItemColor: AppColors.textDisabled,
+        type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
@@ -948,11 +996,14 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
     Provider.of<AuthProvider>(context);
 
     return Scaffold(
+      backgroundColor: AppColors.backgroundDeep,
       appBar: AppBar(
-        title: const Text('FEMN'),
+        title: const Text('FEMN', style: TextStyle(color: AppColors.textHigh, fontWeight: FontWeight.bold)),
+        backgroundColor: AppColors.backgroundDeep,
+        elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.tune),
+            icon: const Icon(Icons.tune, color: AppColors.primaryLavender),
             onPressed: () {
               // Show feed tuning options
             },
@@ -960,8 +1011,10 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
         ],
       ),
       body: pinProvider.isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: AppColors.primaryLavender))
           : RefreshIndicator(
+              color: AppColors.primaryLavender,
+              backgroundColor: AppColors.surface,
               onRefresh: _loadPins,
               child: GridView.builder(
                 controller: _scrollController,
@@ -975,7 +1028,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                 itemCount: pinProvider.pins.length + (_isLoading ? 1 : 0),
                 itemBuilder: (context, index) {
                   if (index == pinProvider.pins.length) {
-                    return const Center(child: CircularProgressIndicator());
+                    return const Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
                   }
                   
                   final pin = pinProvider.pins[index];
@@ -1005,6 +1058,7 @@ class PinCard extends StatelessWidget {
         );
       },
       child: Card(
+        color: AppColors.surface, // Surface color for card
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -1021,6 +1075,7 @@ class PinCard extends StatelessWidget {
                     if (loadingProgress == null) return child;
                     return Center(
                       child: CircularProgressIndicator(
+                        color: AppColors.primaryLavender,
                         value: loadingProgress.expectedTotalBytes != null
                             ? loadingProgress.cumulativeBytesLoaded /
                                 loadingProgress.expectedTotalBytes!
@@ -1038,6 +1093,7 @@ class PinCard extends StatelessWidget {
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
+                  color: AppColors.textHigh, // Off-white text
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -1047,15 +1103,15 @@ class PinCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: Row(
                 children: [
-                  const Icon(Icons.push_pin, size: 14, color: Colors.red),
+                  const Icon(Icons.push_pin, size: 14, color: AppColors.accentMustard), // Mustard for saves
                   const SizedBox(width: 4),
                   Text(
                     '${pin.saves}',
-                    style: const TextStyle(fontSize: 12),
+                    style: const TextStyle(fontSize: 12, color: AppColors.textMedium),
                   ),
                   const Spacer(),
                   IconButton(
-                    icon: const Icon(Icons.more_vert, size: 16),
+                    icon: const Icon(Icons.more_vert, size: 16, color: AppColors.textMedium),
                     onPressed: () {
                       // Show more options
                     },
@@ -1081,10 +1137,16 @@ class PinDetailScreen extends StatelessWidget {
     final authProvider = Provider.of<AuthProvider>(context);
 
     return Scaffold(
+      backgroundColor: AppColors.backgroundDeep,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
+            backgroundColor: AppColors.backgroundDeep,
             expandedHeight: 300,
+            leading: IconButton(
+              icon: Icon(Icons.arrow_back, color: AppColors.primaryLavender),
+              onPressed: () => Navigator.pop(context),
+            ),
             flexibleSpace: FlexibleSpaceBar(
               background: Image.network(
                 pin.imageUrl,
@@ -1094,13 +1156,13 @@ class PinDetailScreen extends StatelessWidget {
             pinned: true,
             actions: [
               IconButton(
-                icon: const Icon(Icons.save_alt),
+                icon: const Icon(Icons.save_alt, color: AppColors.primaryLavender),
                 onPressed: () {
                   _showSaveDialog(context, authProvider.user!.uid);
                 },
               ),
               IconButton(
-                icon: const Icon(Icons.share),
+                icon: const Icon(Icons.share, color: AppColors.primaryLavender),
                 onPressed: () {
                   _sharePin(context);
                 },
@@ -1118,12 +1180,13 @@ class PinDetailScreen extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
+                      color: AppColors.textHigh,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     pin.description,
-                    style: const TextStyle(fontSize: 16),
+                    style: const TextStyle(fontSize: 16, color: AppColors.textMedium),
                   ),
                   const SizedBox(height: 16),
                   if (pin.websiteUrl != null)
@@ -1131,18 +1194,22 @@ class PinDetailScreen extends StatelessWidget {
                       onPressed: () {
                         // Open website
                       },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.elevation,
+                        foregroundColor: AppColors.primaryLavender,
+                      ),
                       child: const Text('Visit website'),
                     ),
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      const Icon(Icons.push_pin, size: 16, color: Colors.red),
+                      const Icon(Icons.push_pin, size: 16, color: AppColors.accentMustard),
                       const SizedBox(width: 4),
-                      Text('${pin.saves} saves'),
+                      Text('${pin.saves} saves', style: TextStyle(color: AppColors.textMedium)),
                       const SizedBox(width: 16),
-                      const Icon(Icons.favorite, size: 16, color: Colors.red),
+                      const Icon(Icons.favorite, size: 16, color: AppColors.error), // Soft red for likes
                       const SizedBox(width: 4),
-                      Text('${pin.likes} likes'),
+                      Text('${pin.likes} likes', style: TextStyle(color: AppColors.textMedium)),
                     ],
                   ),
                 ],
@@ -1152,16 +1219,17 @@ class PinDetailScreen extends StatelessWidget {
         ],
       ),
       bottomNavigationBar: BottomAppBar(
+        color: AppColors.surface,
         child: Row(
           children: [
             IconButton(
-              icon: const Icon(Icons.favorite_border),
+              icon: const Icon(Icons.favorite_border, color: AppColors.primaryLavender),
               onPressed: () {
                 // Like pin
               },
             ),
             IconButton(
-              icon: const Icon(Icons.comment),
+              icon: const Icon(Icons.comment, color: AppColors.primaryLavender),
               onPressed: () {
                 // Show comments
               },
@@ -1172,8 +1240,8 @@ class PinDetailScreen extends StatelessWidget {
                 _showSaveDialog(context, authProvider.user!.uid);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
+                backgroundColor: AppColors.primaryLavender,
+                foregroundColor: AppColors.backgroundDeep,
               ),
               child: const Text('Save'),
             ),
@@ -1186,12 +1254,17 @@ class PinDetailScreen extends StatelessWidget {
   void _showSaveDialog(BuildContext context, String userId) {
     showModalBottomSheet(
       context: context,
+      backgroundColor: Colors.transparent,
       builder: (context) {
         return FutureBuilder(
           future: Provider.of<PinProvider>(context, listen: false).fetchUserBoards(userId),
           builder: (context, snapshot) {
             final pinProvider = Provider.of<PinProvider>(context);
             return Container(
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+              ),
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1201,6 +1274,7 @@ class PinDetailScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
+                      color: AppColors.textHigh,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -1210,8 +1284,8 @@ class PinDetailScreen extends StatelessWidget {
                       itemBuilder: (context, index) {
                         if (index == 0) {
                           return ListTile(
-                            leading: const Icon(Icons.add),
-                            title: const Text('Create new board'),
+                            leading: const Icon(Icons.add, color: AppColors.primaryLavender),
+                            title: const Text('Create new board', style: TextStyle(color: AppColors.textHigh)),
                             onTap: () {
                               _createNewBoard(context);
                             },
@@ -1219,8 +1293,8 @@ class PinDetailScreen extends StatelessWidget {
                         }
                         final board = pinProvider.boards[index - 1];
                         return ListTile(
-                          leading: const Icon(Icons.bookmark),
-                          title: Text(board.name),
+                          leading: const Icon(Icons.bookmark, color: AppColors.textMedium),
+                          title: Text(board.name, style: TextStyle(color: AppColors.textMedium)),
                           onTap: () {
                             _saveToBoard(context, board.id);
                           },
@@ -1244,7 +1318,10 @@ class PinDetailScreen extends StatelessWidget {
     pinProvider.savePin(pin.id, boardId, authProvider.user!.uid);
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Pin saved!')),
+      SnackBar(
+        content: Text('Pin saved!', style: TextStyle(color: AppColors.backgroundDeep)),
+        backgroundColor: AppColors.primaryLavender,
+      ),
     );
   }
 
@@ -1257,36 +1334,46 @@ class PinDetailScreen extends StatelessWidget {
         bool _isSecret = false;
 
         return AlertDialog(
-          title: const Text('Create new board'),
+          backgroundColor: AppColors.surface,
+          title: const Text('Create new board', style: TextStyle(color: AppColors.textHigh)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: _boardNameController,
+                style: TextStyle(color: AppColors.textHigh),
                 decoration: const InputDecoration(
                   labelText: 'Board name',
-                  border: OutlineInputBorder(),
+                  labelStyle: TextStyle(color: AppColors.textMedium),
+                  enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppColors.textDisabled)),
+                  focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: AppColors.primaryLavender)),
                 ),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: _boardDescController,
+                style: TextStyle(color: AppColors.textHigh),
                 decoration: const InputDecoration(
                   labelText: 'Description',
-                  border: OutlineInputBorder(),
+                  labelStyle: TextStyle(color: AppColors.textMedium),
+                  enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppColors.textDisabled)),
+                  focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: AppColors.primaryLavender)),
                 ),
                 maxLines: 3,
               ),
               const SizedBox(height: 16),
               Row(
                 children: [
-                  Checkbox(
-                    value: _isSecret,
-                    onChanged: (value) {
-                      // Handle secret board
-                    },
+                  StatefulBuilder(
+                    builder: (context, setState) => Checkbox(
+                      value: _isSecret,
+                      activeColor: AppColors.primaryLavender,
+                      onChanged: (value) {
+                        setState(() => _isSecret = value ?? false);
+                      },
+                    ),
                   ),
-                  const Text('Secret board'),
+                  const Text('Secret board', style: TextStyle(color: AppColors.textMedium)),
                 ],
               ),
             ],
@@ -1294,7 +1381,7 @@ class PinDetailScreen extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: const Text('Cancel', style: TextStyle(color: AppColors.textMedium)),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -1315,6 +1402,7 @@ class PinDetailScreen extends StatelessWidget {
                   );
                 }
               },
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryLavender, foregroundColor: AppColors.backgroundDeep),
               child: const Text('Create'),
             ),
           ],
@@ -1326,15 +1414,20 @@ class PinDetailScreen extends StatelessWidget {
   void _sharePin(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      backgroundColor: Colors.transparent,
       builder: (context) {
         return Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+          ),
           padding: const EdgeInsets.all(16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.link),
-                title: const Text('Copy link'),
+                leading: const Icon(Icons.link, color: AppColors.textMedium),
+                title: const Text('Copy link', style: TextStyle(color: AppColors.textHigh)),
                 onTap: () {
                   // Copy link to clipboard
                   Navigator.pop(context);
@@ -1344,8 +1437,8 @@ class PinDetailScreen extends StatelessWidget {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.share),
-                title: const Text('Share via...'),
+                leading: const Icon(Icons.share, color: AppColors.textMedium),
+                title: const Text('Share via...', style: TextStyle(color: AppColors.textHigh)),
                 onTap: () {
                   // Share via native share sheet
                   Navigator.pop(context);
@@ -1431,11 +1524,14 @@ class _CreatePinScreenState extends State<CreatePinScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.backgroundDeep,
       appBar: AppBar(
-        title: const Text('Create Pin'),
+        title: const Text('Create Pin', style: TextStyle(color: AppColors.textHigh)),
+        backgroundColor: AppColors.backgroundDeep,
+        elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.check),
+            icon: const Icon(Icons.check, color: AppColors.primaryLavender),
             onPressed: _isLoading ? null : _createPin,
           ),
         ],
@@ -1449,7 +1545,7 @@ class _CreatePinScreenState extends State<CreatePinScreen> {
               child: Container(
                 height: 200,
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
+                  color: AppColors.elevation,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: _imageData == null
@@ -1457,46 +1553,49 @@ class _CreatePinScreenState extends State<CreatePinScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.add_photo_alternate, size: 48, color: Colors.grey),
+                            Icon(Icons.add_photo_alternate, size: 48, color: AppColors.textDisabled),
                             SizedBox(height: 8),
-                            Text('Tap to add image'),
+                            Text('Tap to add image', style: TextStyle(color: AppColors.textMedium)),
                           ],
                         ),
                       )
-                    : Image.memory(_imageData!, fit: BoxFit.cover),
+                    : ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.memory(_imageData!, fit: BoxFit.cover, width: double.infinity),
+                      ),
               ),
             ),
             const SizedBox(height: 16),
-            TextField(
-              controller: _titleController,
-              decoration: const InputDecoration(
-                labelText: 'Title',
-                border: OutlineInputBorder(),
-              ),
-              maxLength: 100,
-            ),
+            _buildTextField(controller: _titleController, label: 'Title'),
             const SizedBox(height: 16),
-            TextField(
-              controller: _descriptionController,
-              decoration: const InputDecoration(
-                labelText: 'Description',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 3,
-              maxLength: 800,
-            ),
+            _buildTextField(controller: _descriptionController, label: 'Description', maxLines: 3),
             const SizedBox(height: 16),
-            TextField(
-              controller: _websiteController,
-              decoration: const InputDecoration(
-                labelText: 'Website URL (optional)',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.url,
-            ),
+            _buildTextField(controller: _websiteController, label: 'Website URL (optional)', keyboardType: TextInputType.url),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    int maxLines = 1,
+    TextInputType? keyboardType,
+  }) {
+    return TextField(
+      controller: controller,
+      style: TextStyle(color: AppColors.textHigh),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: AppColors.textMedium),
+        filled: true,
+        fillColor: AppColors.elevation,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.primaryLavender)),
+      ),
+      maxLines: maxLines,
+      keyboardType: keyboardType,
     );
   }
 }
@@ -1508,9 +1607,10 @@ class SearchScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
+      backgroundColor: AppColors.backgroundDeep,
       appBar: SearchAppBar(),
       body: Center(
-        child: Text('Search functionality would go here'),
+        child: Text('Search functionality would go here', style: TextStyle(color: AppColors.textMedium)),
       ),
     );
   }
@@ -1526,18 +1626,22 @@ class SearchAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
+      backgroundColor: AppColors.backgroundDeep,
+      elevation: 0,
       title: Container(
         height: 40,
         decoration: BoxDecoration(
-          color: Colors.grey[200],
+          color: AppColors.elevation,
           borderRadius: BorderRadius.circular(20),
         ),
         child: const TextField(
+          style: TextStyle(color: AppColors.textHigh),
           decoration: InputDecoration(
-            prefixIcon: Icon(Icons.search),
+            prefixIcon: Icon(Icons.search, color: AppColors.textMedium),
             hintText: 'Search for ideas',
+            hintStyle: TextStyle(color: AppColors.textDisabled),
             border: InputBorder.none,
-            contentPadding: EdgeInsets.symmetric(horizontal: 16),
+            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           ),
         ),
       ),
@@ -1552,11 +1656,14 @@ class NotificationsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.backgroundDeep,
       appBar: AppBar(
-        title: Text('Notifications'),
+        title: const Text('Notifications', style: TextStyle(color: AppColors.textHigh)),
+        backgroundColor: AppColors.backgroundDeep,
+        elevation: 0,
       ),
-      body: Center(
-        child: Text('Notifications will appear here'),
+      body: const Center(
+        child: Text('Notifications will appear here', style: TextStyle(color: AppColors.textMedium)),
       ),
     );
   }
@@ -1576,11 +1683,14 @@ class ProfileScreen extends StatelessWidget {
     }
 
     return Scaffold(
+      backgroundColor: AppColors.backgroundDeep,
       appBar: AppBar(
-        title: const Text('Profile'),
+        title: const Text('Profile', style: TextStyle(color: AppColors.textHigh)),
+        backgroundColor: AppColors.backgroundDeep,
+        elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings),
+            icon: const Icon(Icons.settings, color: AppColors.textHigh),
             onPressed: () {
               // Navigate to settings
             },
@@ -1588,7 +1698,7 @@ class ProfileScreen extends StatelessWidget {
         ],
       ),
       body: userProvider.isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: AppColors.primaryLavender))
           : SingleChildScrollView(
               child: Column(
                 children: [
@@ -1596,6 +1706,7 @@ class ProfileScreen extends StatelessWidget {
                   const CircleAvatar(
                     radius: 40,
                     backgroundImage: NetworkImage('https://via.placeholder.com/150'),
+                    backgroundColor: AppColors.elevation,
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -1603,12 +1714,13 @@ class ProfileScreen extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
+                      color: AppColors.textHigh,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     userProvider.currentUserData?['email'] ?? '',
-                    style: const TextStyle(color: Colors.grey),
+                    style: const TextStyle(color: AppColors.textMedium),
                   ),
                   const SizedBox(height: 24),
                   Row(
@@ -1627,9 +1739,10 @@ class ProfileScreen extends StatelessWidget {
                         authProvider.signOut();
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
+                        backgroundColor: AppColors.elevation, // Less emphasis for sign out
+                        foregroundColor: AppColors.error, // Soft red text for destructive action
                         minimumSize: const Size(double.infinity, 50),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       child: const Text('Sign Out'),
                     ),
@@ -1648,11 +1761,12 @@ class ProfileScreen extends StatelessWidget {
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
+            color: AppColors.textHigh,
           ),
         ),
         Text(
           label,
-          style: const TextStyle(color: Colors.grey),
+          style: const TextStyle(color: AppColors.textMedium),
         ),
       ],
     );

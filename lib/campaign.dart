@@ -1,8 +1,8 @@
-
 import 'dart:async';
 import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:femn/colors.dart'; // <--- IMPORT YOUR COLORS FILE
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -23,9 +23,15 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
     return DefaultTabController(
       length: _tabs.length,
       child: Scaffold(
+        backgroundColor: AppColors.backgroundDeep,
         appBar: AppBar(
-          title: Text('Campaigns', style: TextStyle(fontWeight: FontWeight.bold)),
+          backgroundColor: AppColors.backgroundDeep,
+          elevation: 0,
+          title: Text('Campaigns', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textHigh)),
           bottom: TabBar(
+            indicatorColor: AppColors.primaryLavender,
+            labelColor: AppColors.primaryLavender,
+            unselectedLabelColor: AppColors.textMedium,
             tabs: _tabs.map((tab) => Tab(text: tab)).toList(),
           ),
         ),
@@ -40,8 +46,8 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
           onPressed: () {
             _showCreateBottomSheet(context);
           },
-          child: Icon(Icons.add),
-          backgroundColor: Colors.blue,
+          child: Icon(Icons.add, color: AppColors.backgroundDeep),
+          backgroundColor: AppColors.accentMustard, // Mustard for FAB
         ),
       ),
     );
@@ -50,33 +56,38 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
   void _showCreateBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      backgroundColor: Colors.transparent,
       builder: (BuildContext context) {
         return Container(
           padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Create New', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text('Create New', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
               SizedBox(height: 16),
               ListTile(
-                leading: Icon(Icons.poll, color: Colors.blue),
-                title: Text('Poll', style: TextStyle(fontWeight: FontWeight.w500)),
+                leading: Icon(Icons.poll, color: AppColors.primaryLavender),
+                title: Text('Poll', style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.textHigh)),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(context, MaterialPageRoute(builder: (context) => CreatePollScreen()));
                 },
               ),
               ListTile(
-                leading: Icon(Icons.assignment, color: Colors.green),
-                title: Text('Petition', style: TextStyle(fontWeight: FontWeight.w500)),
+                leading: Icon(Icons.assignment, color: AppColors.secondaryTeal),
+                title: Text('Petition', style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.textHigh)),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(context, MaterialPageRoute(builder: (context) => CreatePetitionScreen()));
                 },
               ),
               ListTile(
-                leading: Icon(Icons.event, color: Colors.orange),
-                title: Text('Event', style: TextStyle(fontWeight: FontWeight.w500)),
+                leading: Icon(Icons.event, color: AppColors.accentMustard),
+                title: Text('Event', style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.textHigh)),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(context, MaterialPageRoute(builder: (context) => CreateEventScreen()));
@@ -107,7 +118,7 @@ class PollsTab extends StatelessWidget {
         }
         
         if (snapshot.hasError) {
-          return Center(child: Text('Error loading polls: ${snapshot.error}'));
+          return Center(child: Text('Error loading polls', style: TextStyle(color: AppColors.error)));
         }
         
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -130,7 +141,6 @@ class PollsTab extends StatelessWidget {
   }
 
   Widget _buildPollCard(DocumentSnapshot poll, BuildContext context, bool hasVoted) {
-    // --- Safer data access ---
     final pollData = poll.data() as Map<String, dynamic>?;
     final imageUrl = pollData?['imageUrl'] as String?;
     final description = pollData?['description'] as String?;
@@ -142,12 +152,12 @@ class PollsTab extends StatelessWidget {
       final opt = option as Map<String, dynamic>;
       return sum + ((opt['votes'] as int?) ?? 0);
     });
-    // --- End safer data access ---
 
     return Card(
       margin: EdgeInsets.symmetric(vertical: 8),
+      color: AppColors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 3,
+      elevation: 0,
       child: InkWell(
         onTap: () {
           Navigator.push(context, MaterialPageRoute(
@@ -159,35 +169,33 @@ class PollsTab extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- Safer image display ---
               if (imageUrl != null && imageUrl.isNotEmpty)
                 Padding(
                   padding: EdgeInsets.only(bottom: 12),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: CachedNetworkImage(
-                      imageUrl: imageUrl, // <-- Use safely accessed imageUrl
+                      imageUrl: imageUrl,
                       height: 150,
                       width: double.infinity,
                       fit: BoxFit.cover,
                       placeholder: (context, url) => Container(
                         height: 150,
-                        color: Colors.grey[200],
-                        child: Center(child: CircularProgressIndicator()),
+                        color: AppColors.elevation,
+                        child: Center(child: CircularProgressIndicator(color: AppColors.primaryLavender)),
                       ),
-                      errorWidget: (context, url, error) => Icon(Icons.error),
+                      errorWidget: (context, url, error) => Icon(Icons.error, color: AppColors.error),
                     ),
                   ),
                 ),
-              // --- End safer image display ---
               Text(
-                question, // <-- Use safely accessed question
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                question,
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.textHigh),
               ),
               SizedBox(height: 8),
               Text(
-                description ?? '', // <-- Use safely accessed description
-                style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                description ?? '',
+                style: TextStyle(color: AppColors.textMedium, fontSize: 14),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -205,22 +213,26 @@ class PollsTab extends StatelessWidget {
                       Row(
                         children: [
                           Expanded(
-                            child: LinearProgressIndicator(
-                              value: percentage / 100,
-                              backgroundColor: Colors.grey[200],
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                hasVoted ? Colors.blue : Colors.grey[300]!,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: percentage / 100,
+                                backgroundColor: AppColors.elevation,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  hasVoted ? AppColors.secondaryTeal : AppColors.textDisabled,
+                                ),
+                                minHeight: 6,
                               ),
                             ),
                           ),
                           SizedBox(width: 8),
-                          Text('${percentage.toStringAsFixed(1)}%'),
+                          Text('${percentage.toStringAsFixed(1)}%', style: TextStyle(color: AppColors.textMedium, fontSize: 12)),
                         ],
                       ),
                       SizedBox(height: 4),
                       Text(
-                        text, // <-- Use safely accessed option text
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                        text,
+                        style: TextStyle(fontSize: 12, color: AppColors.textMedium),
                       ),
                     ],
                   ),
@@ -229,18 +241,18 @@ class PollsTab extends StatelessWidget {
               if (options.length > 2)
                 Text(
                   '+ ${options.length - 2} more options',
-                  style: TextStyle(color: Colors.blue, fontSize: 12),
+                  style: TextStyle(color: AppColors.primaryLavender, fontSize: 12),
                 ),
               SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '$totalVotes votes • Created by $creatorName', // <-- Use safely accessed creatorName
-                    style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                    '$totalVotes votes • Created by $creatorName',
+                    style: TextStyle(color: AppColors.textDisabled, fontSize: 12),
                   ),
                   if (hasVoted)
-                    Icon(Icons.check_circle, color: Colors.green, size: 16),
+                    Icon(Icons.check_circle, color: AppColors.secondaryTeal, size: 16),
                 ],
               ),
             ],
@@ -268,7 +280,7 @@ class PetitionsTab extends StatelessWidget {
         }
         
         if (snapshot.hasError) {
-          return Center(child: Text('Error loading petitions: ${snapshot.error}'));
+          return Center(child: Text('Error loading petitions', style: TextStyle(color: AppColors.error)));
         }
         
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -291,21 +303,20 @@ class PetitionsTab extends StatelessWidget {
   }
 
   Widget _buildPetitionCard(DocumentSnapshot petition, BuildContext context, bool hasSigned) {
-    // --- Safer data access ---
     final petitionData = petition.data() as Map<String, dynamic>?;
     final imageUrl = petitionData?['imageUrl'] as String?;
     final title = petitionData?['title'] as String? ?? 'Untitled Petition';
     final description = petitionData?['description'] as String? ?? '';
     final creatorName = petitionData?['creatorName'] as String? ?? 'Unknown';
     final signatures = (petitionData?['signatures'] as int?) ?? 0;
-    final goal = (petitionData?['goal'] as int?) ?? 1000; // Default to 1000 if missing
-    final progress = goal > 0 ? signatures / goal : 0; // Prevent division by zero
-    // --- End safer data access ---
+    final goal = (petitionData?['goal'] as int?) ?? 1000;
+    final progress = goal > 0 ? signatures / goal : 0;
 
     return Card(
       margin: EdgeInsets.symmetric(vertical: 8),
+      color: AppColors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 3,
+      elevation: 0,
       child: InkWell(
         onTap: () {
           Navigator.push(context, MaterialPageRoute(
@@ -317,44 +328,46 @@ class PetitionsTab extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- Safer image display ---
               if (imageUrl != null && imageUrl.isNotEmpty)
                 Padding(
                   padding: EdgeInsets.only(bottom: 12),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: CachedNetworkImage(
-                      imageUrl: imageUrl, // <-- Use safely accessed imageUrl
+                      imageUrl: imageUrl,
                       height: 150,
                       width: double.infinity,
                       fit: BoxFit.cover,
                       placeholder: (context, url) => Container(
                         height: 150,
-                        color: Colors.grey[200],
-                        child: Center(child: CircularProgressIndicator()),
+                        color: AppColors.elevation,
+                        child: Center(child: CircularProgressIndicator(color: AppColors.primaryLavender)),
                       ),
-                      errorWidget: (context, url, error) => Icon(Icons.error),
+                      errorWidget: (context, url, error) => Icon(Icons.error, color: AppColors.error),
                     ),
                   ),
                 ),
-              // --- End safer image display ---
               Text(
-                title, // <-- Use safely accessed title
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                title,
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.textHigh),
               ),
               SizedBox(height: 8),
               Text(
-                description, // <-- Use safely accessed description
-                style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                description,
+                style: TextStyle(color: AppColors.textMedium, fontSize: 14),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
               SizedBox(height: 12),
-              LinearProgressIndicator(
-                value: progress.clamp(0.0, 1.0).toDouble(), // Cast to double
-                backgroundColor: Colors.grey[200],
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  hasSigned ? Colors.green : Colors.blue,
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: progress.clamp(0.0, 1.0).toDouble(),
+                  backgroundColor: AppColors.elevation,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    hasSigned ? AppColors.success : AppColors.secondaryTeal,
+                  ),
+                  minHeight: 6,
                 ),
               ),
 
@@ -363,17 +376,17 @@ class PetitionsTab extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '$signatures of $goal signatures', // <-- Use safely accessed signatures and goal
-                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                    '$signatures of $goal signatures',
+                    style: TextStyle(color: AppColors.textMedium, fontSize: 12),
                   ),
                   if (hasSigned)
-                    Icon(Icons.check_circle, color: Colors.green, size: 16),
+                    Icon(Icons.check_circle, color: AppColors.success, size: 16),
                 ],
               ),
               SizedBox(height: 8),
               Text(
-                'Created by $creatorName', // <-- Use safely accessed creatorName
-                style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                'Created by $creatorName',
+                style: TextStyle(color: AppColors.textDisabled, fontSize: 12),
               ),
             ],
           ),
@@ -400,7 +413,7 @@ class EventsTab extends StatelessWidget {
         }
         
         if (snapshot.hasError) {
-          return Center(child: Text('Error loading events: ${snapshot.error}'));
+          return Center(child: Text('Error loading events', style: TextStyle(color: AppColors.error)));
         }
         
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -423,7 +436,6 @@ class EventsTab extends StatelessWidget {
   }
 
   Widget _buildEventCard(DocumentSnapshot event, BuildContext context, bool isAttending) {
-    // --- Safer data access ---
     final eventData = event.data() as Map<String, dynamic>?;
     final imageUrl = eventData?['imageUrl'] as String?;
     final title = eventData?['title'] as String? ?? 'Untitled Event';
@@ -440,15 +452,14 @@ class EventsTab extends StatelessWidget {
         date = timestamp.toDate();
       }
     } catch (e) {
-      // Handle potential parsing errors or missing date field
       print('Error parsing date for event ${event.id}: $e');
     }
-    // --- End safer data access ---
 
     return Card(
       margin: EdgeInsets.symmetric(vertical: 8),
+      color: AppColors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 3,
+      elevation: 0,
       child: InkWell(
         onTap: () {
           Navigator.push(context, MaterialPageRoute(
@@ -460,51 +471,49 @@ class EventsTab extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- Safer image display ---
               if (imageUrl != null && imageUrl.isNotEmpty)
                 Padding(
                   padding: EdgeInsets.only(bottom: 12),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: CachedNetworkImage(
-                      imageUrl: imageUrl, // <-- Use safely accessed imageUrl
+                      imageUrl: imageUrl,
                       height: 150,
                       width: double.infinity,
                       fit: BoxFit.cover,
                       placeholder: (context, url) => Container(
                         height: 150,
-                        color: Colors.grey[200],
-                        child: Center(child: CircularProgressIndicator()),
+                        color: AppColors.elevation,
+                        child: Center(child: CircularProgressIndicator(color: AppColors.primaryLavender)),
                       ),
-                      errorWidget: (context, url, error) => Icon(Icons.error),
+                      errorWidget: (context, url, error) => Icon(Icons.error, color: AppColors.error),
                     ),
                   ),
                 ),
-              // --- End safer image display ---
               Text(
-                title, // <-- Use safely accessed title
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                title,
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.textHigh),
               ),
               SizedBox(height: 8),
               Row(
                 children: [
-                  Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
+                  Icon(Icons.calendar_today, size: 16, color: AppColors.primaryLavender),
                   SizedBox(width: 8),
                   Text(
-                    DateFormat('MMM d, yyyy • h:mm a').format(date), // <-- Use safely accessed date
-                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                    DateFormat('MMM d, yyyy • h:mm a').format(date),
+                    style: TextStyle(color: AppColors.textMedium, fontSize: 14),
                   ),
                 ],
               ),
               SizedBox(height: 4),
               Row(
                 children: [
-                  Icon(Icons.location_on, size: 16, color: Colors.grey[600]),
+                  Icon(Icons.location_on, size: 16, color: AppColors.primaryLavender),
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      location, // <-- Use safely accessed location
-                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                      location,
+                      style: TextStyle(color: AppColors.textMedium, fontSize: 14),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -512,8 +521,8 @@ class EventsTab extends StatelessWidget {
               ),
               SizedBox(height: 8),
               Text(
-                description ?? '', // <-- Use safely accessed description
-                style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                description ?? '',
+                style: TextStyle(color: AppColors.textMedium, fontSize: 14),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -522,11 +531,11 @@ class EventsTab extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '$attendeesCount attending • Created by $creatorName', // <-- Use safely accessed count and creatorName
-                    style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                    '$attendeesCount attending • Created by $creatorName',
+                    style: TextStyle(color: AppColors.textDisabled, fontSize: 12),
                   ),
                   if (isAttending)
-                    Icon(Icons.check_circle, color: Colors.green, size: 16),
+                    Icon(Icons.check_circle, color: AppColors.success, size: 16),
                 ],
               ),
             ],
@@ -618,17 +627,20 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.backgroundDeep,
       appBar: AppBar(
-        title: Text('Create Poll'),
+        title: Text('Create Poll', style: TextStyle(color: AppColors.textHigh)),
+        backgroundColor: AppColors.backgroundDeep,
+        iconTheme: IconThemeData(color: AppColors.primaryLavender),
         actions: [
           IconButton(
-            icon: Icon(Icons.check),
+            icon: Icon(Icons.check, color: AppColors.primaryLavender),
             onPressed: _isLoading ? null : _createPoll,
           ),
         ],
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator(color: AppColors.primaryLavender))
           : SingleChildScrollView(
               padding: EdgeInsets.all(16),
               child: Form(
@@ -642,49 +654,33 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                         width: double.infinity,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
-                          color: Colors.grey[200],
-                          border: Border.all(color: Colors.grey[300]!),
+                          color: AppColors.elevation,
                         ),
                         child: _image != null
-                            ? Image.file(_image!, fit: BoxFit.cover)
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.file(_image!, fit: BoxFit.cover),
+                              )
                             : Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.add_photo_alternate, size: 40, color: Colors.grey[400]),
-                                  Text('Add Image', style: TextStyle(color: Colors.grey[600])),
+                                  Icon(Icons.add_photo_alternate, size: 40, color: AppColors.textDisabled),
+                                  Text('Add Image', style: TextStyle(color: AppColors.textMedium)),
                                 ],
                               ),
                       ),
                     ),
                     SizedBox(height: 16),
-                    TextFormField(
-                      controller: _questionController,
-                      decoration: InputDecoration(
-                        labelText: 'Question',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      validator: (value) => value!.isEmpty ? 'Please enter a question' : null,
-                    ),
+                    _buildTextField(controller: _questionController, label: 'Question'),
                     SizedBox(height: 16),
-                    TextFormField(
-                      controller: _descriptionController,
-                      maxLines: 3,
-                      decoration: InputDecoration(
-                        labelText: 'Description (optional)',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                    ),
+                    _buildTextField(controller: _descriptionController, label: 'Description (optional)', maxLines: 3),
                     SizedBox(height: 16),
-                    Text('Options', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text('Options', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
                     ..._optionControllers.map((controller) => Padding(
                       padding: EdgeInsets.only(top: 8),
-                      child: TextFormField(
+                      child: _buildTextField(
                         controller: controller,
-                        decoration: InputDecoration(
-                          labelText: 'Option ${_optionControllers.indexOf(controller) + 1}',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        validator: (value) => value!.isEmpty ? 'Please enter option text' : null,
+                        label: 'Option ${_optionControllers.indexOf(controller) + 1}',
                       ),
                     )).toList(),
                     SizedBox(height: 8),
@@ -694,7 +690,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                           _optionControllers.add(TextEditingController());
                         });
                       },
-                      child: Text('+ Add Option'),
+                      child: Text('+ Add Option', style: TextStyle(color: AppColors.secondaryTeal)),
                     ),
                   ],
                 ),
@@ -779,17 +775,20 @@ class _CreatePetitionScreenState extends State<CreatePetitionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.backgroundDeep,
       appBar: AppBar(
-        title: Text('Create Petition'),
+        title: Text('Create Petition', style: TextStyle(color: AppColors.textHigh)),
+        backgroundColor: AppColors.backgroundDeep,
+        iconTheme: IconThemeData(color: AppColors.primaryLavender),
         actions: [
           IconButton(
-            icon: Icon(Icons.check),
+            icon: Icon(Icons.check, color: AppColors.primaryLavender),
             onPressed: _isLoading ? null : _createPetition,
           ),
         ],
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator(color: AppColors.primaryLavender))
           : SingleChildScrollView(
               padding: EdgeInsets.all(16),
               child: Form(
@@ -803,48 +802,31 @@ class _CreatePetitionScreenState extends State<CreatePetitionScreen> {
                         width: double.infinity,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
-                          color: Colors.grey[200],
-                          border: Border.all(color: Colors.grey[300]!),
+                          color: AppColors.elevation,
                         ),
                         child: _image != null
-                            ? Image.file(_image!, fit: BoxFit.cover)
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.file(_image!, fit: BoxFit.cover),
+                              )
                             : Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.add_photo_alternate, size: 40, color: Colors.grey[400]),
-                                  Text('Add Image', style: TextStyle(color: Colors.grey[600])),
+                                  Icon(Icons.add_photo_alternate, size: 40, color: AppColors.textDisabled),
+                                  Text('Add Image', style: TextStyle(color: AppColors.textMedium)),
                                 ],
                               ),
                       ),
                     ),
                     SizedBox(height: 16),
-                    TextFormField(
-                      controller: _titleController,
-                      decoration: InputDecoration(
-                        labelText: 'Title',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      validator: (value) => value!.isEmpty ? 'Please enter a title' : null,
-                    ),
+                    _buildTextField(controller: _titleController, label: 'Title'),
                     SizedBox(height: 16),
-                    TextFormField(
-                      controller: _descriptionController,
-                      maxLines: 5,
-                      decoration: InputDecoration(
-                        labelText: 'Description',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      validator: (value) => value!.isEmpty ? 'Please enter a description' : null,
-                    ),
+                    _buildTextField(controller: _descriptionController, label: 'Description', maxLines: 5),
                     SizedBox(height: 16),
-                    TextFormField(
-                      controller: _goalController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: 'Signature Goal',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      validator: (value) => value!.isEmpty ? 'Please enter a goal' : null,
+                    _buildTextField(
+                      controller: _goalController, 
+                      label: 'Signature Goal', 
+                      keyboardType: TextInputType.number
                     ),
                   ],
                 ),
@@ -899,12 +881,38 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       initialDate: DateTime.now(),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.dark(
+              primary: AppColors.primaryLavender,
+              onPrimary: AppColors.backgroundDeep,
+              surface: AppColors.surface,
+              onSurface: AppColors.textHigh,
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
     
     if (date != null) {
       final time = await showTimePicker(
         context: context,
         initialTime: TimeOfDay.now(),
+        builder: (context, child) {
+          return Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: ColorScheme.dark(
+                primary: AppColors.primaryLavender,
+                onPrimary: AppColors.backgroundDeep,
+                surface: AppColors.surface,
+                onSurface: AppColors.textHigh,
+              ),
+            ),
+            child: child!,
+          );
+        },
       );
       
       if (time != null) {
@@ -968,17 +976,20 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.backgroundDeep,
       appBar: AppBar(
-        title: Text('Create Event'),
+        title: Text('Create Event', style: TextStyle(color: AppColors.textHigh)),
+        backgroundColor: AppColors.backgroundDeep,
+        iconTheme: IconThemeData(color: AppColors.primaryLavender),
         actions: [
           IconButton(
-            icon: Icon(Icons.check),
+            icon: Icon(Icons.check, color: AppColors.primaryLavender),
             onPressed: _isLoading ? null : _createEvent,
           ),
         ],
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator(color: AppColors.primaryLavender))
           : SingleChildScrollView(
               padding: EdgeInsets.all(16),
               child: Form(
@@ -992,55 +1003,44 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                         width: double.infinity,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
-                          color: Colors.grey[200],
-                          border: Border.all(color: Colors.grey[300]!),
+                          color: AppColors.elevation,
                         ),
                         child: _image != null
-                            ? Image.file(_image!, fit: BoxFit.cover)
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.file(_image!, fit: BoxFit.cover),
+                              )
                             : Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.add_photo_alternate, size: 40, color: Colors.grey[400]),
-                                  Text('Add Image', style: TextStyle(color: Colors.grey[600])),
+                                  Icon(Icons.add_photo_alternate, size: 40, color: AppColors.textDisabled),
+                                  Text('Add Image', style: TextStyle(color: AppColors.textMedium)),
                                 ],
                               ),
                       ),
                     ),
                     SizedBox(height: 16),
-                    TextFormField(
-                      controller: _titleController,
-                      decoration: InputDecoration(
-                        labelText: 'Title',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      validator: (value) => value!.isEmpty ? 'Please enter a title' : null,
-                    ),
+                    _buildTextField(controller: _titleController, label: 'Title'),
                     SizedBox(height: 16),
-                    TextFormField(
-                      controller: _descriptionController,
-                      maxLines: 3,
-                      decoration: InputDecoration(
-                        labelText: 'Description',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      validator: (value) => value!.isEmpty ? 'Please enter a description' : null,
-                    ),
+                    _buildTextField(controller: _descriptionController, label: 'Description', maxLines: 3),
                     SizedBox(height: 16),
-                    TextFormField(
-                      controller: _locationController,
-                      decoration: InputDecoration(
-                        labelText: 'Location',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      validator: (value) => value!.isEmpty ? 'Please enter a location' : null,
-                    ),
+                    _buildTextField(controller: _locationController, label: 'Location'),
                     SizedBox(height: 16),
-                    ListTile(
-                      title: Text(_selectedDate == null 
-                        ? 'Select Date and Time' 
-                        : '${DateFormat('MMM d, yyyy').format(_selectedDate!)} at ${_selectedTime!.format(context)}'),
-                      trailing: Icon(Icons.calendar_today),
-                      onTap: _selectDateTime,
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.elevation,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ListTile(
+                        title: Text(
+                          _selectedDate == null 
+                            ? 'Select Date and Time' 
+                            : '${DateFormat('MMM d, yyyy').format(_selectedDate!)} at ${_selectedTime!.format(context)}',
+                          style: TextStyle(color: AppColors.textHigh),
+                        ),
+                        trailing: Icon(Icons.calendar_today, color: AppColors.primaryLavender),
+                        onTap: _selectDateTime,
+                      ),
                     ),
                   ],
                 ),
@@ -1048,6 +1048,36 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             ),
     );
   }
+}
+
+// Reusable Input Field Widget for Create Screens
+Widget _buildTextField({
+  required TextEditingController controller,
+  required String label,
+  int maxLines = 1,
+  TextInputType? keyboardType,
+}) {
+  return TextFormField(
+    controller: controller,
+    style: TextStyle(color: AppColors.textHigh),
+    maxLines: maxLines,
+    keyboardType: keyboardType,
+    decoration: InputDecoration(
+      labelText: label,
+      labelStyle: TextStyle(color: AppColors.textMedium),
+      filled: true,
+      fillColor: AppColors.elevation,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: AppColors.primaryLavender),
+      ),
+    ),
+    validator: (value) => value!.isEmpty ? 'Please enter $label' : null,
+  );
 }
 
 // Detail Screens with Voting/Signing Functionality
@@ -1106,16 +1136,21 @@ class _PollDetailScreenState extends State<PollDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Poll Details')),
+      backgroundColor: AppColors.backgroundDeep,
+      appBar: AppBar(
+        title: Text('Poll Details', style: TextStyle(color: AppColors.textHigh)),
+        backgroundColor: AppColors.backgroundDeep,
+        iconTheme: IconThemeData(color: AppColors.primaryLavender),
+      ),
       body: StreamBuilder<DocumentSnapshot>(
         stream: _firestore.collection('polls').doc(widget.pollId).snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
           }
           
           if (!snapshot.hasData || !snapshot.data!.exists) {
-            return Center(child: Text('Poll not found'));
+            return Center(child: Text('Poll not found', style: TextStyle(color: AppColors.textHigh)));
           }
           
           final poll = snapshot.data!;
@@ -1144,7 +1179,7 @@ class _PollDetailScreenState extends State<PollDetailScreen> {
                 
                 Text(
                   poll['question'],
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textHigh),
                 ),
                 
                 SizedBox(height: 8),
@@ -1152,7 +1187,7 @@ class _PollDetailScreenState extends State<PollDetailScreen> {
                 if (poll['description'] != null && poll['description'].isNotEmpty)
                   Text(
                     poll['description'],
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                    style: TextStyle(fontSize: 16, color: AppColors.textMedium),
                   ),
                 
                 SizedBox(height: 16),
@@ -1164,24 +1199,29 @@ class _PollDetailScreenState extends State<PollDetailScreen> {
                   final percentage = totalVotes > 0 ? (votes / totalVotes * 100) : 0;
                   
                   return Card(
+                    color: AppColors.surface,
                     margin: EdgeInsets.only(bottom: 8),
                     child: ListTile(
-                      title: Text(option['text']),
+                      title: Text(option['text'], style: TextStyle(color: AppColors.textHigh)),
                       subtitle: hasVoted || _selectedOption != null
-                          ? LinearProgressIndicator(
-                              value: percentage / 100,
-                              backgroundColor: Colors.grey[200],
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: percentage / 100,
+                                backgroundColor: AppColors.elevation,
+                                valueColor: AlwaysStoppedAnimation<Color>(AppColors.secondaryTeal),
+                              ),
                             )
                           : null,
                       trailing: hasVoted || _selectedOption != null
-                          ? Text('${percentage.toStringAsFixed(1)}% ($votes votes)')
+                          ? Text('${percentage.toStringAsFixed(1)}% ($votes votes)', style: TextStyle(color: AppColors.textMedium))
                           : null,
                       onTap: (!hasVoted && _selectedOption == null && !_isLoading)
                           ? () => _vote(index.toString())
                           : null,
                       selected: _selectedOption == index.toString(),
                       tileColor: _selectedOption == index.toString()
-                          ? Colors.blue.withOpacity(0.1)
+                          ? AppColors.primaryLavender.withOpacity(0.1)
                           : null,
                     ),
                   );
@@ -1191,7 +1231,7 @@ class _PollDetailScreenState extends State<PollDetailScreen> {
                 
                 Text(
                   'Total votes: $totalVotes • Created by ${poll['creatorName']}',
-                  style: TextStyle(color: Colors.grey[500]),
+                  style: TextStyle(color: AppColors.textDisabled),
                 ),
               ],
             ),
@@ -1250,16 +1290,21 @@ class _PetitionDetailScreenState extends State<PetitionDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Petition Details')),
+      backgroundColor: AppColors.backgroundDeep,
+      appBar: AppBar(
+        title: Text('Petition Details', style: TextStyle(color: AppColors.textHigh)),
+        backgroundColor: AppColors.backgroundDeep,
+        iconTheme: IconThemeData(color: AppColors.primaryLavender),
+      ),
       body: StreamBuilder<DocumentSnapshot>(
         stream: _firestore.collection('petitions').doc(widget.petitionId).snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
           }
           
           if (!snapshot.hasData || !snapshot.data!.exists) {
-            return Center(child: Text('Petition not found'));
+            return Center(child: Text('Petition not found', style: TextStyle(color: AppColors.textHigh)));
           }
           
           final petition = snapshot.data!;
@@ -1289,29 +1334,33 @@ class _PetitionDetailScreenState extends State<PetitionDetailScreen> {
                 
                 Text(
                   petition['title'],
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textHigh),
                 ),
                 
                 SizedBox(height: 16),
                 
-                LinearProgressIndicator(
-                  value: progress.clamp(0.0, 1.0),
-                  backgroundColor: Colors.grey[200],
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: progress.clamp(0.0, 1.0),
+                    backgroundColor: AppColors.elevation,
+                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.secondaryTeal),
+                    minHeight: 10,
+                  ),
                 ),
                 
                 SizedBox(height: 8),
                 
                 Text(
                   '$signatures of $goal signatures',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textHigh),
                 ),
                 
                 SizedBox(height: 16),
                 
                 Text(
                   petition['description'],
-                  style: TextStyle(fontSize: 16, height: 1.5),
+                  style: TextStyle(fontSize: 16, height: 1.5, color: AppColors.textMedium),
                 ),
                 
                 SizedBox(height: 24),
@@ -1322,9 +1371,10 @@ class _PetitionDetailScreenState extends State<PetitionDetailScreen> {
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _signPetition,
                       child: _isLoading
-                          ? CircularProgressIndicator(color: Colors.white)
-                          : Text('Sign This Petition'),
+                          ? CircularProgressIndicator(color: AppColors.backgroundDeep)
+                          : Text('Sign This Petition', style: TextStyle(color: AppColors.backgroundDeep)),
                       style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryLavender,
                         padding: EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -1341,13 +1391,14 @@ class _PetitionDetailScreenState extends State<PetitionDetailScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.check_circle, color: Colors.green),
+                          Icon(Icons.check_circle, color: AppColors.success),
                           SizedBox(width: 8),
-                          Text('Already Signed'),
+                          Text('Already Signed', style: TextStyle(color: AppColors.success)),
                         ],
                       ),
                       style: OutlinedButton.styleFrom(
                         padding: EdgeInsets.symmetric(vertical: 16),
+                        side: BorderSide(color: AppColors.success),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -1359,7 +1410,7 @@ class _PetitionDetailScreenState extends State<PetitionDetailScreen> {
                 
                 Text(
                   'Created by ${petition['creatorName']}',
-                  style: TextStyle(color: Colors.grey[500]),
+                  style: TextStyle(color: AppColors.textDisabled),
                 ),
               ],
             ),
@@ -1416,16 +1467,21 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Event Details')),
+      backgroundColor: AppColors.backgroundDeep,
+      appBar: AppBar(
+        title: Text('Event Details', style: TextStyle(color: AppColors.textHigh)),
+        backgroundColor: AppColors.backgroundDeep,
+        iconTheme: IconThemeData(color: AppColors.primaryLavender),
+      ),
       body: StreamBuilder<DocumentSnapshot>(
         stream: _firestore.collection('events').doc(widget.eventId).snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
           }
           
           if (!snapshot.hasData || !snapshot.data!.exists) {
-            return Center(child: Text('Event not found'));
+            return Center(child: Text('Event not found', style: TextStyle(color: AppColors.textHigh)));
           }
           
           final event = snapshot.data!;
@@ -1454,18 +1510,18 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 
                 Text(
                   event['title'],
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textHigh),
                 ),
                 
                 SizedBox(height: 16),
                 
                 Row(
                   children: [
-                    Icon(Icons.calendar_today, color: Colors.grey[600]),
+                    Icon(Icons.calendar_today, color: AppColors.primaryLavender),
                     SizedBox(width: 12),
                     Text(
                       DateFormat('MMM d, yyyy • h:mm a').format(date),
-                      style: TextStyle(fontSize: 16),
+                      style: TextStyle(fontSize: 16, color: AppColors.textMedium),
                     ),
                   ],
                 ),
@@ -1474,12 +1530,12 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 
                 Row(
                   children: [
-                    Icon(Icons.location_on, color: Colors.grey[600]),
+                    Icon(Icons.location_on, color: AppColors.primaryLavender),
                     SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         event['location'],
-                        style: TextStyle(fontSize: 16),
+                        style: TextStyle(fontSize: 16, color: AppColors.textMedium),
                       ),
                     ),
                   ],
@@ -1489,18 +1545,18 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 
                 Text(
                   event['description'] ?? '',
-                  style: TextStyle(fontSize: 16, height: 1.5),
+                  style: TextStyle(fontSize: 16, height: 1.5, color: AppColors.textMedium),
                 ),
                 
                 SizedBox(height: 24),
                 
                 Row(
                   children: [
-                    Icon(Icons.people, color: Colors.grey[600]),
+                    Icon(Icons.people, color: AppColors.secondaryTeal),
                     SizedBox(width: 8),
                     Text(
                       '$attendees people attending',
-                      style: TextStyle(fontSize: 16),
+                      style: TextStyle(fontSize: 16, color: AppColors.textHigh),
                     ),
                   ],
                 ),
@@ -1512,14 +1568,17 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _toggleAttendance,
                     child: _isLoading
-                        ? CircularProgressIndicator(color: Colors.white)
-                        : Text(isAttending ? 'Cancel Attendance' : 'Attend Event'),
+                        ? CircularProgressIndicator(color: AppColors.backgroundDeep)
+                        : Text(
+                            isAttending ? 'Cancel Attendance' : 'Attend Event',
+                            style: TextStyle(color: isAttending ? AppColors.textHigh : AppColors.backgroundDeep),
+                          ),
                     style: ElevatedButton.styleFrom(
                       padding: EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      backgroundColor: isAttending ? Colors.grey : null,
+                      backgroundColor: isAttending ? AppColors.elevation : AppColors.primaryLavender,
                     ),
                   ),
                 ),
@@ -1528,7 +1587,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 
                 Text(
                   'Created by ${event['creatorName']}',
-                  style: TextStyle(color: Colors.grey[500]),
+                  style: TextStyle(color: AppColors.textDisabled),
                 ),
               ],
             ),
@@ -1546,8 +1605,8 @@ Widget _buildShimmerList() {
     itemCount: 6,
     itemBuilder: (context, index) {
       return Shimmer.fromColors(
-        baseColor: Colors.grey[300]!,
-        highlightColor: Colors.grey[100]!,
+        baseColor: AppColors.elevation,
+        highlightColor: AppColors.surface,
         child: Card(
           margin: EdgeInsets.symmetric(vertical: 8),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -1555,7 +1614,7 @@ Widget _buildShimmerList() {
             height: 180,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              color: Colors.white,
+              color: AppColors.elevation,
             ),
           ),
         ),
@@ -1569,11 +1628,11 @@ Widget _buildEmptyState(String message, IconData icon) {
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(icon, size: 64, color: Colors.grey[300]),
+        Icon(icon, size: 64, color: AppColors.textDisabled),
         SizedBox(height: 16),
         Text(
           message,
-          style: TextStyle(fontSize: 18, color: Colors.grey[500]),
+          style: TextStyle(fontSize: 18, color: AppColors.textMedium),
           textAlign: TextAlign.center,
         ),
       ],

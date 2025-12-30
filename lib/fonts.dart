@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:femn/colors.dart'; // <--- IMPORT YOUR COLORS FILE
 
 // Define the font family name (must match pubspec.yaml)
 const String _fontFamily = 'Helvetica';
@@ -7,7 +8,7 @@ const String _fontFamily = 'Helvetica';
 TextStyle helveticaStyle({
   double fontSize = 16.0,
   FontWeight fontWeight = FontWeight.normal,
-  Color color = Colors.black87,
+  Color color = AppColors.textHigh, // Default to Off-White for Dark Mode
 }) {
   return TextStyle(
     fontFamily: _fontFamily,
@@ -20,7 +21,7 @@ TextStyle helveticaStyle({
 // Utility functions for very bold text
 TextStyle helveticaBoldStyle({
   double fontSize = 16.0,
-  Color color = Colors.black87,
+  Color color = AppColors.textHigh, // Default to Off-White
 }) {
   return TextStyle(
     fontFamily: _fontFamily,
@@ -32,14 +33,14 @@ TextStyle helveticaBoldStyle({
 
 // Optional: You can keep your old names if you prefer
 // But now they refer to Helvetica instead of Google Fonts
-final primaryFont = _fontFamily; // Not used as a font directly anymore
+final primaryFont = _fontFamily; 
 final secondaryFont = _fontFamily;
 
 // Keep your utility functions but rename them to reflect Helvetica
 TextStyle primaryTextStyle({
   double fontSize = 16.0,
   FontWeight fontWeight = FontWeight.normal,
-  Color color = Colors.black87,
+  Color color = AppColors.textHigh,
 }) {
   return helveticaStyle(fontSize: fontSize, fontWeight: fontWeight, color: color);
 }
@@ -47,7 +48,7 @@ TextStyle primaryTextStyle({
 TextStyle secondaryTextStyle({
   double fontSize = 16.0,
   FontWeight fontWeight = FontWeight.normal,
-  Color color = Colors.black87,
+  Color color = AppColors.textHigh,
 }) {
   return helveticaStyle(fontSize: fontSize, fontWeight: fontWeight, color: color);
 }
@@ -55,14 +56,14 @@ TextStyle secondaryTextStyle({
 // Very bold versions
 TextStyle primaryVeryBoldTextStyle({
   double fontSize = 16.0,
-  Color color = Colors.black87,
+  Color color = AppColors.textHigh,
 }) {
   return helveticaBoldStyle(fontSize: fontSize, color: color);
 }
 
 TextStyle secondaryVeryBoldTextStyle({
   double fontSize = 16.0,
-  Color color = Colors.black87,
+  Color color = AppColors.textHigh,
 }) {
   return helveticaBoldStyle(fontSize: fontSize, color: color);
 }

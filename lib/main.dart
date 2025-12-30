@@ -2,6 +2,7 @@ import 'package:femn/addpost.dart';
 import 'package:femn/groups.dart';
 import 'package:femn/messaging.dart';
 import 'package:femn/wellness.dart';
+import 'package:femn/colors.dart'; // <--- IMPORT YOUR COLORS FILE
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -9,9 +10,9 @@ import 'package:provider/provider.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'auth.dart';
 import 'post.dart';
-import 'campaign.dart';
+import 'campaign.dart'; // Ensure filename matches (campaign.dart or campaigns.dart)
 import 'auth_provider.dart';
-import 'fonts.dart'; // Import the fonts file
+import 'fonts.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,62 +31,98 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Femn',
       theme: ThemeData(
-        primaryColor: Colors.pink.shade100,
-        scaffoldBackgroundColor: Colors.white,
-        colorScheme: ColorScheme.light(
-          primary: Colors.pink.shade200,
-          secondary: Colors.pink.shade400,
-          surface: Colors.white,
-          onPrimary: Colors.white,
-          onSecondary: Colors.white,
-          onSurface: Colors.black87,
-          error: Colors.red.shade400,
+        // --- 1. Global Color Settings ---
+        brightness: Brightness.dark,
+        primaryColor: AppColors.primaryLavender,
+        scaffoldBackgroundColor: AppColors.backgroundDeep, // Deep Dark Background
+        
+        colorScheme: ColorScheme.dark(
+          primary: AppColors.primaryLavender,
+          secondary: AppColors.secondaryTeal,
+          surface: AppColors.surface,
+          onPrimary: AppColors.backgroundDeep, // Dark text on Lavender buttons
+          onSecondary: Colors.white,         // White text on Teal elements
+          onSurface: AppColors.textHigh,     // Off-white text on surfaces
+          error: AppColors.error,
         ),
+
+        // --- 2. Text Theme (Defaulting to Off-White) ---
         textTheme: TextTheme(
-          bodyLarge: primaryTextStyle(fontSize: 18.0),
-          bodyMedium: primaryTextStyle(fontSize: 16.0),
-          displayLarge: primaryVeryBoldTextStyle(fontSize: 32.0),
-          displayMedium: primaryVeryBoldTextStyle(fontSize: 28.0),
-          displaySmall: primaryVeryBoldTextStyle(fontSize: 24.0),
-          headlineMedium: primaryVeryBoldTextStyle(fontSize: 20.0),
-          headlineSmall: primaryVeryBoldTextStyle(fontSize: 18.0),
-          titleLarge: primaryVeryBoldTextStyle(fontSize: 16.0),
-          titleMedium: secondaryTextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
-          titleSmall: secondaryTextStyle(fontSize: 14.0, fontWeight: FontWeight.bold),
-          bodySmall: secondaryTextStyle(fontSize: 12.0),
-          labelLarge: secondaryVeryBoldTextStyle(fontSize: 16.0),
-          labelSmall: secondaryTextStyle(fontSize: 10.0),
+          bodyLarge: primaryTextStyle(fontSize: 18.0, color: AppColors.textHigh),
+          bodyMedium: primaryTextStyle(fontSize: 16.0, color: AppColors.textMedium),
+          displayLarge: primaryVeryBoldTextStyle(fontSize: 32.0, color: AppColors.textHigh),
+          displayMedium: primaryVeryBoldTextStyle(fontSize: 28.0, color: AppColors.textHigh),
+          displaySmall: primaryVeryBoldTextStyle(fontSize: 24.0, color: AppColors.textHigh),
+          headlineMedium: primaryVeryBoldTextStyle(fontSize: 20.0, color: AppColors.textHigh),
+          headlineSmall: primaryVeryBoldTextStyle(fontSize: 18.0, color: AppColors.textHigh),
+          titleLarge: primaryVeryBoldTextStyle(fontSize: 16.0, color: AppColors.textHigh),
+          titleMedium: secondaryTextStyle(fontSize: 16.0, fontWeight: FontWeight.bold, color: AppColors.textHigh),
+          titleSmall: secondaryTextStyle(fontSize: 14.0, fontWeight: FontWeight.bold, color: AppColors.textHigh),
+          bodySmall: secondaryTextStyle(fontSize: 12.0, color: AppColors.textMedium),
+          labelLarge: secondaryVeryBoldTextStyle(fontSize: 16.0, color: AppColors.textHigh),
+          labelSmall: secondaryTextStyle(fontSize: 10.0, color: AppColors.textMedium),
         ),
+
+        // --- 3. Component Themes ---
+        appBarTheme: AppBarTheme(
+          backgroundColor: AppColors.backgroundDeep,
+          elevation: 0,
+          iconTheme: IconThemeData(color: AppColors.primaryLavender),
+          titleTextStyle: TextStyle(
+            color: AppColors.textHigh, 
+            fontSize: 20, 
+            fontWeight: FontWeight.bold
+          ),
+        ),
+
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.pink.shade300,
-            foregroundColor: Colors.white,
+            backgroundColor: AppColors.primaryLavender,
+            foregroundColor: AppColors.backgroundDeep, // Dark text on button
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
             ),
             padding: EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-            textStyle: secondaryVeryBoldTextStyle(fontSize: 16),
+            textStyle: secondaryVeryBoldTextStyle(fontSize: 16, color: AppColors.backgroundDeep),
             elevation: 2,
           ),
         ),
+
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: Colors.pink.shade50,
+          fillColor: AppColors.elevation, // Dark container for inputs
           contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 16),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide.none,
           ),
-          labelStyle: secondaryTextStyle(color: Colors.pink.shade700),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: AppColors.primaryLavender, width: 1.5),
+          ),
+          labelStyle: secondaryTextStyle(color: AppColors.textMedium),
+          hintStyle: secondaryTextStyle(color: AppColors.textDisabled),
         ),
+
         cardTheme: CardThemeData(
-          color: Colors.pink.shade50,
+          color: AppColors.surface, // Dark surface for cards
           elevation: 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
         ),
+        
+        iconTheme: IconThemeData(color: AppColors.primaryLavender),
+        
+        bottomSheetTheme: BottomSheetThemeData(
+          backgroundColor: AppColors.surface,
+          modalBackgroundColor: AppColors.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+        ),
       ),
+      
       home: Consumer<AuthProvider>(
         builder: (context, authProvider, child) {
           return StreamBuilder<User?>(
@@ -95,7 +132,10 @@ class MyApp extends StatelessWidget {
                 User? user = snapshot.data;
                 return user == null ? LoginScreen() : HomeScreen();
               }
-              return Scaffold(body: Center(child: CircularProgressIndicator()));
+              return Scaffold(
+                backgroundColor: AppColors.backgroundDeep,
+                body: Center(child: CircularProgressIndicator(color: AppColors.primaryLavender))
+              );
             },
           );
         },
@@ -125,27 +165,31 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.backgroundDeep, // Ensure main bg is dark
       body: _screens[_currentIndex],
-      extendBody: true,
+      extendBody: true, // Allows content to go behind the floating nav bar
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.fromLTRB(12, 0, 12, 24), // bottom spacing
         child: Align(
           alignment: Alignment.bottomCenter, // center horizontally
             child: Container(
-              width: MediaQuery.of(context).size.width * 0.8,
+              width: MediaQuery.of(context).size.width * 0.8, // Slightly wider for comfort
               height: 70,
               decoration: BoxDecoration(
-                color: const Color(0xFFFFE1E0),
+                color: AppColors.surface.withOpacity(0.95), // Dark Surface
                 borderRadius: BorderRadius.circular(40),
-                // removed border for a cleaner look
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.15),
+                    color: Colors.black.withOpacity(0.4), // Stronger shadow for depth in dark mode
                     blurRadius: 20,
                     spreadRadius: 2,
-                    offset: const Offset(0, 8), // soft downward shadow
+                    offset: const Offset(0, 8), 
                   ),
                 ],
+                border: Border.all(
+                  color: AppColors.elevation,
+                  width: 1,
+                ),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -153,6 +197,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   _buildNavItem(Feather.home, "Home", 0),
                   _buildNavItem(Feather.hexagon, "Circle", 1),
                   _buildNavItem(Feather.user, "You", 2),
+                  // _buildNavItem(Feather.flag, "Campaigns", 3), // Optional: Uncomment if you want 5 items
                   _buildNavItem(Feather.message_circle, "Inbox", 4),
                 ],
               ),
@@ -171,8 +216,9 @@ class _HomeScreenState extends State<HomeScreen> {
         curve: Curves.easeInOut,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
+          // Use Teal for selected state background, heavily transparent
           color: isSelected
-              ? const Color(0xFFFFA3B5).withOpacity(0.3)
+              ? AppColors.secondaryTeal.withOpacity(0.3)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(30),
         ),
@@ -180,22 +226,24 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Icon(
               icon,
-              size: isSelected ? 26 : 22,
-              color: const Color(0xFFE35773)
-                  .withOpacity(isSelected ? 1.0 : 0.7),
+              size: isSelected ? 24 : 22,
+              // Lavender for active, Medium Gray for inactive
+              color: isSelected 
+                  ? AppColors.primaryLavender 
+                  : AppColors.textMedium.withOpacity(0.7),
             ),
             AnimatedSize(
               duration: const Duration(milliseconds: 250),
               curve: Curves.easeInOut,
               child: isSelected
                   ? Padding(
-                      padding: const EdgeInsets.only(left: 6),
+                      padding: const EdgeInsets.only(left: 8),
                       child: Text(
                         label,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: const Color(0xFFE35773),
+                          color: AppColors.primaryLavender, // Lavender Text
                         ),
                       ),
                     )
@@ -208,6 +256,3 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
 }
-
-// --- FIREBASE SETUP ---
-class FirestoreService {}

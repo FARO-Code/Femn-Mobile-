@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:femn/auth.dart';
 import 'package:femn/discussions.dart';
+import 'package:femn/colors.dart'; // Import the new color scheme
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
@@ -30,14 +31,7 @@ import 'package:collection/collection.dart'; // For comparing lists (though not 
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 
-const Color primaryPink = Color(0xFFE56982); // Updated to #e56982
-const Color lightPink = Color(0xFFFFE1E0); // Updated to #ffe1e0
-const Color darkPink = Color(0xFFFFB7C5); // Updated to #ffb7c5
-const Color bgWhite = Color(0xFFFFE1E0); // Updated to #ffe1e0
-const Color cardWhite = Color(0xFFFFFFFF);
-const Color outgoingBubble = Color(0xFFFFCDD2);
-const Color incomingBubble = Colors.white;
-
+// Remove old color constants and use AppColors instead
 const Map<String, IconData> _optionIcons = {
   'Polls': Icons.poll,
   'Discussions': Icons.forum,
@@ -188,8 +182,6 @@ class _GroupsScreenState extends State<GroupsScreen> {
   String get _currentContentType {
     return _contentTypes[_selectedContentTypeIndex];
   }
-
-  
 
   final List<String> _categories = [
     'All',
@@ -376,20 +368,6 @@ double _getAverageRating(Map<String, dynamic> discussionData) {
     // --- Add this new method ---
 // Modified _buildAllTab method with shuffling
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 Widget _buildAllTab() {
   // Singular control variables for widths and paddings
   const double externalPadding = 20.0; // Horizontal padding for the entire grid
@@ -413,11 +391,11 @@ Widget _buildAllTab() {
     ]),
     builder: (context, snapshot) {
       if (snapshot.connectionState == ConnectionState.waiting) {
-        return Center(child: CircularProgressIndicator(color: primaryPink));
+        return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
       }
 
       if (snapshot.hasError || !snapshot.hasData) {
-        return Center(child: Text('Error loading content.'));
+        return Center(child: Text('Error loading content.', style: TextStyle(color: AppColors.textHigh)));
       }
 
       final groupsSnapshot = snapshot.data![0];
@@ -482,18 +460,18 @@ Widget _buildAllTab() {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.explore, size: 50, color: Colors.grey),
+              Icon(Icons.explore, size: 50, color: AppColors.textDisabled),
               SizedBox(height: 16),
               Text(
                 'Nothing here yet',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16),
+                style: TextStyle(fontSize: 16, color: AppColors.textHigh),
               ),
               SizedBox(height: 8),
               Text(
                 'Explore or create content!',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey),
+                style: TextStyle(color: AppColors.textDisabled),
               ),
             ],
           ),
@@ -547,7 +525,7 @@ Widget _buildAllTab() {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(22), // smoother rounded corners
                 ),
-                color: const Color(0xFFFFE1E0),
+                color: AppColors.surface,
                 elevation: 4, // subtle soft shadow
                 shadowColor: Colors.black.withOpacity(0.08),
                 child: InkWell(
@@ -577,17 +555,17 @@ Widget _buildAllTab() {
                                   width: double.infinity,
                                   fit: BoxFit.cover,
                                   placeholder: (context, url) =>
-                                      Container(color: Colors.grey[200]),
+                                      Container(color: AppColors.elevation),
                                   errorWidget: (context, url, error) =>
-                                      const Icon(Icons.error, color: Color(0xFFE56982)),
+                                      const Icon(Icons.error, color: AppColors.primaryLavender),
                                 )
                               : Container(
                                   width: double.infinity,
-                                  color: Colors.grey[200],
+                                  color: AppColors.elevation,
                                   padding: const EdgeInsets.all(28),
                                   child: const Icon(
                                     Icons.group,
-                                    color: Color(0xFFE56982),
+                                    color: AppColors.primaryLavender,
                                     size: 36,
                                   ),
                                 ),
@@ -602,7 +580,7 @@ Widget _buildAllTab() {
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
-                            color: Color(0xFFE56982),
+                            color: AppColors.primaryLavender,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -616,7 +594,7 @@ Widget _buildAllTab() {
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontSize: 13,
-                            color: Color(0xFFE56982),
+                            color: AppColors.textMedium,
                           ),
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
@@ -628,7 +606,7 @@ Widget _buildAllTab() {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFB7C5).withOpacity(0.25),
+                            color: AppColors.secondaryTeal,
                             borderRadius: BorderRadius.circular(50),
                             boxShadow: [
                               BoxShadow(
@@ -644,13 +622,13 @@ Widget _buildAllTab() {
                               const Icon(
                                 Icons.people_rounded,
                                 size: 16,
-                                color: Color(0xFFE56982),
+                                color: AppColors.textOnSecondary,
                               ),
                               const SizedBox(width: 5),
                               Text(
                                 '$memberCount members',
                                 style: const TextStyle(
-                                  color: Color(0xFFE56982),
+                                  color: AppColors.textOnSecondary,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -683,9 +661,9 @@ Widget _buildAllTab() {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(borderRadiusValue),
                 ),
-                color: const Color(0xFFFFE1E0),
+                color: AppColors.surface,
                 elevation: 3,
-                shadowColor: const Color(0xFFFFB7C5).withOpacity(0.3),
+                shadowColor: AppColors.elevation,
                 child: InkWell(
                   borderRadius: BorderRadius.circular(borderRadiusValue),
                   onTap: isArchived
@@ -726,13 +704,13 @@ Widget _buildAllTab() {
                                         colorBlendMode:
                                             isArchived ? BlendMode.saturation : null,
                                         placeholder: (context, url) =>
-                                            Container(color: Colors.grey[300]),
+                                            Container(color: AppColors.elevation),
                                         errorWidget: (context, url, error) =>
                                             const Icon(Icons.error),
                                       )
                                     : Container(
-                                        color: Colors.grey[300],
-                                        child: const Icon(Icons.forum, color: Colors.grey),
+                                        color: AppColors.elevation,
+                                        child: const Icon(Icons.forum, color: AppColors.textDisabled),
                                       ),
                                 if (isArchived)
                                   Container(
@@ -761,7 +739,7 @@ Widget _buildAllTab() {
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
-                            color: Color(0xFFE56982), // same as other items
+                            color: AppColors.primaryLavender,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -775,7 +753,7 @@ Widget _buildAllTab() {
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontSize: 13,
-                            color: Color(0xFFE56982), // same as other items
+                            color: AppColors.textMedium,
                           ),
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
@@ -789,11 +767,11 @@ Widget _buildAllTab() {
                             padding:
                                 const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFFE1E0),
+                              color: AppColors.secondaryTeal,
                               borderRadius: BorderRadius.circular(50),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFFE56982).withOpacity(0.15),
+                                  color: AppColors.primaryLavender.withOpacity(0.15),
                                   blurRadius: 4,
                                   offset: const Offset(0, 2),
                                 )
@@ -802,7 +780,7 @@ Widget _buildAllTab() {
                             child: Text(
                               '$daysLeft days left',
                               style: const TextStyle(
-                                color: Color(0xFFE56982),
+                                color: AppColors.textOnSecondary,
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -817,15 +795,15 @@ Widget _buildAllTab() {
                               const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: isArchived
-                                ? Colors.grey[400] // gray pill for archived
-                                : const Color(0xFFFFE1E0),
+                                ? AppColors.textDisabled
+                                : AppColors.secondaryTeal,
                             borderRadius: BorderRadius.circular(50),
                             boxShadow: [
                               BoxShadow(
                                 color: (isArchived
-                                        ? Colors.grey[500]
-                                        : const Color(0xFFE56982))
-                                    ?.withOpacity(0.1) ?? const Color(0xFFE56982).withOpacity(0.1),
+                                        ? AppColors.textDisabled
+                                        : AppColors.primaryLavender)
+                                    .withOpacity(0.1),
                                 blurRadius: 4,
                                 offset: const Offset(0, 2),
                               )
@@ -836,12 +814,12 @@ Widget _buildAllTab() {
                             children: [
                               Icon(Icons.people,
                                   size: 14,
-                                  color: isArchived ? Colors.grey[700] : Color(0xFFE56982)),
+                                  color: isArchived ? AppColors.textHigh : AppColors.textOnSecondary),
                               const SizedBox(width: 4),
                               Text(
                                 '$memberCount members',
                                 style: TextStyle(
-                                  color: isArchived ? Colors.grey[700] : Color(0xFFE56982),
+                                  color: isArchived ? AppColors.textHigh : AppColors.textOnSecondary,
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -880,9 +858,9 @@ Widget _buildAllTab() {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(borderRadiusValue),
                 ),
-                color: const Color(0xFFFFE1E0),
+                color: AppColors.surface,
                 elevation: 2,
-                shadowColor: const Color(0xFFFFB7C5).withOpacity(0.4),
+                shadowColor: AppColors.elevation,
                 child: InkWell(
                   onTap: () {
                     showPetitionDetails(context, petition, isSigned);
@@ -904,15 +882,15 @@ Widget _buildAllTab() {
                                   width: double.infinity,
                                   fit: BoxFit.cover,
                                   placeholder: (context, url) =>
-                                      Container(color: Colors.grey[300]),
+                                      Container(color: AppColors.elevation),
                                   errorWidget: (context, url, error) =>
                                       const Icon(Icons.error),
                                 )
                               : Container(
                                   height: 140,
                                   width: double.infinity,
-                                  color: Colors.grey[300],
-                                  child: const Icon(Icons.image, color: Colors.grey),
+                                  color: AppColors.elevation,
+                                  child: const Icon(Icons.image, color: AppColors.textDisabled),
                                 ),
                         ),
                         const SizedBox(height: 12),
@@ -926,7 +904,7 @@ Widget _buildAllTab() {
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
-                            color: Color(0xFFE56982),
+                            color: AppColors.primaryLavender,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -939,7 +917,7 @@ Widget _buildAllTab() {
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontSize: 13,
-                            color: Color(0xFFE56982),
+                            color: AppColors.textMedium,
                           ),
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
@@ -950,15 +928,15 @@ Widget _buildAllTab() {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFE1E0), // pill bg same as member pill
+                            color: AppColors.secondaryTeal,
                             borderRadius: BorderRadius.circular(50),
                             border: Border.all(
-                              color: const Color(0xFFE56982),
+                              color: AppColors.primaryLavender,
                               width: 4.5 * progress, // thin, proportional to progress
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFFE56982).withOpacity(0.1),
+                                color: AppColors.primaryLavender.withOpacity(0.1),
                                 blurRadius: 4,
                                 offset: const Offset(0, 2),
                               )
@@ -967,12 +945,12 @@ Widget _buildAllTab() {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.how_to_reg, size: 14, color: Color(0xFFE56982)),
+                              const Icon(Icons.how_to_reg, size: 14, color: AppColors.textOnSecondary),
                               const SizedBox(width: 4),
                               Text(
                                 '${petition.currentSignatures}/${petition.goal} signatures',
                                 style: const TextStyle(
-                                  color: Color(0xFFE56982),
+                                  color: AppColors.textOnSecondary,
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -989,7 +967,12 @@ Widget _buildAllTab() {
 
             else {
               // Fallback for unknown item types
-              return Card(child: ListTile(title: Text('Unknown Item Type')));
+              return Card(
+                color: AppColors.surface,
+                child: ListTile(
+                  title: Text('Unknown Item Type', style: TextStyle(color: AppColors.textHigh))
+                )
+              );
             }
           },
         ),
@@ -1007,7 +990,7 @@ Widget _buildAllTab() {
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator(color: primaryPink));
+          return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
         }
         
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -1017,13 +1000,13 @@ Widget _buildAllTab() {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.group, size: 40, color: Colors.grey),
+                  Icon(Icons.group, size: 40, color: AppColors.textDisabled),
                   SizedBox(height: 12),
-                  Text('No public groups yet', style: TextStyle(fontSize: 14)),
+                  Text('No public groups yet', style: TextStyle(fontSize: 14, color: AppColors.textHigh)),
                   SizedBox(height: 6),
                   Text(
                     'Be the first to create a group!',
-                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                    style: TextStyle(color: AppColors.textDisabled, fontSize: 12),
                   ),
                 ],
               ),
@@ -1053,18 +1036,18 @@ Widget _buildAllTab() {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.search_off, size: 50, color: Colors.grey),
+                Icon(Icons.search_off, size: 50, color: AppColors.textDisabled),
                 SizedBox(height: 16),
                 Text(
                   'No groups found in ${_selectedCategory == "All" ? "any category" : _selectedCategory}',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16),
+                  style: TextStyle(fontSize: 16, color: AppColors.textHigh),
                 ),
                 SizedBox(height: 8),
                 Text(
                   'Try a different category or create your own group',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey),
+                  style: TextStyle(color: AppColors.textDisabled),
                 ),
               ],
             ),
@@ -1100,7 +1083,7 @@ Widget _buildAllTab() {
 
       return Container(
         decoration: BoxDecoration(
-          color: const Color(0xFFFFE1E0),
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -1137,16 +1120,16 @@ Widget _buildAllTab() {
                               imageUrl: groupImage,
                               fit: BoxFit.cover,
                               placeholder: (context, url) =>
-                                  Container(color: Colors.grey[300]),
+                                  Container(color: AppColors.elevation),
                               errorWidget: (context, url, error) =>
                                   Container(
-                                    color: Colors.grey[300],
-                                    child: Icon(Icons.group, color: Colors.white),
+                                    color: AppColors.elevation,
+                                    child: Icon(Icons.group, color: AppColors.textHigh),
                                   ),
                             )
                           : Container(
-                              color: Colors.grey[300],
-                              child: Icon(Icons.group, color: Colors.white),
+                              color: AppColors.elevation,
+                              child: Icon(Icons.group, color: AppColors.textHigh),
                             ),
                     ),
                   ),
@@ -1181,7 +1164,7 @@ Widget _buildAllTab() {
                       child: Container(
                         padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: primaryPink.withOpacity(0.8),
+                          color: AppColors.primaryLavender.withOpacity(0.8),
                           borderRadius: BorderRadius.circular(8),
                           boxShadow: [
                             BoxShadow(
@@ -1194,7 +1177,7 @@ Widget _buildAllTab() {
                         child: Text(
                           '$daysLeft days left',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: AppColors.textOnSecondary,
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),
@@ -1213,7 +1196,7 @@ Widget _buildAllTab() {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
-                        color: primaryPink,
+                        color: AppColors.primaryLavender,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -1221,7 +1204,7 @@ Widget _buildAllTab() {
                     SizedBox(height: 4),
                     Text(
                       groupDescription,
-                      style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                      style: TextStyle(fontSize: 13, color: AppColors.textMedium),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -1237,7 +1220,7 @@ Widget _buildAllTab() {
                               margin: EdgeInsets.only(right: 4),
                               padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
+                                color: AppColors.secondaryTeal,
                                 borderRadius: BorderRadius.circular(12),
                                 boxShadow: [
                                   BoxShadow(
@@ -1251,7 +1234,7 @@ Widget _buildAllTab() {
                                 '#$tag',
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: primaryPink,
+                                  color: AppColors.textOnSecondary,
                                 ),
                               ),
                             );
@@ -1264,11 +1247,11 @@ Widget _buildAllTab() {
                       children: [
                         Text(
                           category,
-                          style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                          style: TextStyle(fontSize: 11, color: AppColors.textDisabled),
                         ),
                         Text(
                           ageRating,
-                          style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                          style: TextStyle(fontSize: 11, color: AppColors.textDisabled),
                         ),
                       ],
                     ),
@@ -1292,7 +1275,7 @@ Widget _buildAllTab() {
       stream: _firestore.collection('polls').snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator(color: primaryPink));
+          return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
         }
         
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -1300,18 +1283,18 @@ Widget _buildAllTab() {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.poll, size: 50, color: Colors.grey),
+                Icon(Icons.poll, size: 50, color: AppColors.textDisabled),
                 SizedBox(height: 16),
                 Text(
                   'No polls yet',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16),
+                  style: TextStyle(fontSize: 16, color: AppColors.textHigh),
                 ),
                 SizedBox(height: 8),
                 Text(
                   'Be the first to create a poll!',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey),
+                  style: TextStyle(color: AppColors.textDisabled),
                 ),
               ],
             ),
@@ -1350,6 +1333,7 @@ Widget _buildAllTab() {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 elevation: 1,
+                color: AppColors.surface,
                 child: InkWell(
                   onTap: () {
                     // Navigate to poll screen
@@ -1361,9 +1345,9 @@ Widget _buildAllTab() {
                     children: [
                       Container(
                         height: 120,
-                        color: lightPink,
+                        color: AppColors.elevation,
                         child: Center(
-                          child: Icon(Icons.poll, size: 40, color: primaryPink),
+                          child: Icon(Icons.poll, size: 40, color: AppColors.primaryLavender),
                         ),
                       ),
                       Padding(
@@ -1373,19 +1357,19 @@ Widget _buildAllTab() {
                           children: [
                             Text(
                               question,
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textHigh),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
                             SizedBox(height: 8),
                             Text(
                               '$totalVotes votes',
-                              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                              style: TextStyle(fontSize: 12, color: AppColors.textMedium),
                             ),
                             if (daysLeft != null && daysLeft >= 0)
                               Text(
                                 '$daysLeft days left',
-                                style: TextStyle(fontSize: 11, color: primaryPink),
+                                style: TextStyle(fontSize: 11, color: AppColors.primaryLavender),
                               ),
                             SizedBox(height: 4),
                             if (hashtags.isNotEmpty)
@@ -1398,7 +1382,7 @@ Widget _buildAllTab() {
                                       padding: const EdgeInsets.only(right: 4.0),
                                       child: Text(
                                         '#$tag',
-                                        style: TextStyle(fontSize: 10, color: primaryPink),
+                                        style: TextStyle(fontSize: 10, color: AppColors.primaryLavender),
                                       ),
                                     );
                                   }).toList(),
@@ -1407,7 +1391,7 @@ Widget _buildAllTab() {
                             SizedBox(height: 2),
                             Text(
                               ageRating,
-                              style: TextStyle(fontSize: 10, color: Colors.grey[500]),
+                              style: TextStyle(fontSize: 10, color: AppColors.textDisabled),
                             ),
                           ],
                         ),
@@ -1432,7 +1416,7 @@ Widget _buildAllTab() {
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator(color: primaryPink));
+          return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
         }
         
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -1440,18 +1424,18 @@ Widget _buildAllTab() {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.forum, size: 50, color: Colors.grey),
+                Icon(Icons.forum, size: 50, color: AppColors.textDisabled),
                 SizedBox(height: 16),
                 Text(
                   'No discussions yet',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16),
+                  style: TextStyle(fontSize: 16, color: AppColors.textHigh),
                 ),
                 SizedBox(height: 8),
                 Text(
                   'Be the first to start a discussion!',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey),
+                  style: TextStyle(color: AppColors.textDisabled),
                 ),
               ],
             ),
@@ -1488,7 +1472,7 @@ Widget _buildAllTab() {
 
       return Container(
         decoration: BoxDecoration(
-          color: const Color(0xFFFFE1E0),
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -1525,16 +1509,16 @@ Widget _buildAllTab() {
                               imageUrl: discussionImage,
                               fit: BoxFit.cover,
                               placeholder: (context, url) =>
-                                  Container(color: Colors.grey[300]),
+                                  Container(color: AppColors.elevation),
                               errorWidget: (context, url, error) =>
                                   Container(
-                                    color: Colors.grey[300],
-                                    child: Icon(Icons.forum, color: Colors.white),
+                                    color: AppColors.elevation,
+                                    child: Icon(Icons.forum, color: AppColors.textHigh),
                                   ),
                             )
                           : Container(
-                              color: Colors.grey[300],
-                              child: Icon(Icons.forum, color: Colors.white),
+                              color: AppColors.elevation,
+                              child: Icon(Icons.forum, color: AppColors.textHigh),
                             ),
                     ),
                   ),
@@ -1567,7 +1551,7 @@ Widget _buildAllTab() {
                       child: Container(
                         padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: primaryPink.withOpacity(0.8),
+                          color: AppColors.primaryLavender.withOpacity(0.8),
                           borderRadius: BorderRadius.circular(8),
                           boxShadow: [
                             BoxShadow(
@@ -1580,7 +1564,7 @@ Widget _buildAllTab() {
                         child: Text(
                           '$daysLeft days left',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: AppColors.textOnSecondary,
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),
@@ -1599,7 +1583,7 @@ Widget _buildAllTab() {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
-                        color: primaryPink,
+                        color: AppColors.primaryLavender,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -1607,7 +1591,7 @@ Widget _buildAllTab() {
                     SizedBox(height: 4),
                     Text(
                       discussionDescription,
-                      style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                      style: TextStyle(fontSize: 13, color: AppColors.textMedium),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -1622,7 +1606,7 @@ Widget _buildAllTab() {
                               margin: EdgeInsets.only(right: 4),
                               padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
+                                color: AppColors.secondaryTeal,
                                 borderRadius: BorderRadius.circular(12),
                                 boxShadow: [
                                   BoxShadow(
@@ -1636,7 +1620,7 @@ Widget _buildAllTab() {
                                 '#$tag',
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: primaryPink,
+                                  color: AppColors.textOnSecondary,
                                 ),
                               ),
                             );
@@ -1649,11 +1633,11 @@ Widget _buildAllTab() {
                       children: [
                         Text(
                           'Discussion',
-                          style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                          style: TextStyle(fontSize: 11, color: AppColors.textDisabled),
                         ),
                         Text(
                           ageRating,
-                          style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                          style: TextStyle(fontSize: 11, color: AppColors.textDisabled),
                         ),
                       ],
                     ),
@@ -1677,7 +1661,7 @@ Widget _buildAllTab() {
       stream: _firestore.collection('petitions').snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator(color: primaryPink));
+          return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
         }
 
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -1685,18 +1669,18 @@ Widget _buildAllTab() {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.how_to_vote, size: 50, color: Colors.grey),
+                Icon(Icons.how_to_vote, size: 50, color: AppColors.textDisabled),
                 SizedBox(height: 16),
                 Text(
                   'No petitions yet',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16),
+                  style: TextStyle(fontSize: 16, color: AppColors.textHigh),
                 ),
                 SizedBox(height: 8),
                 Text(
                   'Be the first to create a petition!',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey),
+                  style: TextStyle(color: AppColors.textDisabled),
                 ),
               ],
             ),
@@ -1726,7 +1710,7 @@ Widget _buildAllTab() {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 elevation: 0,
-                color: Colors.pink[50], // light background similar to screenshot
+                color: AppColors.surface,
                 child: InkWell(
                   onTap: () {
                     // Navigate to petition screen
@@ -1741,9 +1725,9 @@ Widget _buildAllTab() {
                         child: Container(
                           height: 120,
                           width: double.infinity,
-                          color: Colors.grey[300],
+                          color: AppColors.elevation,
                           child: Center(
-                            child: Icon(Icons.how_to_vote, size: 40, color: primaryPink),
+                            child: Icon(Icons.how_to_vote, size: 40, color: AppColors.primaryLavender),
                           ),
                         ),
                       ),
@@ -1760,7 +1744,7 @@ Widget _buildAllTab() {
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
-                                color: Colors.black87,
+                                color: AppColors.textHigh,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -1772,7 +1756,7 @@ Widget _buildAllTab() {
                               description,
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Colors.black54,
+                                color: AppColors.textMedium,
                               ),
                               maxLines: 3,
                               overflow: TextOverflow.ellipsis,
@@ -1785,7 +1769,7 @@ Widget _buildAllTab() {
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
-                                color: primaryPink,
+                                color: AppColors.primaryLavender,
                               ),
                             ),
                           ],
@@ -1817,7 +1801,7 @@ Widget _buildAllTab() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: bgWhite,
+      backgroundColor: AppColors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -1838,9 +1822,9 @@ Widget _buildAllTab() {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Create Petition', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      Text('Create Petition', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
                       IconButton(
-                        icon: Icon(Icons.close),
+                        icon: Icon(Icons.close, color: AppColors.textHigh),
                         onPressed: () => Navigator.pop(context),
                       ),
                     ],
@@ -1848,26 +1832,38 @@ Widget _buildAllTab() {
                   SizedBox(height: 16),
                   TextField(
                     controller: _titleController,
+                    style: TextStyle(color: AppColors.textHigh),
                     decoration: InputDecoration(
                       labelText: 'Petition Title *',
+                      labelStyle: TextStyle(color: AppColors.textMedium),
                       border: OutlineInputBorder(),
+                      filled: true,
+                      fillColor: AppColors.elevation,
                     ),
                   ),
                   SizedBox(height: 16),
                   TextField(
                     controller: _descriptionController,
+                    style: TextStyle(color: AppColors.textHigh),
                     decoration: InputDecoration(
                       labelText: 'Petition Description *',
+                      labelStyle: TextStyle(color: AppColors.textMedium),
                       border: OutlineInputBorder(),
+                      filled: true,
+                      fillColor: AppColors.elevation,
                     ),
                     maxLines: 4,
                   ),
                   SizedBox(height: 16),
                   TextField(
                     controller: _goalController,
+                    style: TextStyle(color: AppColors.textHigh),
                     decoration: InputDecoration(
                       labelText: 'Signature Goal *',
+                      labelStyle: TextStyle(color: AppColors.textMedium),
                       border: OutlineInputBorder(),
+                      filled: true,
+                      fillColor: AppColors.elevation,
                     ),
                     keyboardType: TextInputType.number,
                   ),
@@ -1878,7 +1874,7 @@ Widget _buildAllTab() {
                     items: _ageRatings.map((rating) {
                       return DropdownMenuItem<String>(
                         value: rating,
-                        child: Text(rating),
+                        child: Text(rating, style: TextStyle(color: AppColors.textHigh)),
                       );
                     }).toList(),
                     onChanged: (value) {
@@ -1888,8 +1884,12 @@ Widget _buildAllTab() {
                     },
                     decoration: InputDecoration(
                       labelText: 'Age Rating',
+                      labelStyle: TextStyle(color: AppColors.textMedium),
                       border: OutlineInputBorder(),
+                      filled: true,
+                      fillColor: AppColors.elevation,
                     ),
+                    dropdownColor: AppColors.surface,
                   ),
                   SizedBox(height: 16),
                   // Hashtags
@@ -1898,8 +1898,9 @@ Widget _buildAllTab() {
                     runSpacing: 4.0,
                     children: _hashtags.map((tag) {
                       return Chip(
-                        label: Text('#$tag'),
-                        deleteIcon: Icon(Icons.close, size: 18),
+                        label: Text('#$tag', style: TextStyle(color: AppColors.textOnSecondary)),
+                        backgroundColor: AppColors.secondaryTeal,
+                        deleteIcon: Icon(Icons.close, size: 18, color: AppColors.textOnSecondary),
                         onDeleted: () {
                           setModalState(() {
                             _hashtags.remove(tag);
@@ -1913,11 +1914,15 @@ Widget _buildAllTab() {
                       Expanded(
                         child: TextField(
                           controller: _hashtagController,
+                          style: TextStyle(color: AppColors.textHigh),
                           decoration: InputDecoration(
                             labelText: 'Add Hashtag',
+                            labelStyle: TextStyle(color: AppColors.textMedium),
                             border: OutlineInputBorder(),
+                            filled: true,
+                            fillColor: AppColors.elevation,
                             suffixIcon: IconButton(
-                              icon: Icon(Icons.add),
+                              icon: Icon(Icons.add, color: AppColors.primaryLavender),
                               onPressed: () {
                                 String newTag = _hashtagController.text.trim().replaceAll('#', '');
                                 if (newTag.isNotEmpty && !_hashtags.contains(newTag)) {
@@ -1960,11 +1965,10 @@ Widget _buildAllTab() {
                         int.parse(_goalController.text),
                       );
                     },
-                    child: Text('Create Petition'),
+                    child: Text('Create Petition', style: TextStyle(color: AppColors.textOnSecondary)),
                     style: ElevatedButton.styleFrom(
                       minimumSize: Size(double.infinity, 50),
-                      backgroundColor: primaryPink,
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppColors.primaryLavender,
                     ),
                   ),
                   SizedBox(height: 16),
@@ -2025,7 +2029,7 @@ Widget _buildAllTab() {
           borderRadius: BorderRadius.circular(16.0),
         ),
         elevation: 6,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
           child: Column(
@@ -2034,7 +2038,7 @@ Widget _buildAllTab() {
               Text(
                 'Coming Soon',
                 style: TextStyle(
-                  color: Color(0xFFE56982),
+                  color: AppColors.accentMustard,
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
                 ),
@@ -2043,7 +2047,7 @@ Widget _buildAllTab() {
               Text(
                 'This feature is currently under development.',
                 style: TextStyle(
-                  color: Colors.black.withOpacity(0.8),
+                  color: AppColors.textMedium,
                   fontSize: 15,
                 ),
                 textAlign: TextAlign.center,
@@ -2054,7 +2058,7 @@ Widget _buildAllTab() {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 10),
                   decoration: BoxDecoration(
-                    color: Color(0xFFFFE1E0),
+                    color: AppColors.elevation,
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
@@ -2064,27 +2068,27 @@ Widget _buildAllTab() {
                       ),
                     ],
                   ),
-                  child: Text(
-                    'OK',
-                    style: TextStyle(
-                      color: Color(0xFFE35773),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                    child: Text(
+                      'OK',
+                      style: TextStyle(
+                        color: AppColors.primaryLavender,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-      ),
-    );
-  }
+      );
+    }
 
   void _showOptionsModal() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: bgWhite, // #ffe1e0 background
+      backgroundColor: AppColors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -2100,13 +2104,13 @@ Widget _buildAllTab() {
                 height: 4,
                 margin: EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: darkPink, // #ffb7c5 color
+                  color: AppColors.primaryLavender,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
             Text('Create New', 
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
             SizedBox(height: 16),
             // Options grid
             GridView.count(
@@ -2151,10 +2155,10 @@ Widget _buildAllTab() {
   // Helper method to build option cards
   Widget _buildOptionCard(String title, IconData icon) {
     return Card(
-      color: cardWhite,
+      color: AppColors.elevation,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: darkPink, width: 1.0),
+        side: BorderSide(color: AppColors.primaryLavender, width: 1.0),
       ),
       elevation: 1,
       child: InkWell(
@@ -2185,10 +2189,10 @@ Widget _buildAllTab() {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: primaryPink, size: 28),
+              Icon(icon, color: AppColors.primaryLavender, size: 28),
               SizedBox(height: 8),
               Text(title, 
-                  style: TextStyle(fontWeight: FontWeight.w500, color: primaryPink)),
+                  style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.textHigh)),
             ],
           ),
         ),
@@ -2201,12 +2205,13 @@ Widget _buildAllTab() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Coming Soon'),
-        content: Text('Mentorship feature is coming in a future update.'),
+        title: Text('Coming Soon', style: TextStyle(color: AppColors.textHigh)),
+        content: Text('Mentorship feature is coming in a future update.', style: TextStyle(color: AppColors.textMedium)),
+        backgroundColor: AppColors.surface,
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('OK', style: TextStyle(color: primaryPink)),
+            child: Text('OK', style: TextStyle(color: AppColors.primaryLavender)),
           ),
         ],
       ),
@@ -2223,7 +2228,7 @@ Widget _buildAllTab() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: bgWhite,
+      backgroundColor: AppColors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -2245,9 +2250,9 @@ Widget _buildAllTab() {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('New Discussion',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
                       IconButton(
-                        icon: Icon(Icons.close),
+                        icon: Icon(Icons.close, color: AppColors.textHigh),
                         onPressed: () => Navigator.pop(context),
                       ),
                     ],
@@ -2258,12 +2263,12 @@ Widget _buildAllTab() {
                       onTap: _pickGroupImage, // Reusing the same image picking logic
                       child: CircleAvatar(
                         radius: 40,
-                        backgroundColor: Colors.grey[200],
+                        backgroundColor: AppColors.elevation,
                         backgroundImage: _groupImage != null
                             ? FileImage(_groupImage!)
                             : null,
                         child: _groupImage == null
-                            ? Icon(Icons.camera_alt, size: 30, color: Colors.grey)
+                            ? Icon(Icons.camera_alt, size: 30, color: AppColors.textDisabled)
                             : null,
                       ),
                     ),
@@ -2271,17 +2276,25 @@ Widget _buildAllTab() {
                   SizedBox(height: 16),
                   TextField(
                     controller: _groupNameController, // Reusing the same controller for simplicity
+                    style: TextStyle(color: AppColors.textHigh),
                     decoration: InputDecoration(
                       labelText: 'Discussion Title *',
+                      labelStyle: TextStyle(color: AppColors.textMedium),
                       border: OutlineInputBorder(),
+                      filled: true,
+                      fillColor: AppColors.elevation,
                     ),
                   ),
                   SizedBox(height: 16),
                   TextField(
                     controller: _groupDescriptionController, // Reusing the same controller for simplicity
+                    style: TextStyle(color: AppColors.textHigh),
                     decoration: InputDecoration(
                       labelText: 'Description *',
+                      labelStyle: TextStyle(color: AppColors.textMedium),
                       border: OutlineInputBorder(),
+                      filled: true,
+                      fillColor: AppColors.elevation,
                     ),
                     maxLines: 3,
                   ),
@@ -2292,8 +2305,9 @@ Widget _buildAllTab() {
                     runSpacing: 4.0,
                     children: _hashtags.map((tag) {
                       return Chip(
-                        label: Text('#$tag'),
-                        deleteIcon: Icon(Icons.close, size: 18),
+                        label: Text('#$tag', style: TextStyle(color: AppColors.textOnSecondary)),
+                        backgroundColor: AppColors.secondaryTeal,
+                        deleteIcon: Icon(Icons.close, size: 18, color: AppColors.textOnSecondary),
                         onDeleted: () {
                           setModalState(() {
                             _hashtags.remove(tag);
@@ -2308,11 +2322,15 @@ Widget _buildAllTab() {
                       Expanded(
                         child: TextField(
                           controller: _hashtagController,
+                          style: TextStyle(color: AppColors.textHigh),
                           decoration: InputDecoration(
                             labelText: 'Add Hashtag',
+                            labelStyle: TextStyle(color: AppColors.textMedium),
                             border: OutlineInputBorder(),
+                            filled: true,
+                            fillColor: AppColors.elevation,
                             suffixIcon: IconButton(
-                              icon: Icon(Icons.add),
+                              icon: Icon(Icons.add, color: AppColors.primaryLavender),
                               onPressed: () {
                                 String newTag = _hashtagController.text.trim().replaceAll('#', '');
                                 if (newTag.isNotEmpty && !_hashtags.contains(newTag)) {
@@ -2344,7 +2362,7 @@ Widget _buildAllTab() {
                     items: _ageRatings.map((rating) {
                       return DropdownMenuItem<String>(
                         value: rating,
-                        child: Text(rating),
+                        child: Text(rating, style: TextStyle(color: AppColors.textHigh)),
                       );
                     }).toList(),
                     onChanged: (value) {
@@ -2354,28 +2372,32 @@ Widget _buildAllTab() {
                     },
                     decoration: InputDecoration(
                       labelText: 'Age Rating',
+                      labelStyle: TextStyle(color: AppColors.textMedium),
                       border: OutlineInputBorder(),
+                      filled: true,
+                      fillColor: AppColors.elevation,
                     ),
+                    dropdownColor: AppColors.surface,
                   ),
                   SizedBox(height: 16),
                   SwitchListTile(
-                    title: Text('Private Discussion'),
-                    subtitle: Text('Only invited members can join (Coming Soon)'),
+                    title: Text('Private Discussion', style: TextStyle(color: AppColors.textHigh)),
+                    subtitle: Text('Only invited members can join (Coming Soon)', style: TextStyle(color: AppColors.textMedium)),
                     value: _isPrivate,
                     onChanged: (value) {
                       setModalState(() {
                         _isPrivate = value;
                       });
                     },
+                    activeColor: AppColors.primaryLavender,
                   ),
                   SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: _createDiscussion, // New method to create discussion
-                    child: Text('Create'),
+                    child: Text('Create', style: TextStyle(color: AppColors.textOnSecondary)),
                     style: ElevatedButton.styleFrom(
                       minimumSize: Size(double.infinity, 50),
-                      backgroundColor: primaryPink,
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppColors.primaryLavender,
                     ),
                   ),
                   SizedBox(height: 16),
@@ -2484,7 +2506,7 @@ Widget _buildAllTab() {
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.dark,
+      value: SystemUiOverlayStyle.light,
       child: Scaffold(
       appBar: AppBar(
         // --- Modified Title Section ---
@@ -2497,7 +2519,7 @@ Widget _buildAllTab() {
             height: 42,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFFFFE1E0), // soft pink background
+              color: AppColors.elevation,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.08),
@@ -2518,13 +2540,13 @@ Widget _buildAllTab() {
             // --- Original Title Text ---
             Text(
               'Circles',
-              style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFE35773),),
+              style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textHigh,),
             ),
           ],
         ),
         // --- Keep the rest of your AppBar properties ---
-        backgroundColor: cardWhite,
-        foregroundColor: Colors.black,
+        backgroundColor: AppColors.backgroundDeep,
+        foregroundColor: AppColors.textHigh,
         elevation: 0,
         actions: [
           // --- Add Button ---
@@ -2533,7 +2555,7 @@ Widget _buildAllTab() {
             height: 42,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFFFFE1E0),
+              color: AppColors.elevation,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.08),
@@ -2545,7 +2567,7 @@ Widget _buildAllTab() {
             child: IconButton(
               icon: const Icon(
                 Icons.add,
-                color: Color(0xFFE35773),
+                color: AppColors.primaryLavender,
                 size: 22, // fits inside 42x42 nicely
               ),
               onPressed: () => _showOptionsModal(),
@@ -2560,7 +2582,7 @@ Widget _buildAllTab() {
             height: 42,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFFFFE1E0),
+              color: AppColors.elevation,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.08),
@@ -2572,7 +2594,7 @@ Widget _buildAllTab() {
             child: IconButton(
               icon: const Icon(
                 Feather.search,
-                color: Color(0xFFE35773),
+                color: AppColors.primaryLavender,
                 size: 22,
               ),
               onPressed: () {
@@ -2621,7 +2643,7 @@ Widget _buildAllTab() {
                   height: 42,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: const Color(0xFFFFE1E0), // soft pink background
+                    color: AppColors.elevation,
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.08),
@@ -2644,6 +2666,8 @@ Widget _buildAllTab() {
             setState(() {});
             await Future.delayed(Duration(seconds: 1));
           },
+          color: AppColors.primaryLavender,
+          backgroundColor: AppColors.surface,
           child: Column(
             children: [
               // Content Type Selector - ADD THIS SECTION
@@ -2670,7 +2694,7 @@ Widget _buildAllTab() {
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                           margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFE1E0), // soft pink bg
+                            color: isSelected ? AppColors.secondaryTeal : AppColors.elevation,
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
@@ -2684,7 +2708,7 @@ Widget _buildAllTab() {
                             child: Text(
                               type,
                               style: TextStyle(
-                                color: const Color(0xFFE35773),
+                                color: isSelected ? AppColors.textOnSecondary : AppColors.textHigh,
                                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                                 fontSize: 14,
                               ),
@@ -2711,7 +2735,7 @@ Widget _buildAllTab() {
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return Center(
-                          child: CircularProgressIndicator(color: primaryPink));
+                          child: CircularProgressIndicator(color: AppColors.primaryLavender));
                     }
                     if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                       return Center(
@@ -2722,28 +2746,28 @@ Widget _buildAllTab() {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.group, size: 50, color: Colors.grey),
+                                Icon(Icons.group, size: 20, color: AppColors.textDisabled),
                                 const SizedBox(height: 16),
-                                const Text(
+                                Text(
                                   'Join your first group!',
                                   style: TextStyle(
-                                    fontSize: 18,
+                                    fontSize: 14,
                                     fontWeight: FontWeight.bold,
+                                    color: AppColors.textHigh,
                                   ),
                                 ),
-                                const SizedBox(height: 8),
-                                const Text(
+                                const SizedBox(height: 4),
+                                Text(
                                   'Discover communities that matter to you',
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(color: Colors.grey, fontSize: 14),
+                                  style: TextStyle(color: AppColors.textDisabled, fontSize: 14),
                                 ),
                                 const SizedBox(height: 16),
                                 ElevatedButton(
                                   onPressed: () => _navigateToGroupCreationScreen(),
-                                  child: const Text('Create Group'),
+                                  child: const Text('Create Group', style: TextStyle(color: AppColors.textOnSecondary)),
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: primaryPink,
-                                    foregroundColor: Colors.white,
+                                    backgroundColor: AppColors.primaryLavender,
                                   ),
                                 ),
                               ],
@@ -2812,7 +2836,7 @@ Widget _buildAllTab() {
                               margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: bgWhite,
+                                color: AppColors.surface,
                                 borderRadius: BorderRadius.circular(24),
                                 boxShadow: [
                                   BoxShadow(
@@ -2830,7 +2854,7 @@ Widget _buildAllTab() {
                                     height: 50,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-                                      color: Colors.grey[200],
+                                      color: AppColors.elevation,
                                       boxShadow: [
                                         BoxShadow(
                                           color: Colors.black.withOpacity(0.08),
@@ -2864,7 +2888,7 @@ Widget _buildAllTab() {
                                           style: TextStyle(
                                             fontWeight: FontWeight.w600,
                                             fontSize: 16,
-                                            color: primaryPink,
+                                            color: AppColors.primaryLavender,
                                           ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
@@ -2874,7 +2898,7 @@ Widget _buildAllTab() {
                                           displayMessage,
                                           style: TextStyle(
                                             fontSize: 14,
-                                            color: primaryPink.withOpacity(0.8),
+                                            color: AppColors.textMedium,
                                           ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
@@ -2892,7 +2916,7 @@ Widget _buildAllTab() {
                                         timeString,
                                         style: TextStyle(
                                           fontSize: 12,
-                                          color: primaryPink,
+                                          color: AppColors.textMedium,
                                         ),
                                       ),
                                       if (hasNewMessages)
@@ -2900,7 +2924,7 @@ Widget _buildAllTab() {
                                           margin: const EdgeInsets.only(top: 6),
                                           padding: const EdgeInsets.all(6),
                                           decoration: BoxDecoration(
-                                            color: primaryPink,
+                                            color: AppColors.primaryLavender,
                                             shape: BoxShape.circle,
                                           ),
                                           constraints: const BoxConstraints(
@@ -2911,7 +2935,7 @@ Widget _buildAllTab() {
                                             child: Text(
                                               unreadCount > 99 ? '99+' : '$unreadCount',
                                               style: const TextStyle(
-                                                color: Colors.white,
+                                                color: AppColors.textOnSecondary,
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.bold,
                                               ),
@@ -3112,10 +3136,10 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
           width: 30,
           height: 30,
           decoration: BoxDecoration(
-            color: primaryPink.withOpacity(0.1),
+            color: AppColors.primaryLavender.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, size: 18, color: primaryPink),
+          child: Icon(icon, size: 18, color: AppColors.primaryLavender),
         ),
         SizedBox(width: 10),
         Text(
@@ -3123,7 +3147,7 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF8B4E6B),
+            color: AppColors.textHigh,
           ),
         ),
       ],
@@ -3133,7 +3157,7 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.pink[50], // soft feminine background
+      backgroundColor: AppColors.backgroundDeep,
       appBar: AppBar(
         title: Text(
           'Create New Group ✨',
@@ -3141,14 +3165,14 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
             fontWeight: FontWeight.bold,
             fontSize: 20,
             letterSpacing: 0.5,
-            color: Colors.white,
+            color: AppColors.textHigh,
           ),
         ),
-        backgroundColor: Colors.pink[300],
+        backgroundColor: AppColors.backgroundDeep,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: AppColors.textHigh),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -3163,11 +3187,11 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
                 width: double.infinity,
                 padding: EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(18),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.pink.withOpacity(0.1),
+                      color: Colors.black.withOpacity(0.1),
                       blurRadius: 10,
                       offset: Offset(0, 4),
                     ),
@@ -3178,14 +3202,14 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.group, color: Colors.pink[300], size: 24),
+                        Icon(Icons.group, color: AppColors.primaryLavender, size: 24),
                         SizedBox(width: 10),
                         Text(
                           'Create Your Community',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF8B4E6B),
+                            color: AppColors.textHigh,
                           ),
                         ),
                       ],
@@ -3194,7 +3218,7 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
                     Text(
                       'Fill in the details below to create your group and start connecting!',
                       style: TextStyle(
-                        color: Colors.grey[600],
+                        color: AppColors.textMedium,
                         fontSize: 14,
                       ),
                     ),
@@ -3213,9 +3237,9 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
                     height: 150,
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: Colors.pink[100],
+                      color: AppColors.elevation,
                       borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: Colors.pink[200]!),
+                      border: Border.all(color: AppColors.primaryLavender),
                       image: _groupImage != null
                           ? DecorationImage(
                               image: FileImage(_groupImage!),
@@ -3228,11 +3252,11 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.image_outlined, size: 40, color: Colors.pink[400]),
+                                Icon(Icons.image_outlined, size: 40, color: AppColors.primaryLavender),
                                 SizedBox(height: 6),
                                 Text(
                                   "Upload Group Image",
-                                  style: TextStyle(color: Colors.pink[400]),
+                                  style: TextStyle(color: AppColors.primaryLavender),
                                 ),
                               ],
                             ),
@@ -3251,28 +3275,32 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.pink.withOpacity(0.05),
+                      color: Colors.black.withOpacity(0.05),
                       blurRadius: 5,
                       offset: Offset(0, 2),
                     ),
                   ],
                 ),
-                child: TextField(
-                  controller: _groupNameController,
-                  decoration: InputDecoration(
-                    labelText: 'Enter group name',
-                    labelStyle: TextStyle(color: Colors.grey[600]),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    prefixIcon: Icon(Icons.edit, color: Colors.pink[300]),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  ),
-                  style: TextStyle(fontSize: 16),
-                ),
+child: TextField(
+  controller: _groupNameController,
+  // Combined the color and fontSize into one style argument
+  style: TextStyle(
+    color: AppColors.textHigh,
+    fontSize: 16,
+  ),
+  decoration: InputDecoration(
+    labelText: 'Enter group name',
+    labelStyle: TextStyle(color: AppColors.textMedium),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide.none,
+    ),
+    filled: true,
+    fillColor: AppColors.elevation,
+    prefixIcon: Icon(Icons.edit, color: AppColors.primaryLavender),
+    contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+  ),
+),
               ),
               SizedBox(height: 20),
 
@@ -3284,29 +3312,33 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.pink.withOpacity(0.05),
+                      color: Colors.black.withOpacity(0.05),
                       blurRadius: 5,
                       offset: Offset(0, 2),
                     ),
                   ],
                 ),
-                child: TextField(
-                  controller: _groupDescriptionController,
-                  decoration: InputDecoration(
-                    labelText: 'Describe your group...',
-                    labelStyle: TextStyle(color: Colors.grey[600]),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    alignLabelWithHint: true,
-                    contentPadding: EdgeInsets.all(20),
-                  ),
-                  maxLines: 4,
-                  style: TextStyle(fontSize: 16),
-                ),
+child: TextField(
+  controller: _groupDescriptionController,
+  // Combined both style properties here
+  style: TextStyle(
+    color: AppColors.textHigh,
+    fontSize: 16,
+  ),
+  decoration: InputDecoration(
+    labelText: 'Describe your group...',
+    labelStyle: TextStyle(color: AppColors.textMedium),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide.none,
+    ),
+    filled: true,
+    fillColor: AppColors.elevation,
+    alignLabelWithHint: true,
+    contentPadding: EdgeInsets.all(20),
+  ),
+  maxLines: 4,
+),
               ),
               SizedBox(height: 20),
 
@@ -3318,7 +3350,7 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.pink.withOpacity(0.05),
+                      color: Colors.black.withOpacity(0.05),
                       blurRadius: 5,
                       offset: Offset(0, 2),
                     ),
@@ -3329,7 +3361,7 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
                   items: _ageRatings.map((rating) {
                     return DropdownMenuItem<String>(
                       value: rating,
-                      child: Text(rating),
+                      child: Text(rating, style: TextStyle(color: AppColors.textHigh)),
                     );
                   }).toList(),
                   onChanged: (value) {
@@ -3339,18 +3371,18 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
                   },
                   decoration: InputDecoration(
                     labelText: 'Who should see this group?',
-                    labelStyle: TextStyle(color: Colors.grey[600]),
+                    labelStyle: TextStyle(color: AppColors.textMedium),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
                     filled: true,
-                    fillColor: Colors.white,
-                    prefixIcon: Icon(Icons.people_outline, color: Colors.pink[300]),
+                    fillColor: AppColors.elevation,
+                    prefixIcon: Icon(Icons.people_outline, color: AppColors.primaryLavender),
                     contentPadding: EdgeInsets.symmetric(horizontal: 20),
                   ),
-                  dropdownColor: Colors.white,
-                  style: TextStyle(fontSize: 16),
+                  dropdownColor: AppColors.surface,
+                  style: TextStyle(fontSize: 16, color: AppColors.textHigh),
                 ),
               ),
               SizedBox(height: 20),
@@ -3363,7 +3395,7 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.pink.withOpacity(0.05),
+                      color: Colors.black.withOpacity(0.05),
                       blurRadius: 5,
                       offset: Offset(0, 2),
                     ),
@@ -3371,25 +3403,26 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
                 ),
                 child: TextField(
                   controller: _hashtagController,
+                  style: TextStyle(color: AppColors.textHigh),
                   decoration: InputDecoration(
                     labelText: 'Add relevant hashtags',
-                    labelStyle: TextStyle(color: Colors.grey[600]),
+                    labelStyle: TextStyle(color: AppColors.textMedium),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
                     filled: true,
-                    fillColor: Colors.white,
-                    prefixIcon: Icon(Icons.tag, color: Colors.pink[300]),
+                    fillColor: AppColors.elevation,
+                    prefixIcon: Icon(Icons.tag, color: AppColors.primaryLavender),
                     suffixIcon: IconButton(
                       icon: Container(
                         width: 32,
                         height: 32,
                         decoration: BoxDecoration(
-                          color: Colors.pink[300],
+                          color: AppColors.primaryLavender,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Icon(Icons.add, color: Colors.white, size: 18),
+                        child: Icon(Icons.add, color: AppColors.textOnSecondary, size: 18),
                       ),
                       onPressed: () {
                         String newTag = _hashtagController.text.trim().replaceAll('#', '');
@@ -3425,7 +3458,7 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
                     return Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [Color(0xFFFFE3ED), Color(0xFFFFF0F5)],
+                          colors: [AppColors.primaryLavender.withOpacity(0.2), AppColors.primaryLavender.withOpacity(0.1)],
                         ),
                         borderRadius: BorderRadius.circular(20),
                       ),
@@ -3437,7 +3470,7 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
                             Text(
                               '#$tag',
                               style: TextStyle(
-                                color: Color(0xFF8B4E6B),
+                                color: AppColors.primaryLavender,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -3448,7 +3481,7 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
                                   _hashtags.remove(tag);
                                 });
                               },
-                              child: Icon(Icons.close, size: 16, color: Color(0xFF8B4E6B)),
+                              child: Icon(Icons.close, size: 16, color: AppColors.primaryLavender),
                             ),
                           ],
                         ),
@@ -3461,11 +3494,11 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
               // Privacy Setting
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.pink.withOpacity(0.05),
+                      color: Colors.black.withOpacity(0.05),
                       blurRadius: 5,
                       offset: Offset(0, 2),
                     ),
@@ -3476,10 +3509,10 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
                     'Private Group',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF8B4E6B),
+                      color: AppColors.textHigh,
                     ),
                   ),
-                  subtitle: Text('Only invited members can join (Comming Soon)'),
+                  subtitle: Text('Only invited members can join (Coming Soon)', style: TextStyle(color: AppColors.textMedium)),
                   value: _isPrivate,
                   onChanged: (value) {
                     setState(() {
@@ -3490,11 +3523,12 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
                     width: 30,
                     height: 30,
                     decoration: BoxDecoration(
-                      color: Colors.pink[300]!.withOpacity(0.1),
+                      color: AppColors.primaryLavender.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(Icons.lock, size: 18, color: Colors.pink[300]),
+                    child: Icon(Icons.lock, size: 18, color: AppColors.primaryLavender),
                   ),
+                  activeColor: AppColors.primaryLavender,
                 ),
               ),
               SizedBox(height: 30),
@@ -3505,7 +3539,7 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.pink[300]!.withOpacity(0.3),
+                      color: AppColors.primaryLavender.withOpacity(0.3),
                       blurRadius: 10,
                       offset: Offset(0, 4),
                     ),
@@ -3515,8 +3549,8 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
                   onPressed: _isLoading ? null : _createGroup,
                   style: ElevatedButton.styleFrom(
                     minimumSize: Size(double.infinity, 55),
-                    backgroundColor: Colors.pink[400],
-                    foregroundColor: Colors.white,
+                    backgroundColor: AppColors.primaryLavender,
+                    foregroundColor: AppColors.textOnSecondary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -3528,7 +3562,7 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
                           width: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.white,
+                            color: AppColors.textOnSecondary,
                           ),
                         )
                       : Row(
@@ -3712,11 +3746,11 @@ class _GroupViewScreenState extends State<GroupViewScreen> {
             children: [
               CircleAvatar(
                 radius: 16,
-                backgroundColor: Colors.grey[300],
+                backgroundColor: AppColors.elevation,
                 backgroundImage: userProfileImage.isNotEmpty
                     ? CachedNetworkImageProvider(userProfileImage)
                     : AssetImage('assets/default_avatar.png') as ImageProvider,
-                child: userProfileImage.isEmpty ? Icon(Icons.person, size: 16) : null,
+                child: userProfileImage.isEmpty ? Icon(Icons.person, size: 16, color: AppColors.textDisabled) : null,
               ),
               SizedBox(width: 8),
               Expanded(
@@ -3728,12 +3762,13 @@ class _GroupViewScreenState extends State<GroupViewScreen> {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
+                        color: AppColors.textHigh,
                       ),
                     ),
                     SizedBox(height: 4),
                     Text(
                       previewText,
-                      style: TextStyle(fontSize: 14),
+                      style: TextStyle(fontSize: 14, color: AppColors.textMedium),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -3742,7 +3777,7 @@ class _GroupViewScreenState extends State<GroupViewScreen> {
                         DateFormat.Hm().format(messageTime),
                         style: TextStyle(
                           fontSize: 10,
-                          color: Colors.grey,
+                          color: AppColors.textDisabled,
                         ),
                       ),
                   ],
@@ -3758,19 +3793,19 @@ class _GroupViewScreenState extends State<GroupViewScreen> {
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.dark,
+      value: SystemUiOverlayStyle.light,
       child: Scaffold(
         appBar: AppBar(
           title: StreamBuilder<DocumentSnapshot>(
             stream: _groupDocRef.snapshots(),
             builder: (context, snapshot) {
-              if (!snapshot.hasData) return Text('Group');
+              if (!snapshot.hasData) return Text('Group', style: TextStyle(color: AppColors.textHigh));
               final groupData = snapshot.data!.data() as Map<String, dynamic>?;
-              return Text(groupData?['name'] ?? 'Group');
+              return Text(groupData?['name'] ?? 'Group', style: TextStyle(color: AppColors.textHigh));
             },
           ),
-          backgroundColor: cardWhite,
-          foregroundColor: Colors.black,
+          backgroundColor: AppColors.backgroundDeep,
+          foregroundColor: AppColors.textHigh,
           elevation: 0,
           actions: [
             if (!_isMember)
@@ -3784,7 +3819,7 @@ class _GroupViewScreenState extends State<GroupViewScreen> {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: primaryPink,
+                            color: AppColors.primaryLavender,
                           ),
                         ),
                       )
@@ -3792,10 +3827,10 @@ class _GroupViewScreenState extends State<GroupViewScreen> {
                         onPressed: _joinGroup,
                         child: Text('JOIN',
                             style: TextStyle(
-                                color: Colors.white, 
+                                color: AppColors.textOnSecondary, 
                                 fontWeight: FontWeight.bold)),
                         style: TextButton.styleFrom(
-                          backgroundColor: primaryPink,
+                          backgroundColor: AppColors.primaryLavender,
                           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20)),
@@ -3804,7 +3839,7 @@ class _GroupViewScreenState extends State<GroupViewScreen> {
               ),
             // NEW: Three-dot menu replacement for info button
             PopupMenuButton<String>(
-              icon: Icon(Icons.more_vert),
+              icon: Icon(Icons.more_vert, color: AppColors.textHigh),
               onSelected: (value) {
                 // Handle menu selection
                 if (value == 'info') {
@@ -3820,22 +3855,22 @@ class _GroupViewScreenState extends State<GroupViewScreen> {
                   PopupMenuItem<String>(
                     value: 'info',
                     child: ListTile(
-                      leading: Icon(Icons.info_outline, color: primaryPink),
-                      title: Text('Group Info'),
+                      leading: Icon(Icons.info_outline, color: AppColors.primaryLavender),
+                      title: Text('Group Info', style: TextStyle(color: AppColors.textHigh)),
                     ),
                   ),
                   PopupMenuItem<String>(
                     value: 'media',
                     child: ListTile(
-                      leading: Icon(Icons.photo_library, color: primaryPink),
-                      title: Text('Group Media'),
+                      leading: Icon(Icons.photo_library, color: AppColors.primaryLavender),
+                      title: Text('Group Media', style: TextStyle(color: AppColors.textHigh)),
                     ),
                   ),
                   PopupMenuItem<String>(
                     value: 'search',
                     child: ListTile(
-                      leading: Icon(Icons.search, color: primaryPink),
-                      title: Text('Search'),
+                      leading: Icon(Icons.search, color: AppColors.primaryLavender),
+                      title: Text('Search', style: TextStyle(color: AppColors.textHigh)),
                     ),
                   ),
                 ];
@@ -3851,15 +3886,15 @@ class _GroupViewScreenState extends State<GroupViewScreen> {
                   // Group preview header
                   Container(
                     padding: EdgeInsets.all(16),
-                    color: cardWhite,
+                    color: AppColors.surface,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('Previewing Group', 
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
                         SizedBox(height: 8),
                         Text('Join this group to start chatting', 
-                            style: TextStyle(color: Colors.grey)),
+                            style: TextStyle(color: AppColors.textMedium)),
                       ],
                     ),
                   ),
@@ -3918,18 +3953,18 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: bgWhite,
+      backgroundColor: AppColors.backgroundDeep,
       appBar: AppBar(
-        title: Text('Group Info'),
-        backgroundColor: cardWhite,
-        foregroundColor: Colors.black,
+        title: Text('Group Info', style: TextStyle(color: AppColors.textHigh)),
+        backgroundColor: AppColors.backgroundDeep,
+        foregroundColor: AppColors.textHigh,
         elevation: 0,
       ),
       body: StreamBuilder<DocumentSnapshot>(
         stream: _firestore.collection('groups').doc(widget.groupId).snapshots(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
-            return Center(child: CircularProgressIndicator(color: primaryPink));
+            return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
           }
 
           final groupData = snapshot.data!.data() as Map<String, dynamic>;
@@ -3948,6 +3983,7 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                   children: [
                     CircleAvatar(
                       radius: 50,
+                      backgroundColor: AppColors.elevation,
                       backgroundImage: groupImage.isNotEmpty
                           ? CachedNetworkImageProvider(groupImage)
                           : AssetImage('assets/femnlogo.png',) as ImageProvider,
@@ -3958,7 +3994,7 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: primaryPink,
+                        color: AppColors.primaryLavender,
                       ),
                     ),
                     if (description.isNotEmpty) ...[
@@ -3966,7 +4002,7 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                       Text(
                         description,
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.grey[600]),
+                        style: TextStyle(color: AppColors.textMedium),
                       ),
                     ],
                   ],
@@ -3996,7 +4032,7 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+Widget _buildSectionHeader(String title) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 8),
       child: Text(
@@ -4004,10 +4040,10 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
         style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.bold,
-          color: primaryPink,
+          color: AppColors.primaryLavender,
         ),
-      ),
-    );
+      ), // This closing parenthesis belongs to the Text widget
+    ); // This closing parenthesis belongs to the Padding widget
   }
 
   Widget _buildMembersList(List<dynamic> members, List<dynamic> admins) {
@@ -4019,15 +4055,15 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: primaryPink.withOpacity(0.1),
+                color: AppColors.primaryLavender.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: Icon(Icons.person_add, color: primaryPink),
+              child: Icon(Icons.person_add, color: AppColors.primaryLavender),
             ),
-            title: Text('Add Participants'),
+            title: Text('Add Participants', style: TextStyle(color: AppColors.textHigh)),
             onTap: _addParticipants,
           ),
-          Divider(),
+          Divider(color: AppColors.elevation),
         ],
         
         ...members.map((memberId) => FutureBuilder<Map<String, dynamic>>(
@@ -4035,8 +4071,8 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
           builder: (context, snapshot) {
             if (!snapshot.hasData) {
               return ListTile(
-                leading: CircleAvatar(radius: 20),
-                title: Text('Loading...'),
+                leading: CircleAvatar(radius: 20, backgroundColor: AppColors.elevation),
+                title: Text('Loading...', style: TextStyle(color: AppColors.textHigh)),
               );
             }
             
@@ -4049,27 +4085,28 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
             return ListTile(
               leading: CircleAvatar(
                 radius: 20,
+                backgroundColor: AppColors.elevation,
                 backgroundImage: userImage.isNotEmpty
                     ? CachedNetworkImageProvider(userImage)
                     : AssetImage('assets/default_avatar.png') as ImageProvider,
               ),
               title: Row(
                 children: [
-                  Text(userName),
-                  if (isMe) Text(' (You)', style: TextStyle(color: Colors.grey)),
+                  Text(userName, style: TextStyle(color: AppColors.textHigh)),
+                  if (isMe) Text(' (You)', style: TextStyle(color: AppColors.textDisabled)),
                 ],
               ),
-              subtitle: isAdmin ? Text('Admin', style: TextStyle(color: primaryPink)) : null,
+              subtitle: isAdmin ? Text('Admin', style: TextStyle(color: AppColors.primaryLavender)) : null,
               trailing: _isAdmin && !isMe ? PopupMenuButton<String>(
                 onSelected: (value) => _handleMemberAction(value, memberId, isAdmin),
                 itemBuilder: (context) => [
                   PopupMenuItem(
                     value: isAdmin ? 'demote' : 'promote',
-                    child: Text(isAdmin ? 'Demote from Admin' : 'Promote to Admin'),
+                    child: Text(isAdmin ? 'Demote from Admin' : 'Promote to Admin', style: TextStyle(color: AppColors.textHigh)),
                   ),
                   PopupMenuItem(
                     value: 'remove',
-                    child: Text('Remove from Group', style: TextStyle(color: Colors.red)),
+                    child: Text('Remove from Group', style: TextStyle(color: AppColors.error)),
                   ),
                 ],
               ) : null,
@@ -4086,7 +4123,7 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
           .collection('messages').snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return CircularProgressIndicator(color: primaryPink);
+          return CircularProgressIndicator(color: AppColors.primaryLavender);
         }
         
         final messages = snapshot.data!.docs;
@@ -4114,17 +4151,17 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
               return CachedNetworkImage(
                 imageUrl: data['imageUrl'],
                 fit: BoxFit.cover,
-                placeholder: (context, url) => Container(color: Colors.grey[300]),
+                placeholder: (context, url) => Container(color: AppColors.elevation),
               );
             } else if (data['type'] == 'file') {
               return Container(
-                color: lightPink,
-                child: Icon(Icons.insert_drive_file, color: primaryPink),
+                color: AppColors.elevation,
+                child: Icon(Icons.insert_drive_file, color: AppColors.primaryLavender),
               );
             } else {
               return Container(
-                color: lightPink,
-                child: Icon(Icons.link, color: primaryPink),
+                color: AppColors.elevation,
+                child: Icon(Icons.link, color: AppColors.primaryLavender),
               );
             }
           },
@@ -4139,25 +4176,29 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
       children: [
         _buildSectionHeader('Admin Controls'),
         Card(
+          color: AppColors.surface,
           child: Column(
             children: [
               SwitchListTile(
-                title: Text('Read-only Mode'),
-                subtitle: Text('Only admins can send messages'),
+                title: Text('Read-only Mode', style: TextStyle(color: AppColors.textHigh)),
+                subtitle: Text('Only admins can send messages', style: TextStyle(color: AppColors.textMedium)),
                 value: false, // You'll need to store this in your group data
                 onChanged: (value) => _toggleReadOnlyMode(value),
+                activeColor: AppColors.primaryLavender,
               ),
               SwitchListTile(
-                title: Text('Profanity Filter'),
-                subtitle: Text('Automatically filter inappropriate content'),
+                title: Text('Profanity Filter', style: TextStyle(color: AppColors.textHigh)),
+                subtitle: Text('Automatically filter inappropriate content', style: TextStyle(color: AppColors.textMedium)),
                 value: true, // You'll need to store this in your group data
                 onChanged: (value) => _toggleProfanityFilter(value),
+                activeColor: AppColors.primaryLavender,
               ),
               SwitchListTile(
-                title: Text('Link Restrictions'),
-                subtitle: Text('Prevent sharing of external links'),
+                title: Text('Link Restrictions', style: TextStyle(color: AppColors.textHigh)),
+                subtitle: Text('Prevent sharing of external links', style: TextStyle(color: AppColors.textMedium)),
                 value: false, // You'll need to store this in your group data
                 onChanged: (value) => _toggleLinkRestrictions(value),
+                activeColor: AppColors.primaryLavender,
               ),
             ],
           ),
@@ -4175,12 +4216,13 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Add Participants'),
-        content: Text('Feature coming soon!'),
+        title: Text('Add Participants', style: TextStyle(color: AppColors.textHigh)),
+        content: Text('Feature coming soon!', style: TextStyle(color: AppColors.textMedium)),
+        backgroundColor: AppColors.surface,
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('OK'),
+            child: Text('OK', style: TextStyle(color: AppColors.primaryLavender)),
           ),
         ],
       ),
@@ -4293,7 +4335,7 @@ class _SearchDialogState extends State<SearchDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: bgWhite,
+      backgroundColor: AppColors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
         width: double.infinity,
@@ -4303,32 +4345,34 @@ class _SearchDialogState extends State<SearchDialog> {
           children: [
             Row(
               children: [
-                Icon(Icons.search, color: primaryPink),
+                Icon(Icons.search, color: AppColors.primaryLavender),
                 SizedBox(width: 12),
                 Expanded(
                   child: TextField(
                     controller: _searchController,
+                    style: TextStyle(color: AppColors.textHigh),
                     decoration: InputDecoration(
                       hintText: 'Search in chat...',
+                      hintStyle: TextStyle(color: AppColors.textDisabled),
                       border: InputBorder.none,
                     ),
                     onChanged: _performSearch,
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.close),
+                  icon: Icon(Icons.close, color: AppColors.textHigh),
                   onPressed: () => Navigator.pop(context),
                 ),
               ],
             ),
-            Divider(),
+            Divider(color: AppColors.elevation),
             SizedBox(height: 16),
             if (_isSearching)
-              Center(child: CircularProgressIndicator(color: primaryPink))
+              Center(child: CircularProgressIndicator(color: AppColors.primaryLavender))
             else if (_searchResults.isEmpty && _searchController.text.isNotEmpty)
-              Center(child: Text('No messages found'))
+              Center(child: Text('No messages found', style: TextStyle(color: AppColors.textMedium)))
             else if (_searchResults.isEmpty)
-              Center(child: Text('Enter search terms above'))
+              Center(child: Text('Enter search terms above', style: TextStyle(color: AppColors.textMedium)))
             else
               Expanded(
                 child: ListView.builder(
@@ -4340,8 +4384,8 @@ class _SearchDialogState extends State<SearchDialog> {
                     final Timestamp timestamp = data['timestamp'];
                     
                     return ListTile(
-                      title: Text(text),
-                      subtitle: Text(DateFormat.yMMMd().add_Hm().format(timestamp.toDate())),
+                      title: Text(text, style: TextStyle(color: AppColors.textHigh)),
+                      subtitle: Text(DateFormat.yMMMd().add_Hm().format(timestamp.toDate()), style: TextStyle(color: AppColors.textDisabled)),
                       onTap: () {
                         Navigator.pop(context);
                       },
@@ -4582,8 +4626,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         uiSettings: [
           AndroidUiSettings(
             toolbarTitle: 'Edit Image',
-            toolbarColor: primaryPink,
-            toolbarWidgetColor: Colors.white,
+            toolbarColor: AppColors.primaryLavender,
+            toolbarWidgetColor: AppColors.textOnSecondary,
             initAspectRatio: CropAspectRatioPreset.original,
             lockAspectRatio: false,
             aspectRatioPresets: [
@@ -4755,7 +4799,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         return Container(
           height: MediaQuery.of(context).size.height * 0.8,
           decoration: BoxDecoration(
-            color: bgWhite,
+            color: AppColors.backgroundDeep,
             borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
           ),
           child: Column(
@@ -4764,24 +4808,24 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               Container(
                 padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: cardWhite,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.more_vert, color: primaryPink, size: 24),
+                    Icon(Icons.more_vert, color: AppColors.primaryLavender, size: 24),
                     SizedBox(width: 12),
                     Text(
                       'Group Options',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: primaryPink,
+                        color: AppColors.primaryLavender,
                       ),
                     ),
                     Spacer(),
                     IconButton(
-                      icon: Icon(Icons.close, color: primaryPink),
+                      icon: Icon(Icons.close, color: AppColors.primaryLavender),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
@@ -4822,13 +4866,13 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                           _buildMenuOption(
                             title: 'Report Group',
                             icon: Icons.report,
-                            color: Colors.orange,
+                            color: AppColors.accentMustard,
                             onTap: _reportGroup,
                           ),
                         _buildMenuOption(
                           title: 'Exit Group',
                           icon: Icons.exit_to_app,
-                          color: Colors.red,
+                          color: AppColors.error,
                           onTap: _leaveGroup,
                         ),
                       ],
@@ -4850,19 +4894,20 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   }) {
     return Card(
       margin: EdgeInsets.symmetric(vertical: 4),
+      color: AppColors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         leading: Container(
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: primaryPink.withOpacity(0.1),
+            color: AppColors.primaryLavender.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, color: primaryPink, size: 20),
+          child: Icon(icon, color: AppColors.primaryLavender, size: 20),
         ),
-        title: Text(title, style: TextStyle(fontWeight: FontWeight.w500)),
-        trailing: Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+        title: Text(title, style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.textHigh)),
+        trailing: Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.textDisabled),
         onTap: onTap,
       ),
     );
@@ -4875,18 +4920,19 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   }) {
     return Card(
       margin: EdgeInsets.symmetric(vertical: 4),
+      color: AppColors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ExpansionTile(
         leading: Container(
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: primaryPink.withOpacity(0.1),
+            color: AppColors.primaryLavender.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, color: primaryPink, size: 20),
+          child: Icon(icon, color: AppColors.primaryLavender, size: 20),
         ),
-        title: Text(title, style: TextStyle(fontWeight: FontWeight.w500)),
+        title: Text(title, style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.textHigh)),
         children: children,
       ),
     );
@@ -4931,12 +4977,13 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Wallpaper'),
-        content: Text('Wallpaper feature coming soon!'),
+        title: Text('Wallpaper', style: TextStyle(color: AppColors.textHigh)),
+        content: Text('Wallpaper feature coming soon!', style: TextStyle(color: AppColors.textMedium)),
+        backgroundColor: AppColors.surface,
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('OK', style: TextStyle(color: primaryPink)),
+            child: Text('OK', style: TextStyle(color: AppColors.primaryLavender)),
           ),
         ],
       ),
@@ -4946,7 +4993,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: bgWhite,
+      backgroundColor: AppColors.backgroundDeep,
       body: Column(
         children: [
           // Group info header - REPLACED with three-dot menu
@@ -4961,11 +5008,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               final int memberCount = groupData?['memberCount'] ?? 0;
               return Container(
                 padding: EdgeInsets.all(16),
-                color: cardWhite,
+                color: AppColors.surface,
                 child: Row(
                   children: [
                     CircleAvatar(
                       radius: 20,
+                      backgroundColor: AppColors.elevation,
                       backgroundImage: groupImage.isNotEmpty
                           ? CachedNetworkImageProvider(groupImage)
                           : AssetImage('assets/femnlogo.png',)
@@ -4981,12 +5029,13 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
+                              color: AppColors.textHigh,
                             ),
                           ),
                           Text(
                             '$memberCount members',
                             style: TextStyle(
-                              color: Colors.grey,
+                              color: AppColors.textMedium,
                               fontSize: 14,
                             ),
                           ),
@@ -4996,7 +5045,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     // REPLACED: Info button with three-dot menu
                     // NEW: Enhanced three-dot menu
                     IconButton(
-                      icon: Icon(Icons.more_vert, color: primaryPink),
+                      icon: Icon(Icons.more_vert, color: AppColors.primaryLavender),
                       onPressed: _showThreeDotMenu,
                     ),
                   ],
@@ -5008,14 +5057,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           if (_typingStatus.isNotEmpty)
             Container(
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              color: Colors.grey[100],
+              color: AppColors.elevation,
               child: Row(
                 children: [
                   // Inside the Typing indicators Container
                   Text(
                     '${_typingStatus.keys.length} ${_typingStatus.keys.length == 1 ? 'person is' : 'people are'} typing...',
                     style: TextStyle(
-                      color: darkPink,
+                      color: AppColors.primaryLavender,
                       fontStyle: FontStyle.italic,
                     ),
                   ),
@@ -5032,7 +5081,7 @@ Expanded(
     builder: (context, snapshot) {
       if (!snapshot.hasData) {
         return Center(
-          child: CircularProgressIndicator(color: primaryPink),
+          child: CircularProgressIndicator(color: AppColors.primaryLavender),
         );
       }
       final messages = snapshot.data!.docs;
@@ -5097,11 +5146,11 @@ Expanded(
                                     padding: const EdgeInsets.all(1.5), // thin outline
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-                                      border: Border.all(color: Color(0xFFFFB7C5), width: 1.5),
+                                      border: Border.all(color: AppColors.primaryLavender, width: 1.5),
                                     ),
                                     child: CircleAvatar(
                                       radius: 16,
-                                      backgroundColor: Colors.grey[300],
+                                      backgroundColor: AppColors.elevation,
                                       backgroundImage: profileImageUrl.isNotEmpty
                                           ? CachedNetworkImageProvider(profileImageUrl)
                                           : const AssetImage('assets/default_avatar.png') as ImageProvider,
@@ -5119,12 +5168,12 @@ Expanded(
                                         padding: const EdgeInsets.all(1.5),
                                         decoration: BoxDecoration(
                                           shape: BoxShape.circle,
-                                          border: Border.all(color: Color(0xFFFFB7C5), width: 1.5),
+                                          border: Border.all(color: AppColors.primaryLavender, width: 1.5),
                                         ),
                                         child: CircleAvatar(
                                           radius: 16,
-                                          backgroundColor: Colors.grey[300],
-                                          child: const Icon(Icons.person, size: 16),
+                                          backgroundColor: AppColors.elevation,
+                                          child: const Icon(Icons.person, size: 16, color: AppColors.textDisabled),
                                         ),
                                       );
                                     }
@@ -5134,16 +5183,16 @@ Expanded(
                                       padding: const EdgeInsets.all(1.5),
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
-                                        border: Border.all(color: Color(0xFFFFB7C5), width: 1.5),
+                                        border: Border.all(color: AppColors.primaryLavender, width: 1.5),
                                       ),
                                       child: CircleAvatar(
                                         radius: 16,
-                                        backgroundColor: Colors.grey[300],
+                                        backgroundColor: AppColors.elevation,
                                         backgroundImage: profileImageUrl.isNotEmpty
                                             ? CachedNetworkImageProvider(profileImageUrl)
                                             : null,
                                         child: profileImageUrl.isEmpty
-                                            ? const Icon(Icons.person, size: 16)
+                                            ? const Icon(Icons.person, size: 16, color: AppColors.textDisabled)
                                             : null,
                                       ),
                                     );
@@ -5158,7 +5207,7 @@ Expanded(
             Flexible(
               child: Container(
                 decoration: BoxDecoration(
-                  color: isMe ? outgoingBubble : incomingBubble,
+                  color: isMe ? AppColors.primaryLavender : AppColors.surface,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: const [
                     BoxShadow(
@@ -5185,7 +5234,7 @@ Expanded(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                             fontStyle: FontStyle.italic,
-                            color: Colors.grey[700],
+                            color: AppColors.textHigh,
                           ),
                         ),
                       ),
@@ -5202,7 +5251,7 @@ Expanded(
                           if (type == 'text' && text.isNotEmpty)
                             Text(
                               text,
-                              style: const TextStyle(color: Colors.black87),
+                              style: TextStyle(color: isMe ? AppColors.textOnSecondary : AppColors.textHigh),
                             ),
 
                           if (type == 'image' && imageUrl != null)
@@ -5215,7 +5264,7 @@ Expanded(
                                 DateFormat.Hm().format(messageTime),
                                 style: TextStyle(
                                   fontSize: 10,
-                                  color: isMe ? Colors.black54 : Colors.grey,
+                                  color: isMe ? AppColors.textOnSecondary : AppColors.textDisabled,
                                 ),
                               ),
                             ),
@@ -5243,9 +5292,9 @@ Expanded(
               child: FloatingActionButton(
                 onPressed: _scrollToBottom,
                 mini: true,
-                backgroundColor: primaryPink,
+                backgroundColor: AppColors.primaryLavender,
                 child: Icon(Icons.arrow_downward,
-                    color: Colors.white, size: 20),
+                    color: AppColors.textOnSecondary, size: 20),
               ),
             ),
         ],
@@ -5258,7 +5307,7 @@ Expanded(
               !_isReadOnly) // Only show input area if member and not read-only
             Container(
               padding: EdgeInsets.all(8),
-              color: cardWhite,
+              color: AppColors.surface,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -5266,7 +5315,7 @@ Expanded(
                   if (_replyingToMessage != null)
                     Container(
                       padding: EdgeInsets.all(8),
-                      color: Colors.grey[100],
+                      color: AppColors.elevation,
                       child: Row(
                         children: [
                           Expanded(
@@ -5278,6 +5327,7 @@ Expanded(
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 12,
+                                    color: AppColors.textHigh,
                                   ),
                                 ),
                                 SizedBox(height: 4),
@@ -5286,7 +5336,7 @@ Expanded(
                                       (_replyingToMessage!['type'] == 'image'
                                           ? '📷 Image'
                                           : ''),
-                                  style: TextStyle(fontSize: 12),
+                                  style: TextStyle(fontSize: 12, color: AppColors.textMedium),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -5294,7 +5344,7 @@ Expanded(
                               ),
                           ),
                           IconButton(
-                            icon: Icon(Icons.close, size: 18),
+                            icon: Icon(Icons.close, size: 18, color: AppColors.textHigh),
                             onPressed: _cancelReply,
                           ),
                         ],
@@ -5304,7 +5354,7 @@ Expanded(
                   Row(
                     children: [
                       IconButton(
-                        icon: Icon(Icons.image, color: primaryPink),
+                        icon: Icon(Icons.image, color: AppColors.primaryLavender),
                         onPressed: _pickImage,
                       ),
                       Expanded(
@@ -5314,14 +5364,16 @@ Expanded(
                             controller: _messageController,
                             focusNode: _messageFocusNode,
                             onChanged: (value) => _startTyping(),
+                            style: TextStyle(color: AppColors.textHigh),
                             decoration: InputDecoration(
                               hintText: 'Type a message...',
+                              hintStyle: TextStyle(color: AppColors.textDisabled),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(20),
                                 borderSide: BorderSide.none,
                               ),
                               filled: true,
-                              fillColor: Colors.grey[100],
+                              fillColor: AppColors.elevation,
                               contentPadding: EdgeInsets.symmetric(
                                   horizontal: 16, vertical: 8),
                             ),
@@ -5336,7 +5388,7 @@ Expanded(
                           _messageController.text.isNotEmpty
                               ? Icons.send
                               : Icons.add,
-                          color: primaryPink,
+                          color: AppColors.primaryLavender,
                         ),
                         onPressed: () {
                           if (_messageController.text.isNotEmpty) {
@@ -5365,20 +5417,21 @@ Expanded(
       builder: (context) {
         return Container(
           padding: EdgeInsets.all(16),
+          color: AppColors.surface,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: Icon(Icons.image, color: primaryPink),
-                title: Text('Send Image'),
+                leading: Icon(Icons.image, color: AppColors.primaryLavender),
+                title: Text('Send Image', style: TextStyle(color: AppColors.textHigh)),
                 onTap: () {
                   Navigator.pop(context);
                   _pickImage();
                 },
               ),
               ListTile(
-                leading: Icon(Icons.insert_drive_file, color: primaryPink),
-                title: Text('Send File'),
+                leading: Icon(Icons.insert_drive_file, color: AppColors.primaryLavender),
+                title: Text('Send File', style: TextStyle(color: AppColors.textHigh)),
                 onTap: () {
                   Navigator.pop(context);
                   _pickFile();
@@ -5412,12 +5465,12 @@ Expanded(
           margin: EdgeInsets.only(bottom: 4),
           decoration: BoxDecoration(
             color: (isMe
-                ? primaryPink.withOpacity(0.2)
-                : Colors.grey.withOpacity(0.2)),
+                ? AppColors.primaryLavender.withOpacity(0.2)
+                : AppColors.elevation),
             borderRadius: BorderRadius.circular(8),
             border: Border(
               left: BorderSide(
-                color: isMe ? primaryPink : Colors.grey,
+                color: isMe ? AppColors.primaryLavender : AppColors.textDisabled,
                 width: 3,
               ),
             ),
@@ -5430,13 +5483,13 @@ Expanded(
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
-                  color: isMe ? primaryPink : Colors.grey[700],
+                  color: isMe ? AppColors.primaryLavender : AppColors.textMedium,
                 ),
               ),
               SizedBox(height: 2),
               Text(
                 replyData['text'] ?? 'Media',
-                style: TextStyle(fontSize: 12),
+                style: TextStyle(fontSize: 12, color: isMe ? AppColors.textOnSecondary : AppColors.textHigh),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -5470,15 +5523,15 @@ Expanded(
               placeholder: (context, url) => Container(
                 width: 200,
                 height: 200,
-                color: Colors.grey[300],
+                color: AppColors.elevation,
                 child: Center(
-                    child: CircularProgressIndicator(color: primaryPink)),
+                    child: CircularProgressIndicator(color: AppColors.primaryLavender)),
               ),
               errorWidget: (context, url, error) => Container(
                 width: 200,
                 height: 200,
-                color: Colors.grey[300],
-                child: Icon(Icons.error),
+                color: AppColors.elevation,
+                child: Icon(Icons.error, color: AppColors.error),
               ),
             ),
           ),
@@ -5488,7 +5541,7 @@ Expanded(
             padding: EdgeInsets.only(top: 8),
             child: Text(
               caption,
-              style: TextStyle(color: Colors.black87),
+              style: TextStyle(color: AppColors.textHigh),
             ),
           ),
       ],
@@ -5502,20 +5555,21 @@ Expanded(
       builder: (context) {
         return Container(
           padding: EdgeInsets.all(16),
+          color: AppColors.surface,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: Icon(Icons.reply, color: primaryPink),
-                title: Text('Reply'),
+                leading: Icon(Icons.reply, color: AppColors.primaryLavender),
+                title: Text('Reply', style: TextStyle(color: AppColors.textHigh)),
                 onTap: () {
                   Navigator.pop(context);
                   _replyToMessage(messageData);
                 },
               ),
               ListTile(
-                leading: Icon(Icons.content_copy, color: primaryPink),
-                title: Text('Copy'),
+                leading: Icon(Icons.content_copy, color: AppColors.primaryLavender),
+                title: Text('Copy', style: TextStyle(color: AppColors.textHigh)),
                 onTap: () {
                   Navigator.pop(context);
                   if (messageData['text'] != null) {
@@ -5528,8 +5582,8 @@ Expanded(
               ),
               if (messageData['imageUrl'] != null)
                 ListTile(
-                  leading: Icon(Icons.download, color: primaryPink),
-                  title: Text('Save to gallery'),
+                  leading: Icon(Icons.download, color: AppColors.primaryLavender),
+                  title: Text('Save to gallery', style: TextStyle(color: AppColors.textHigh)),
                   onTap: () {
                     Navigator.pop(context);
                     // Implement save to gallery functionality
@@ -5551,12 +5605,13 @@ Expanded(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Group Info'),
+          title: Text('Group Info', style: TextStyle(color: AppColors.textHigh)),
+          backgroundColor: AppColors.surface,
           content: StreamBuilder<DocumentSnapshot>(
             stream: _groupDocRef.snapshots(),
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
-                return Center(child: CircularProgressIndicator());
+                return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
               }
 
               final groupData = snapshot.data!.data() as Map<String, dynamic>;
@@ -5570,15 +5625,15 @@ Expanded(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Name: $name', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text('Name: $name', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textHigh)),
                   SizedBox(height: 8),
-                  if (description.isNotEmpty) Text('Description: $description'),
+                  if (description.isNotEmpty) Text('Description: $description', style: TextStyle(color: AppColors.textMedium)),
                   SizedBox(height: 8),
-                  Text('Category: $category'),
+                  Text('Category: $category', style: TextStyle(color: AppColors.textMedium)),
                   SizedBox(height: 8),
-                  Text('Created: ${DateFormat.yMMMd().format(createdAt.toDate())}'),
+                  Text('Created: ${DateFormat.yMMMd().format(createdAt.toDate())}', style: TextStyle(color: AppColors.textMedium)),
                   SizedBox(height: 8),
-                  Text('Members: $memberCount'),
+                  Text('Members: $memberCount', style: TextStyle(color: AppColors.textMedium)),
                 ],
               );
             },
@@ -5586,7 +5641,7 @@ Expanded(
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Close'),
+              child: Text('Close', style: TextStyle(color: AppColors.primaryLavender)),
             ),
           ],
         );
@@ -5613,18 +5668,23 @@ Expanded(
       builder: (context) {
         final TextEditingController searchController = TextEditingController();
         return AlertDialog(
-          title: Text('Search in Chat'),
+          title: Text('Search in Chat', style: TextStyle(color: AppColors.textHigh)),
           content: TextField(
             controller: searchController,
+            style: TextStyle(color: AppColors.textHigh),
             decoration: InputDecoration(
               hintText: 'Enter search term...',
+              hintStyle: TextStyle(color: AppColors.textDisabled),
               border: OutlineInputBorder(),
+              filled: true,
+              fillColor: AppColors.elevation,
             ),
           ),
+          backgroundColor: AppColors.surface,
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Cancel'),
+              child: Text('Cancel', style: TextStyle(color: AppColors.textDisabled)),
             ),
             TextButton(
               onPressed: () {
@@ -5632,7 +5692,7 @@ Expanded(
                 _searchInChat(searchController.text);
                 Navigator.pop(context);
               },
-              child: Text('Search'),
+              child: Text('Search', style: TextStyle(color: AppColors.primaryLavender)),
             ),
           ],
         );
@@ -5655,12 +5715,13 @@ Expanded(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Leave Group'),
-          content: Text('Are you sure you want to leave this group?'),
+          title: Text('Leave Group', style: TextStyle(color: AppColors.textHigh)),
+          content: Text('Are you sure you want to leave this group?', style: TextStyle(color: AppColors.textMedium)),
+          backgroundColor: AppColors.surface,
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Cancel'),
+              child: Text('Cancel', style: TextStyle(color: AppColors.textDisabled)),
             ),
             TextButton(
               onPressed: () async {
@@ -5694,7 +5755,7 @@ Expanded(
                   );
                 }
               },
-              child: Text('Leave', style: TextStyle(color: Colors.red)),
+              child: Text('Leave', style: TextStyle(color: AppColors.error)),
             ),
           ],
         );
@@ -5709,25 +5770,29 @@ Expanded(
       builder: (context) {
         final TextEditingController reportController = TextEditingController();
         return AlertDialog(
-          title: Text('Report Group'),
+          title: Text('Report Group', style: TextStyle(color: AppColors.textHigh)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Please describe the issue:'),
+              Text('Please describe the issue:', style: TextStyle(color: AppColors.textMedium)),
               SizedBox(height: 8),
               TextField(
                 controller: reportController,
+                style: TextStyle(color: AppColors.textHigh),
                 decoration: InputDecoration(
                   border: OutlineInputBorder(),
+                  filled: true,
+                  fillColor: AppColors.elevation,
                 ),
                 maxLines: 3,
               ),
             ],
           ),
+          backgroundColor: AppColors.surface,
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Cancel'),
+              child: Text('Cancel', style: TextStyle(color: AppColors.textDisabled)),
             ),
             TextButton(
               onPressed: () {
@@ -5735,7 +5800,7 @@ Expanded(
                 _submitReport(reportController.text);
                 Navigator.pop(context);
               },
-              child: Text('Submit Report'),
+              child: Text('Submit Report', style: TextStyle(color: AppColors.primaryLavender)),
             ),
           ],
         );
@@ -5762,8 +5827,10 @@ class GroupMediaScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.backgroundDeep,
       appBar: AppBar(
-        title: Text('Group Media'),
+        title: Text('Group Media', style: TextStyle(color: AppColors.textHigh)),
+        backgroundColor: AppColors.backgroundDeep,
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
@@ -5774,7 +5841,7 @@ class GroupMediaScreen extends StatelessWidget {
             .snapshots(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
-            return Center(child: CircularProgressIndicator());
+            return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
           }
 
           final mediaMessages = snapshot.data!.docs;
@@ -5804,10 +5871,10 @@ class GroupMediaScreen extends StatelessWidget {
                   imageUrl: mediaUrl,
                   fit: BoxFit.cover,
                   placeholder: (context, url) => Container(
-                    color: Colors.grey[300],
-                    child: Center(child: CircularProgressIndicator()),
+                    color: AppColors.elevation,
+                    child: Center(child: CircularProgressIndicator(color: AppColors.primaryLavender)),
                   ),
-                  errorWidget: (context, url, error) => Icon(Icons.error),
+                  errorWidget: (context, url, error) => Icon(Icons.error, color: AppColors.error),
                 ),
               );
             },
@@ -5841,12 +5908,12 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Edit Image'),
-        backgroundColor: primaryPink,
-        foregroundColor: Colors.white,
+        title: Text('Edit Image', style: TextStyle(color: AppColors.textHigh)),
+        backgroundColor: AppColors.backgroundDeep,
+        foregroundColor: AppColors.textHigh,
         actions: [
           IconButton(
-            icon: Icon(Icons.check),
+            icon: Icon(Icons.check, color: AppColors.primaryLavender),
             onPressed: () {
               Navigator.pop(context, {
                 'image': _editedImage!,
@@ -5856,6 +5923,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
           ),
         ],
       ),
+      backgroundColor: AppColors.backgroundDeep,
       body: Column(
         children: [
           Expanded(
@@ -5867,9 +5935,13 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
             padding: EdgeInsets.all(16),
             child: TextField(
               controller: _captionController,
+              style: TextStyle(color: AppColors.textHigh),
               decoration: InputDecoration(
                 hintText: 'Add a caption...',
+                hintStyle: TextStyle(color: AppColors.textDisabled),
                 border: OutlineInputBorder(),
+                filled: true,
+                fillColor: AppColors.elevation,
               ),
             ),
           ),
@@ -5912,7 +5984,7 @@ class ImageViewerScreen extends StatelessWidget {
     @override
     void paint(Canvas canvas, Size size) {
       final paint = Paint()
-        ..color = Colors.white
+        ..color = AppColors.textOnSecondary
         ..style = PaintingStyle.fill;
 
       final rng = Random(duration);
@@ -5939,20 +6011,26 @@ void main() {
   runApp(MaterialApp(
     title: 'Women Support Groups',
     theme: ThemeData(
-      primaryColor: primaryPink,
-      colorScheme: ColorScheme.light(
-        primary: primaryPink,
-        secondary: lightPink,
+      primaryColor: AppColors.primaryLavender,
+      colorScheme: ColorScheme.dark(
+        primary: AppColors.primaryLavender,
+        secondary: AppColors.secondaryTeal,
+        background: AppColors.backgroundDeep,
+        surface: AppColors.surface,
+        onPrimary: AppColors.textOnSecondary,
+        onSecondary: AppColors.textOnSecondary,
+        onBackground: AppColors.textHigh,
+        onSurface: AppColors.textHigh,
       ),
-      scaffoldBackgroundColor: bgWhite,
+      scaffoldBackgroundColor: AppColors.backgroundDeep,
       appBarTheme: AppBarTheme(
-        backgroundColor: cardWhite,
-        foregroundColor: Colors.black,
+        backgroundColor: AppColors.backgroundDeep,
+        foregroundColor: AppColors.textHigh,
         elevation: 0,
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: primaryPink,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.primaryLavender,
+        foregroundColor: AppColors.textOnSecondary,
       ),
     ),
     home: GroupsScreen(),

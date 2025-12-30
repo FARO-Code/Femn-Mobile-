@@ -3,6 +3,7 @@ import 'post.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:femn/profile.dart';
+import 'package:femn/colors.dart'; // <--- IMPORT COLORS
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -101,7 +102,7 @@ class _SearchScreenState extends State<SearchScreen> {
           .limit(10)
           .get();
           
-      // Simple suggestion algorithm - in production, use more sophisticated logic
+      // Simple suggestion algorithm
       final suggested = usersSnapshot.docs
           .map((doc) => doc.data())
           .where((user) => _userInterests.any((interest) => 
@@ -119,10 +120,9 @@ class _SearchScreenState extends State<SearchScreen> {
 
   // Load recent searches from local storage or Firestore
   Future<void> _loadRecentSearches() async {
-    // In production, implement proper local storage
-    // This is a simplified version
+    // Simplified version
     setState(() {
-      _recentSearches = []; // Load from actual storage
+      _recentSearches = []; 
     });
   }
 
@@ -265,7 +265,6 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   List<String> _extractKeywords(String text) {
-    // Simple keyword extraction - improve with NLP in production
     return text.split(' ')
         .where((word) => word.length > 2)
         .map((word) => word.trim())
@@ -426,23 +425,14 @@ class _SearchScreenState extends State<SearchScreen> {
     final fullName = user['fullName']?.toString().toLowerCase() ?? '';
     final queryLower = query.toLowerCase();
 
-    // Exact username match gets highest score
     if (username == queryLower) score += 100;
-    // Username starts with query
     else if (username.startsWith(queryLower)) score += 50;
-    // Username contains query
     else if (username.contains(queryLower)) score += 25;
 
-    // Full name matches
     if (fullName.contains(queryLower)) score += 20;
-
-    // Boost verified users
     if (user['isVerified'] == true) score += 30;
-
-    // Boost users you follow
     if (_followingIds.contains(user['uid'])) score += 40;
 
-    // Boost users with mutual connections
     final mutualCount = _calculateMutualConnections(user);
     score += mutualCount * 5;
 
@@ -454,29 +444,23 @@ class _SearchScreenState extends State<SearchScreen> {
     final caption = post['caption']?.toString().toLowerCase() ?? '';
     final queryLower = query.toLowerCase();
 
-    // Exact phrase match
     if (caption == queryLower) score += 60;
-    // Caption starts with query
     else if (caption.startsWith(queryLower)) score += 40;
-    // Caption contains query
     else if (caption.contains(queryLower)) score += 20;
 
-    // Hashtag matches
     final hashtags = List<String>.from(post['hashtags'] ?? []);
     if (hashtags.any((tag) => tag.toLowerCase().contains(queryLower.replaceFirst('#', '')))) {
       score += 30;
     }
 
-    // Boost popular posts
     final likes = List<String>.from(post['likes'] ?? []).length;
     final comments = post['comments'] ?? 0;
     score += (likes * 0.1) + (comments * 0.2);
 
-    // Boost recent posts
     final timestamp = post['timestamp']?.toDate() ?? DateTime.now();
     final ageInHours = DateTime.now().difference(timestamp).inHours;
-    if (ageInHours < 24) score += 20; // Recent posts get boost
-    if (ageInHours < 1) score += 30; // Very recent posts get more boost
+    if (ageInHours < 24) score += 20;
+    if (ageInHours < 1) score += 30;
 
     return score;
   }
@@ -509,7 +493,7 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.backgroundDeep, // Deep background
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -536,11 +520,11 @@ class _SearchScreenState extends State<SearchScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFE1E0), // FEMN soft pink background
+          color: AppColors.elevation, // Dark container
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withOpacity(0.2),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -548,7 +532,7 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
         child: Row(
           children: [
-            const Icon(Feather.search, color: Color(0xFFE35773)), // FEMN pink
+            const Icon(Feather.search, color: AppColors.primaryLavender),
             const SizedBox(width: 8),
             Expanded(
               child: TextField(
@@ -556,11 +540,11 @@ class _SearchScreenState extends State<SearchScreen> {
                 focusNode: _searchFocusNode,
                 decoration: InputDecoration(
                   hintText: 'Search users, posts, hashtags...',
-                  hintStyle: TextStyle(color: Colors.grey[500]),
+                  hintStyle: TextStyle(color: AppColors.textDisabled),
                   border: InputBorder.none,
                   suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(Feather.x, color: Color(0xFFE35773)),
+                          icon: const Icon(Feather.x, color: AppColors.primaryLavender),
                           onPressed: () {
                             _searchController.clear();
                             _performSearch('');
@@ -575,7 +559,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     _showSuggestions = _searchController.text.isNotEmpty;
                   });
                 },
-                style: const TextStyle(color: Colors.black87),
+                style: const TextStyle(color: AppColors.textHigh), // Off-white text
               ),
             ),
           ],
@@ -608,11 +592,12 @@ class _SearchScreenState extends State<SearchScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
                 decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFFE56982) : const Color(0xFFFFE1E0),
+                  // Teal for active, Elevation for inactive
+                  color: isSelected ? AppColors.secondaryTeal : AppColors.elevation,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(isSelected ? 0.15 : 0.03),
+                      color: Colors.black.withOpacity(isSelected ? 0.3 : 0.1),
                       blurRadius: isSelected ? 6 : 4,
                       offset: const Offset(0, 2),
                     ),
@@ -622,7 +607,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   child: Text(
                     category.name.toUpperCase(),
                     style: TextStyle(
-                      color: isSelected ? Colors.white : const Color(0xFFE35773),
+                      color: isSelected ? Colors.white : AppColors.textMedium,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                       fontSize: 14,
                     ),
@@ -636,10 +621,9 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-
   Widget _buildSearchContent() {
     if (_isSearching) {
-      return Center(child: CircularProgressIndicator());
+      return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
     }
 
     if (_searchController.text.isNotEmpty) {
@@ -674,9 +658,9 @@ class _SearchScreenState extends State<SearchScreen> {
         return ListTile(
           leading: Icon(
             suggestion.startsWith('@') ? Icons.person : Icons.tag,
-            color: Colors.grey[600],
+            color: AppColors.textMedium,
           ),
-          title: Text(suggestion),
+          title: Text(suggestion, style: TextStyle(color: AppColors.textHigh)),
           onTap: () {
             _searchController.text = suggestion;
             _performSearch(suggestion);
@@ -709,7 +693,7 @@ class _SearchScreenState extends State<SearchScreen> {
         
         // Show posts in staggered grid if there are any
         if (posts.isNotEmpty) ...[
-          if (nonPosts.isNotEmpty) SizedBox(height: 16), // Add spacing if there are non-post items
+          if (nonPosts.isNotEmpty) SizedBox(height: 16),
           _buildPostGrid(posts),
         ],
       ],
@@ -718,7 +702,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Widget _buildPostGrid(List<dynamic> posts) {
     return MasonryGridView.count(
-      crossAxisCount: 3, // 3 columns now
+      crossAxisCount: 3, 
       mainAxisSpacing: 10,
       crossAxisSpacing: 10,
       shrinkWrap: true,
@@ -731,9 +715,8 @@ class _SearchScreenState extends State<SearchScreen> {
         final mediaType = post['mediaType'] ?? 'image';
         final caption = post['caption'] ?? '';
         final userId = post['userId'] ?? '';
-        final likes = List<String>.from(post['likes'] ?? []);
+        // final likes = List<String>.from(post['likes'] ?? []);
 
-        // shorter random height factor to avoid stretched look
         final randomHeightFactor = ((postId.hashCode % 2) + 1.4);
         final double imageHeight = 120.0 * randomHeightFactor;
         final double borderRadiusValue = 20.0;
@@ -754,13 +737,13 @@ class _SearchScreenState extends State<SearchScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // --- Media container with shadow ---
+              // --- Media container ---
               Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(borderRadiusValue),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
+                      color: Colors.black.withOpacity(0.3),
                       blurRadius: 8,
                       spreadRadius: 0.5,
                       offset: const Offset(0, 3),
@@ -777,16 +760,14 @@ class _SearchScreenState extends State<SearchScreen> {
                           fit: BoxFit.cover,
                           placeholder: (context, url) => Container(
                             height: imageHeight,
-                            color: const Color(0xFFFFE1E0),
-                            child: const Center(
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
+                            color: AppColors.elevation,
+                            child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryLavender)),
                           ),
                           errorWidget: (context, url, error) => Container(
                             height: imageHeight,
-                            color: const Color(0xFFFFE1E0),
+                            color: AppColors.elevation,
                             child: const Center(
-                              child: Icon(Icons.error, color: Colors.red),
+                              child: Icon(Icons.error, color: AppColors.error),
                             ),
                           ),
                         )
@@ -794,17 +775,11 @@ class _SearchScreenState extends State<SearchScreen> {
                           height: imageHeight,
                           color: Colors.black,
                           child: const Center(
-                            child: Icon(
-                              Icons.play_arrow,
-                              color: Colors.white,
-                              size: 36,
-                            ),
+                            child: Icon(Icons.play_arrow, color: Colors.white, size: 36),
                           ),
                         ),
                 ),
               ),
-
-              // --- Caption (minimal, to match small tiles) ---
               if (caption.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 6.0, left: 4.0, right: 4.0),
@@ -813,7 +788,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
-                      color: Colors.black87,
+                      color: AppColors.textMedium, // Light gray for caption
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -826,227 +801,119 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-
-  Widget _buildPostCard(Map<String, dynamic> post) {
-    final randomHeightFactor = (post['timestamp']?.hashCode ?? 0) % 3 + 2;
-    final double imageHeight = 150.0 * randomHeightFactor;
-    final double borderRadiusValue = 24.0;
-
+  Widget _buildUserResult(Map<String, dynamic> user) {
     return GestureDetector(
       onTap: () {
-        // Navigate to post detail
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => PostDetailScreen(
-              postId: post['postId'] ?? '',
-              userId: post['userId'] ?? '',
-            ),
-          ),
-        );
+        if (user['uid'] == FirebaseAuth.instance.currentUser!.uid) {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileScreen(userId: user['uid'])));
+        } else {
+          // Navigator.push(context, MaterialPageRoute(builder: (context) => OtherUserProfileScreen(userId: user['uid'])));
+        }
       },
       child: Container(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        decoration: BoxDecoration(
+          color: AppColors.surface, // Surface card
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(borderRadiusValue),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Color(0xFFFFE1E0),
-                  border: Border.all(
-                    color: Color(0xFFFFB7C5),
-                    width: 1.0,
-                  ),
-                  borderRadius: BorderRadius.circular(borderRadiusValue),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(borderRadiusValue),
-                  child: post['mediaType'] == 'image'
-                      ? CachedNetworkImage(
-                          imageUrl: post['mediaUrl'] ?? '',
-                          width: double.infinity,
-                          height: imageHeight,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
-                            height: imageHeight,
-                            color: Color(0xFFFFE1E0),
-                            child: const Center(child: CircularProgressIndicator()),
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 6, offset: const Offset(0, 2)),
+                ],
+              ),
+              child: CircleAvatar(
+                radius: 24,
+                backgroundColor: AppColors.elevation,
+                backgroundImage: (user['profileImage']?.isNotEmpty == true)
+                    ? CachedNetworkImageProvider(user['profileImage'])
+                    : const AssetImage('assets/default_avatar.png') as ImageProvider,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          user['username']?.toString() ?? 'Unknown',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: AppColors.primaryLavender, // Lavender username
                           ),
-                          errorWidget: (context, url, error) => Container(
-                            height: imageHeight,
-                            color: Color(0xFFFFE1E0),
-                            child: const Center(
-                              child: Icon(Icons.error, color: Colors.red),
-                            ),
-                          ),
-                        )
-                      : Container(
-                          height: imageHeight,
-                          color: Colors.black,
-                          child: const Center(
-                            child: Icon(Icons.play_arrow, color: Colors.white, size: 50),
-                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
+                      ),
+                      if (user['isVerified'] == true) const SizedBox(width: 4),
+                      if (user['isVerified'] == true)
+                        const Icon(Icons.verified, color: Colors.blue, size: 16),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    user['fullName']?.toString() ?? '',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textMedium,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: () => _followUser(user['uid']),
+              child: Container(
+                height: 32,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: _followingIds.contains(user['uid'])
+                      ? AppColors.elevation // Following = Dark Gray
+                      : AppColors.primaryLavender, // Follow = Lavender
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  _followingIds.contains(user['uid']) ? 'Following' : 'Follow',
+                  style: TextStyle(
+                    color: _followingIds.contains(user['uid']) ? AppColors.textMedium : AppColors.backgroundDeep,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ),
-            if (post['caption'] != null && post['caption'].toString().isNotEmpty)
-              Flexible(
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    post['caption'].toString(),
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ),
           ],
         ),
       ),
     );
   }
 
-Widget _buildUserResult(Map<String, dynamic> user) {
-  final bool isFollowing = _followingIds.contains(user['uid']);
-
-  return GestureDetector(
-    onTap: () {
-      if (user['uid'] == FirebaseAuth.instance.currentUser!.uid) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ProfileScreen(userId: user['uid']),
-          ),
-        );
-      } else {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => OtherUserProfileScreen(userId: user['uid']),
-          ),
-        );
-      }
-    },
-    child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: CircleAvatar(
-              radius: 24,
-              backgroundImage: (user['profileImage']?.isNotEmpty == true)
-                  ? CachedNetworkImageProvider(user['profileImage'])
-                  : const AssetImage('assets/default_avatar.png') as ImageProvider,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        user['username']?.toString() ?? 'Unknown',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: Color(0xFFE35773), // FEMN pink
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (user['isVerified'] == true) const SizedBox(width: 4),
-                    if (user['isVerified'] == true)
-                      const Icon(Icons.verified, color: Colors.blue, size: 16),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  user['fullName']?.toString() ?? '',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFFE35773), // FEMN pink
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          GestureDetector(
-            onTap: () => _followUser(user['uid']),
-            child: Container(
-              height: 32,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: isFollowing
-                    ? const Color(0xFFE35773)
-                    : const Color(0xFFFFE1E0), // soft pink background for unfollow
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                isFollowing ? 'Following' : 'Follow',
-                style: TextStyle(
-                  color: isFollowing ? Colors.white : const Color(0xFFE35773),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-
-
   Widget _buildHashtagResult(Map<String, dynamic> hashtag) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withOpacity(0.2),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -1059,21 +926,10 @@ Widget _buildUserResult(Map<String, dynamic> user) {
           height: 48,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: const Color(0xFFFFE1E0),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            color: AppColors.elevation,
           ),
           child: const Center(
-            child: Icon(
-              Feather.hash,
-              color: Color(0xFFE35773),
-              size: 22,
-            ),
+            child: Icon(Feather.hash, color: AppColors.primaryLavender, size: 22),
           ),
         ),
         title: Text(
@@ -1081,21 +937,14 @@ Widget _buildUserResult(Map<String, dynamic> user) {
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 14,
-            color: Color(0xFFE35773), // pink like usernames
+            color: AppColors.primaryLavender,
           ),
         ),
         subtitle: Text(
           '${hashtag['popularity']} posts',
-          style: TextStyle(
-            fontSize: 12,
-            color: Color(0xFFE35773),
-          ),
+          style: TextStyle(fontSize: 12, color: AppColors.textMedium),
         ),
-        trailing: const Icon(
-          Icons.arrow_forward_ios,
-          size: 16,
-          color: Color(0xFFFFA8B0), // soft light pink
-        ),
+        trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.textDisabled),
         onTap: () {
           _searchController.text = hashtag['tag'].toString();
           _performSearch(hashtag['tag'].toString());
@@ -1104,23 +953,16 @@ Widget _buildUserResult(Map<String, dynamic> user) {
     );
   }
 
-
-
   Widget _buildNoResults() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
+          Icon(Icons.search_off, size: 64, color: AppColors.textDisabled),
           SizedBox(height: 16),
           Text(
             'No results found',
-            style: TextStyle(fontSize: 18, color: Colors.grey[600]),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Try different keywords or check spelling',
-            style: TextStyle(color: Colors.grey[500]),
+            style: TextStyle(fontSize: 18, color: AppColors.textMedium),
           ),
         ],
       ),
@@ -1171,7 +1013,7 @@ Widget _buildUserResult(Map<String, dynamic> user) {
         style: TextStyle(
           fontWeight: FontWeight.bold,
           fontSize: 16,
-          color: Colors.grey[700],
+          color: AppColors.primaryLavender,
         ),
       ),
     );
@@ -1179,10 +1021,10 @@ Widget _buildUserResult(Map<String, dynamic> user) {
 
   Widget _buildRecentSearchItem(Map<String, dynamic> search) {
     return ListTile(
-      leading: Icon(Icons.history, color: Colors.grey[500]),
-      title: Text(search['query']?.toString() ?? ''),
+      leading: Icon(Icons.history, color: AppColors.textMedium),
+      title: Text(search['query']?.toString() ?? '', style: TextStyle(color: AppColors.textHigh)),
       trailing: IconButton(
-        icon: Icon(Icons.close, size: 16),
+        icon: Icon(Icons.close, size: 16, color: AppColors.textDisabled),
         onPressed: () => _removeRecentSearch(search['query']?.toString() ?? ''),
       ),
       onTap: () {
@@ -1199,8 +1041,9 @@ Widget _buildUserResult(Map<String, dynamic> user) {
         _searchController.text = tag;
         _performSearch(tag);
       },
-      backgroundColor: Colors.pink[50],
-      labelStyle: TextStyle(color: Colors.pink[700]),
+      backgroundColor: AppColors.elevation,
+      labelStyle: TextStyle(color: AppColors.primaryLavender),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide.none),
     );
   }
 

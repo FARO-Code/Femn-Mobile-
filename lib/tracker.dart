@@ -3,9 +3,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import 'petitions.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:femn/colors.dart'; // <--- IMPORT COLORS
 
+import 'petitions.dart';
 import 'polls.dart';
 
 class TrackerScreen extends StatefulWidget {
@@ -27,18 +28,18 @@ class _TrackerScreenState extends State<TrackerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFFFE1E0),
+      backgroundColor: AppColors.backgroundDeep, // Deep background
       appBar: AppBar(
         title: Text(
           'My Trackers',
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: Color(0xFFE35773),
+            color: AppColors.textHigh,
           ),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.backgroundDeep,
         elevation: 0,
-        iconTheme: IconThemeData(color: Color(0xFFE35773)),
+        iconTheme: IconThemeData(color: AppColors.primaryLavender),
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -63,7 +64,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
       builder: (context, snapshot) {
         // Handle loading state
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator(color: Color(0xFFE35773)));
+          return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
         }
 
         // Handle errors
@@ -181,7 +182,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
-      color: Colors.white,
+      color: AppColors.surface, // Surface Color
       elevation: 2,
       child: InkWell(
         onTap: () {
@@ -197,7 +198,8 @@ class _TrackerScreenState extends State<TrackerScreen> {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isCreated ? Color(0xFFE35773) : Color(0xFF4CAF50),
+                  // Lavender for Created, Teal for Signed
+                  color: isCreated ? AppColors.primaryLavender : AppColors.secondaryTeal,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -221,13 +223,13 @@ class _TrackerScreenState extends State<TrackerScreen> {
                     width: double.infinity,
                     fit: BoxFit.cover,
                     placeholder: (context, url) => Container(
-                      color: Color(0xFFFFE1E0),
+                      color: AppColors.elevation,
                       height: 80,
                     ),
                     errorWidget: (context, url, error) => Container(
-                      color: Color(0xFFFFE1E0),
+                      color: AppColors.elevation,
                       height: 80,
-                      child: Icon(Icons.error, color: Color(0xFFE35773)),
+                      child: Icon(Icons.error, color: AppColors.error),
                     ),
                   ),
                 ),
@@ -242,7 +244,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
-                  color: Color(0xFFE35773),
+                  color: AppColors.textHigh, // Off-white
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -253,8 +255,8 @@ class _TrackerScreenState extends State<TrackerScreen> {
               // Progress bar
               LinearProgressIndicator(
                 value: progress,
-                backgroundColor: Color(0xFFFFE1E0),
-                color: Color(0xFFE35773),
+                backgroundColor: AppColors.elevation,
+                color: AppColors.secondaryTeal,
                 minHeight: 6,
                 borderRadius: BorderRadius.circular(3),
               ),
@@ -270,14 +272,14 @@ class _TrackerScreenState extends State<TrackerScreen> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFFE35773),
+                      color: AppColors.secondaryTeal,
                     ),
                   ),
                   Text(
                     '${petition.currentSignatures}/${petition.goal}',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey[600],
+                      color: AppColors.textMedium,
                     ),
                   ),
                 ],
@@ -290,7 +292,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
                 _getDaysAgo(petition.createdAt),
                 style: TextStyle(
                   fontSize: 10,
-                  color: Colors.grey[500],
+                  color: AppColors.textDisabled,
                 ),
               ),
             ],
@@ -332,12 +334,11 @@ class _TrackerScreenState extends State<TrackerScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
-      color: Colors.white,
+      color: AppColors.surface, // Surface Color
       elevation: 2,
       child: InkWell(
         onTap: () {
-          // You might want to create a showPollDetails function similar to showPetitionDetails
-          _showPollDetails(context, pollSnapshot);
+          // _showPollDetails(context, pollSnapshot);
         },
         borderRadius: BorderRadius.circular(16),
         child: Padding(
@@ -349,7 +350,8 @@ class _TrackerScreenState extends State<TrackerScreen> {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isCreated ? Color(0xFFE35773) : (hasVoted ? Color(0xFF4CAF50) : Color(0xFF2196F3)),
+                  // Lavender (Created), Teal (Voted), Mustard (Tracking)
+                  color: isCreated ? AppColors.primaryLavender : (hasVoted ? AppColors.secondaryTeal : AppColors.accentMustard),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -368,7 +370,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
                 height: 80,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: Color(0xFFFFE1E0),
+                  color: AppColors.elevation,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: _buildPollImage(options),
@@ -384,7 +386,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
-                  color: Color(0xFFE35773),
+                  color: AppColors.textHigh,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -396,13 +398,13 @@ class _TrackerScreenState extends State<TrackerScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(Icons.poll, size: 16, color: Color(0xFFE35773)),
+                  Icon(Icons.poll, size: 16, color: AppColors.primaryLavender),
                   Text(
                     '$totalVotes votes',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFFE35773),
+                      color: AppColors.primaryLavender,
                     ),
                   ),
                 ],
@@ -415,7 +417,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
                 '${options.length} options',
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey[600],
+                  color: AppColors.textMedium,
                 ),
               ),
               
@@ -427,7 +429,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
                   '$daysLeft days left',
                   style: TextStyle(
                     fontSize: 10,
-                    color: Colors.grey[500],
+                    color: AppColors.textDisabled,
                   ),
                 )
               else if (daysLeft == 0)
@@ -435,7 +437,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
                   'Ended today',
                   style: TextStyle(
                     fontSize: 10,
-                    color: Colors.red[500],
+                    color: AppColors.error,
                   ),
                 )
               else
@@ -443,7 +445,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
                   _getDaysAgo(createdAt),
                   style: TextStyle(
                     fontSize: 10,
-                    color: Colors.grey[500],
+                    color: AppColors.textDisabled,
                   ),
                 ),
             ],
@@ -465,11 +467,11 @@ class _TrackerScreenState extends State<TrackerScreen> {
             width: double.infinity,
             fit: BoxFit.cover,
             placeholder: (context, url) => Container(
-              color: Color(0xFFFFE1E0),
+              color: AppColors.elevation,
             ),
             errorWidget: (context, url, error) => Container(
-              color: Color(0xFFFFE1E0),
-              child: Icon(Icons.poll, color: Color(0xFFE35773)),
+              color: AppColors.elevation,
+              child: Icon(Icons.poll, color: AppColors.primaryLavender),
             ),
           ),
         );
@@ -478,38 +480,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
     
     // Fallback to poll icon
     return Center(
-      child: Icon(Icons.poll, size: 40, color: Color(0xFFE35773)),
-    );
-  }
-
-  void _showPollDetails(BuildContext context, DocumentSnapshot pollSnapshot) {
-    // You can implement a detailed poll view similar to petition details
-    // For now, we'll just show a simple dialog
-    final pollData = pollSnapshot.data() as Map<String, dynamic>;
-    final String question = pollData['question'] ?? '';
-    final int totalVotes = pollData['totalVotes'] ?? 0;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Poll Details'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(question, style: TextStyle(fontWeight: FontWeight.bold)),
-            SizedBox(height: 8),
-            Text('Total Votes: $totalVotes'),
-            // You can add more detailed poll information here
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Close'),
-          ),
-        ],
-      ),
+      child: Icon(Icons.poll, size: 40, color: AppColors.primaryLavender),
     );
   }
 
@@ -539,7 +510,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
           Icon(
             icon,
             size: 64,
-            color: Color(0xFFE35773).withOpacity(0.5),
+            color: AppColors.textDisabled,
           ),
           SizedBox(height: 16),
           Text(
@@ -547,7 +518,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Color(0xFFE35773),
+              color: AppColors.primaryLavender,
             ),
           ),
           SizedBox(height: 8),
@@ -555,7 +526,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
             subtitle,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: Colors.grey[600],
+              color: AppColors.textMedium,
             ),
           ),
         ],
@@ -571,7 +542,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
           Icon(
             Icons.error_outline,
             size: 64,
-            color: Colors.red.withOpacity(0.5),
+            color: AppColors.error.withOpacity(0.5),
           ),
           SizedBox(height: 16),
           Text(
@@ -579,7 +550,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.red,
+              color: AppColors.error,
             ),
           ),
           SizedBox(height: 8),
@@ -587,7 +558,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
             message,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: Colors.grey[600],
+              color: AppColors.textMedium,
             ),
           ),
           SizedBox(height: 16),
@@ -596,7 +567,8 @@ class _TrackerScreenState extends State<TrackerScreen> {
               setState(() {});
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFFE35773),
+              backgroundColor: AppColors.primaryLavender,
+              foregroundColor: AppColors.backgroundDeep,
             ),
             child: Text('Retry'),
           ),

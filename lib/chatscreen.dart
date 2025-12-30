@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:femn/colors.dart'; // <--- IMPORT YOUR COLORS FILE
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
-
 
 // --- UPDATED CHAT SCREEN WITH READ RECEIPTS ---
 class ChatScreen extends StatefulWidget {
@@ -109,7 +109,6 @@ class _ChatScreenState extends State<ChatScreen> {
       _scrollToBottom();
     } catch (e) {
       debugPrint("Error sending message: $e");
-      // Optionally show snack or handle error UI
     }
   }
 
@@ -131,15 +130,24 @@ class _ChatScreenState extends State<ChatScreen> {
         padding: const EdgeInsets.all(12),
         constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
         decoration: BoxDecoration(
-          color: isMe ? Theme.of(context).colorScheme.secondary : Colors.grey[300],
-          borderRadius: BorderRadius.circular(16),
+          // Me = Teal (Dark, so white text), Other = Elevation (Dark Gray, so Off-White text)
+          color: isMe ? AppColors.secondaryTeal : AppColors.elevation,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(16),
+            topRight: Radius.circular(16),
+            bottomLeft: isMe ? Radius.circular(16) : Radius.zero,
+            bottomRight: isMe ? Radius.zero : Radius.circular(16),
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
               text,
-              style: TextStyle(color: isMe ? Colors.white : Colors.black),
+              style: TextStyle(
+                // Teal needs white text, Elevation needs textHigh
+                color: isMe ? Colors.white : AppColors.textHigh,
+              ),
             ),
             const SizedBox(height: 6),
             Row(
@@ -149,7 +157,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   timeago.format(timestamp),
                   style: TextStyle(
                     fontSize: 10,
-                    color: isMe ? Colors.white70 : Colors.grey[600],
+                    color: isMe ? Colors.white70 : AppColors.textDisabled,
                   ),
                 ),
                 if (isMe && isLastMessage) const SizedBox(width: 6),
@@ -157,7 +165,8 @@ class _ChatScreenState extends State<ChatScreen> {
                   Icon(
                     isRead ? Icons.done_all : Icons.done,
                     size: 14,
-                    color: isRead ? Colors.blue : Colors.white70,
+                    // Blue for read doesn't fit the palette, let's use Success Green or Lavender
+                    color: isRead ? AppColors.primaryLavender : Colors.white70,
                   ),
               ],
             ),
@@ -170,8 +179,9 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _buildMessageInput() {
     return SafeArea(
       top: false,
-      child: Padding(
-        padding: const EdgeInsets.all(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        color: AppColors.surface, // Background for input area
         child: Row(
           children: [
             Expanded(
@@ -179,10 +189,15 @@ class _ChatScreenState extends State<ChatScreen> {
                 controller: _messageController,
                 textInputAction: TextInputAction.send,
                 onSubmitted: (_) => _sendMessage(),
+                style: TextStyle(color: AppColors.textHigh),
                 decoration: InputDecoration(
                   hintText: 'Type a message...',
+                  hintStyle: TextStyle(color: AppColors.textDisabled),
+                  filled: true,
+                  fillColor: AppColors.elevation,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
+                    borderSide: BorderSide.none,
                   ),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 ),
@@ -190,9 +205,9 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             const SizedBox(width: 8),
             CircleAvatar(
-              backgroundColor: Theme.of(context).colorScheme.secondary,
+              backgroundColor: AppColors.primaryLavender,
               child: IconButton(
-                icon: const Icon(Icons.send, color: Colors.white),
+                icon: const Icon(Icons.send, color: AppColors.backgroundDeep),
                 onPressed: _sendMessage,
               ),
             ),
@@ -212,10 +227,14 @@ class _ChatScreenState extends State<ChatScreen> {
         .snapshots();
 
     return Scaffold(
+      backgroundColor: AppColors.backgroundDeep, // Deep background
       appBar: AppBar(
+        backgroundColor: AppColors.backgroundDeep,
+        iconTheme: IconThemeData(color: AppColors.primaryLavender),
         title: Row(
           children: [
             CircleAvatar(
+              backgroundColor: AppColors.elevation,
               backgroundImage: widget.otherUserProfileImage.isNotEmpty
                   ? CachedNetworkImageProvider(widget.otherUserProfileImage)
                   : const AssetImage('assets/femnlogo.png') as ImageProvider,
@@ -228,7 +247,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   Text(
                     widget.otherUserName,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 16),
+                    style: const TextStyle(fontSize: 16, color: AppColors.textHigh),
                   ),
                   StreamBuilder<DocumentSnapshot>(
                     stream: FirebaseFirestore.instance.collection('users').doc(widget.otherUserId).snapshots(),
@@ -238,12 +257,15 @@ class _ChatScreenState extends State<ChatScreen> {
                         final bool isOnline = (map?['isOnline'] ?? false) as bool;
                         return Text(
                           isOnline ? 'Online' : 'Offline',
-                          style: TextStyle(fontSize: 12, color: isOnline ? Colors.green : Colors.grey),
+                          style: TextStyle(
+                            fontSize: 12, 
+                            color: isOnline ? AppColors.success : AppColors.textDisabled
+                          ),
                         );
                       } else {
                         return const Text(
                           'Offline',
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                          style: TextStyle(fontSize: 12, color: AppColors.textDisabled),
                         );
                       }
                     },
@@ -261,15 +283,15 @@ class _ChatScreenState extends State<ChatScreen> {
               stream: chatMessagesStream,
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
+                  return Center(child: Text('Error: ${snapshot.error}', style: TextStyle(color: AppColors.error)));
                 }
                 if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
                 }
 
                 final docs = snapshot.data!.docs;
 
-                // Check for unread messages from the other user and mark them as read (once per frame)
+                // Check for unread messages logic remains same...
                 int unreadFromOther = 0;
                 for (var doc in docs) {
                   final data = doc.data() as Map<String, dynamic>?;
@@ -284,12 +306,12 @@ class _ChatScreenState extends State<ChatScreen> {
                   });
                 }
 
-                // scroll to bottom after frame
                 WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
 
                 return ListView.builder(
                   controller: _scrollController,
                   itemCount: docs.length,
+                  padding: EdgeInsets.symmetric(vertical: 16),
                   itemBuilder: (context, index) {
                     final doc = docs[index];
                     final data = doc.data() as Map<String, dynamic>? ?? {};
@@ -350,38 +372,37 @@ class _NewChatScreenState extends State<NewChatScreen> {
   }
 
  void _startChat(String otherUserId, String otherUserName,
-     String otherUserProfileImage) async {
-   final currentUserId = FirebaseAuth.instance.currentUser!.uid;
-   // Check if chat already exists
-   final existingChat = await FirebaseFirestore.instance
-       .collection('chats')
-       .where('participants', arrayContains: currentUserId)
-       .get();
-   // Find existing chat with the other user
-   QueryDocumentSnapshot<Map<String, dynamic>>? existingChatDoc;
-   for (var doc in existingChat.docs) {
-     if (List.from(doc['participants']).contains(otherUserId)) {
-       existingChatDoc = doc;
-       break;
-     }
-   }
-   String chatId;
-   if (existingChatDoc != null) {
-     chatId = existingChatDoc.id;
-   } else {
-    final newChat = await FirebaseFirestore.instance.collection('chats').add({
-      'participants': [currentUserId, otherUserId],
-      'lastMessage': '',
-      'lastMessageTime': FieldValue.serverTimestamp(), // Use server timestamp
-      'createdAt': FieldValue.serverTimestamp(),
-      // Initialize unread counts for both participants
-      'unreadCount': {
-         currentUserId: 0, // Current user starts with 0 unread in this new chat
-         otherUserId: 0,   // Other user also starts with 0
-       }
-    });
-    chatId = newChat.id;
-   }
+      String otherUserProfileImage) async {
+    final currentUserId = FirebaseAuth.instance.currentUser!.uid;
+    // Check if chat already exists
+    final existingChat = await FirebaseFirestore.instance
+        .collection('chats')
+        .where('participants', arrayContains: currentUserId)
+        .get();
+    // Find existing chat with the other user
+    QueryDocumentSnapshot<Map<String, dynamic>>? existingChatDoc;
+    for (var doc in existingChat.docs) {
+      if (List.from(doc['participants']).contains(otherUserId)) {
+        existingChatDoc = doc;
+        break;
+      }
+    }
+    String chatId;
+    if (existingChatDoc != null) {
+      chatId = existingChatDoc.id;
+    } else {
+     final newChat = await FirebaseFirestore.instance.collection('chats').add({
+       'participants': [currentUserId, otherUserId],
+       'lastMessage': '',
+       'lastMessageTime': FieldValue.serverTimestamp(),
+       'createdAt': FieldValue.serverTimestamp(),
+       'unreadCount': {
+          currentUserId: 0, 
+          otherUserId: 0,   
+        }
+     });
+     chatId = newChat.id;
+    }
     Navigator.pop(context);
     Navigator.push(
       context,
@@ -399,16 +420,29 @@ class _NewChatScreenState extends State<NewChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('New Message')),
+      backgroundColor: AppColors.backgroundDeep,
+      appBar: AppBar(
+        title: Text('New Message', style: TextStyle(color: AppColors.textHigh)),
+        backgroundColor: AppColors.backgroundDeep,
+        iconTheme: IconThemeData(color: AppColors.primaryLavender),
+      ),
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
               controller: _searchController,
+              style: TextStyle(color: AppColors.textHigh),
               decoration: InputDecoration(
                 hintText: 'Search users...',
-                prefixIcon: Icon(Icons.search),
+                hintStyle: TextStyle(color: AppColors.textDisabled),
+                prefixIcon: Icon(Icons.search, color: AppColors.primaryLavender),
+                filled: true,
+                fillColor: AppColors.elevation,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
               ),
               onChanged: _searchUsers,
             ),
@@ -420,12 +454,13 @@ class _NewChatScreenState extends State<NewChatScreen> {
                 var user = _searchResults[index];
                 return ListTile(
                   leading: CircleAvatar(
+                    backgroundColor: AppColors.elevation,
                     backgroundImage: user['profileImage'].isNotEmpty
                         ? CachedNetworkImageProvider(user['profileImage'])
                         : AssetImage('assets/default_avatar.png') as ImageProvider,
                   ),
-                  title: Text(user['username']),
-                  subtitle: Text(user['fullName']),
+                  title: Text(user['username'], style: TextStyle(color: AppColors.textHigh)),
+                  subtitle: Text(user['fullName'], style: TextStyle(color: AppColors.textMedium)),
                   onTap: () => _startChat(
                     user['uid'],
                     user['username'],

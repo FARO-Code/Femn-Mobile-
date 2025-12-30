@@ -1,15 +1,97 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:femn/colors.dart'; // <--- Ensure this file exists
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
+import 'package:intl/intl.dart';
+import 'package:femn/post.dart'; // <--- Ensure this file exists
 
-// ========== COLORS ==========
-const Color pinkMain = Color(0xFFE35773);
-const Color pinkLight = Color(0xFFFFE1E0);
+// ==========================================
+// 1. DATA & VALIDATORS (New Additions)
+// ==========================================
+
+class CountryData {
+  static const List<String> allCountries = [
+    "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan",
+    "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso", "Burundi",
+    "Cabo Verde", "Cambodia", "Cameroon", "Canada", "Central African Republic", "Chad", "Chile", "China", "Colombia", "Comoros", "Congo", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czech Republic",
+    "Denmark", "Djibouti", "Dominica", "Dominican Republic",
+    "East Timor", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia",
+    "Fiji", "Finland", "France",
+    "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana",
+    "Haiti", "Honduras", "Hungary",
+    "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", "Ivory Coast",
+    "Jamaica", "Japan", "Jordan",
+    "Kazakhstan", "Kenya", "Kiribati", "Korea, North", "Korea, South", "Kosovo", "Kuwait", "Kyrgyzstan",
+    "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg",
+    "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar",
+    "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Macedonia", "Norway",
+    "Oman",
+    "Pakistan", "Palau", "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal",
+    "Qatar",
+    "Romania", "Russia", "Rwanda",
+    "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Sao Tome and Principe", "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland", "Syria",
+    "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu",
+    "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States", "Uruguay", "Uzbekistan",
+    "Vanuatu", "Vatican City", "Venezuela", "Vietnam",
+    "Yemen",
+    "Zambia", "Zimbabwe"
+  ];
+}
+
+class UsernameValidator {
+  static final Set<String> _reservedWords = {
+    'admin', 'administrator', 'root', 'system', 'support', 'help', 'info',
+    'service', 'staff', 'marketing', 'sales', 'billing', 'api', 'bot',
+    'crawler', 'security', 'signin', 'login', 'register', 'join', 'account',
+    'settings', 'dashboard', 'notifications', 'messages', 'search', 'explore',
+    'femn', 'femnteam', 'official', 'moderator'
+  };
+
+  static String? validate(String? value) {
+    if (value == null || value.isEmpty) {
+      return "Username is required";
+    }
+
+    // Check length
+    if (value.length < 3) return "Username must be at least 3 characters";
+    if (value.length > 20) return "Username must be under 20 characters";
+
+    // Convert to lowercase for checking logic
+    final lowerValue = value.toLowerCase();
+
+    // Check Reserved Words
+    if (_reservedWords.contains(lowerValue)) {
+      return "This username is reserved";
+    }
+
+    // Check Allowed Characters (a-z, 0-9, _, .)
+    final validCharacters = RegExp(r'^[a-z0-9._]+$');
+    if (!validCharacters.hasMatch(lowerValue)) {
+      return "Use only letters, numbers, dot (.), or underscore (_)";
+    }
+
+    // Check Placement (Start/End)
+    if (lowerValue.startsWith('_') || lowerValue.startsWith('.')) {
+      return "Cannot start with underscore or dot";
+    }
+    if (lowerValue.endsWith('_') || lowerValue.endsWith('.')) {
+      return "Cannot end with underscore or dot";
+    }
+
+    // Check Consecutive Special Characters
+    if (lowerValue.contains('..') || lowerValue.contains('__') || 
+        lowerValue.contains('._') || lowerValue.contains('_.')) {
+      return "Cannot have consecutive special characters";
+    }
+
+    return null; // Valid
+  }
+}
 
 // ========== SPLASH SCREEN ==========
 class SplashScreen extends StatefulWidget {
@@ -35,11 +117,13 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.backgroundDeep, 
       body: Container(
         decoration: BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/femn_bg.png'),
+            image: AssetImage('assets/femn_bg.png'), 
             fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.7), BlendMode.darken), 
           ),
         ),
         child: Center(
@@ -51,11 +135,11 @@ class _SplashScreenState extends State<SplashScreen> {
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surface, 
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
+                      color: Colors.black.withOpacity(0.3),
                       blurRadius: 12,
                       offset: Offset(0, 4),
                     ),
@@ -72,12 +156,12 @@ class _SplashScreenState extends State<SplashScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 48,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: AppColors.textHigh, 
                   shadows: [
                     Shadow(
                       offset: Offset(1, 1),
                       blurRadius: 3,
-                      color: Colors.black54,
+                      color: Colors.black,
                     ),
                   ],
                 ),
@@ -90,16 +174,18 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 }
 
-// ========== AUTHENTICATION SCREEN (Login/Signup Selection) ==========
+// ========== AUTHENTICATION SCREEN ==========
 class AuthScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.backgroundDeep,
       body: Container(
         decoration: BoxDecoration(
           image: DecorationImage(
             image: AssetImage('assets/femn_state.png'),
             fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.8), BlendMode.darken),
           ),
         ),
         child: SafeArea(
@@ -110,16 +196,15 @@ class AuthScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // FEMN LOGO
                   Container(
                     width: 120,
                     height: 120,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.surface,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
+                          color: Colors.black.withOpacity(0.3),
                           blurRadius: 12,
                           offset: Offset(0, 4),
                         ),
@@ -136,7 +221,7 @@ class AuthScreen extends StatelessWidget {
                     style: GoogleFonts.poppins(
                       fontSize: 48,
                       fontWeight: FontWeight.bold,
-                      color: pinkMain,
+                      color: AppColors.primaryLavender,
                       letterSpacing: 1.5,
                     ),
                   ),
@@ -145,11 +230,12 @@ class AuthScreen extends StatelessWidget {
                     "Connect, Share, and Heal",
                     style: GoogleFonts.poppins(
                       fontSize: 18,
-                      color: pinkMain.withOpacity(0.8),
+                      color: AppColors.textMedium,
                     ),
                     textAlign: TextAlign.center,
                   ),
                   SizedBox(height: 60),
+                  
                   // Login Button
                   SizedBox(
                     width: double.infinity,
@@ -161,23 +247,24 @@ class AuthScreen extends StatelessWidget {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
+                        backgroundColor: AppColors.primaryLavender,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(24)),
                         padding: EdgeInsets.symmetric(vertical: 16),
                         elevation: 4,
-                        shadowColor: Colors.black.withOpacity(0.05),
+                        shadowColor: Colors.black.withOpacity(0.2),
                       ),
                       child: Text(
                         "Login",
                         style: TextStyle(
-                            color: pinkMain,
+                            color: AppColors.backgroundDeep,
                             fontSize: 18,
                             fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
                   SizedBox(height: 20),
+                  
                   // Signup Button
                   SizedBox(
                     width: double.infinity,
@@ -189,8 +276,8 @@ class AuthScreen extends StatelessWidget {
                         );
                       },
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        side: BorderSide(color: Colors.white, width: 2),
+                        foregroundColor: AppColors.textHigh,
+                        side: BorderSide(color: AppColors.primaryLavender, width: 2),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(24)),
                         padding: EdgeInsets.symmetric(vertical: 16),
@@ -198,6 +285,7 @@ class AuthScreen extends StatelessWidget {
                       child: Text(
                         "Sign Up",
                         style: TextStyle(
+                            color: AppColors.primaryLavender,
                             fontSize: 18,
                             fontWeight: FontWeight.bold),
                       ),
@@ -221,7 +309,7 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Generic Sign Up (for backward compatibility - creates personal account)
+  // Generic Sign Up
   Future<String?> signUp({
     required String email,
     required String password,
@@ -406,11 +494,13 @@ class AccountTypeScreen extends StatelessWidget {
 @override
 Widget build(BuildContext context) {
   return Scaffold(
+    backgroundColor: AppColors.backgroundDeep,
     body: Container(
       decoration: BoxDecoration(
         image: DecorationImage(
           image: AssetImage('assets/femn_state.png'),
           fit: BoxFit.cover,
+          colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.9), BlendMode.darken),
         ),
       ),
       child: SafeArea(
@@ -419,24 +509,22 @@ Widget build(BuildContext context) {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Back button
               Align(
                 alignment: Alignment.topLeft,
                 child: IconButton(
-                  icon: Icon(Icons.arrow_back, color: Colors.white),
+                  icon: Icon(Icons.arrow_back, color: AppColors.textHigh),
                   onPressed: () => Navigator.pop(context),
                 ),
               ),
-              // FEMN LOGO
               Container(
                 width: 100,
                 height: 100,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
+                      color: Colors.black.withOpacity(0.3),
                       blurRadius: 12,
                       offset: Offset(0, 4),
                     ),
@@ -453,7 +541,7 @@ Widget build(BuildContext context) {
                 style: GoogleFonts.poppins(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: pinkMain, // CHANGED TO PINK
+                  color: AppColors.primaryLavender,
                 ),
               ),
               SizedBox(height: 10),
@@ -461,12 +549,11 @@ Widget build(BuildContext context) {
                 "Select the type of account that best fits you",
                 style: GoogleFonts.poppins(
                   fontSize: 16,
-                  color: pinkMain, // CHANGED FROM Colors.white.withOpacity(0.9) TO pinkMain
+                  color: AppColors.textMedium,
                 ),
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 40),
-              // Account Type Cards
               Expanded(
                 child: Column(
                   children: [
@@ -476,7 +563,7 @@ Widget build(BuildContext context) {
                       title: "Personal Account",
                       subtitle: "For individuals looking to connect and share",
                       type: AccountType.personal,
-                      color: Colors.blue.shade400,
+                      color: AppColors.primaryLavender,
                     ),
                     SizedBox(height: 20),
                     _buildAccountTypeCard(
@@ -485,7 +572,7 @@ Widget build(BuildContext context) {
                       title: "Organization Account",
                       subtitle: "For NGOs, companies, and community groups",
                       type: AccountType.organization,
-                      color: Colors.green.shade400,
+                      color: AppColors.secondaryTeal,
                     ),
                     SizedBox(height: 20),
                     _buildAccountTypeCard(
@@ -494,7 +581,7 @@ Widget build(BuildContext context) {
                       title: "Therapist Account",
                       subtitle: "For mental health professionals and volunteers",
                       type: AccountType.therapist,
-                      color: Colors.purple.shade400,
+                      color: AppColors.accentMustard,
                     ),
                   ],
                 ),
@@ -517,7 +604,8 @@ Widget _buildAccountTypeCard(
 }) {
   return Card(
     elevation: 4,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)), // Smaller radius
+    color: AppColors.surface,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)), 
     child: InkWell(
       borderRadius: BorderRadius.circular(16),
       onTap: () {
@@ -529,22 +617,22 @@ Widget _buildAccountTypeCard(
         );
       },
       child: Container(
-        padding: EdgeInsets.all(16), // Reduced from 20 to 16
+        padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          color: Colors.white,
+          color: AppColors.surface,
         ),
         child: Row(
           children: [
             Container(
-              padding: EdgeInsets.all(10), // Reduced from 12 to 10
+              padding: EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
+                color: AppColors.elevation,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: color, size: 24), // Reduced from 30 to 24
+              child: Icon(icon, color: color, size: 24),
             ),
-            SizedBox(width: 12), // Reduced from 16 to 12
+            SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -552,23 +640,23 @@ Widget _buildAccountTypeCard(
                   Text(
                     title,
                     style: GoogleFonts.poppins(
-                      fontSize: 16, // Reduced from 18 to 16
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: pinkMain,
+                      color: AppColors.textHigh,
                     ),
                   ),
-                  SizedBox(height: 2), // Reduced from 4 to 2
+                  SizedBox(height: 2),
                   Text(
                     subtitle,
                     style: GoogleFonts.poppins(
-                      fontSize: 12, // Reduced from 14 to 12
-                      color: Colors.grey.shade600,
+                      fontSize: 12, 
+                      color: AppColors.textMedium,
                     ),
                   ),
                 ],
               ),
             ),
-            Icon(Icons.arrow_forward_ios, color: Colors.grey.shade400, size: 16), // Smaller icon
+            Icon(Icons.arrow_forward_ios, color: AppColors.textDisabled, size: 16),
           ],
         ),
       ),
@@ -599,7 +687,6 @@ class _SignupScreenState extends State<SignupScreen> {
   final _fullNameController = TextEditingController();
   DateTime? _dateOfBirth;
   List<String> _selectedInterests = [];
-  File? _profileImage;
 
   // Organization Account Fields
   final _organizationNameController = TextEditingController();
@@ -611,7 +698,6 @@ class _SignupScreenState extends State<SignupScreen> {
   String? _selectedCountry;
   List<String> _selectedAreasOfFocus = [];
   List<String> _socialLinks = [''];
-  File? _logoImage;
 
   // Therapist Account Fields
   final _therapistFullNameController = TextEditingController();
@@ -623,7 +709,6 @@ class _SignupScreenState extends State<SignupScreen> {
   String? _selectedGenderPreference;
   String? _selectedRegion;
   List<String> _selectedLanguages = [];
-  File? _therapistProfileImage;
   List<File> _certificationFiles = [];
 
   // Options
@@ -635,10 +720,10 @@ class _SignupScreenState extends State<SignupScreen> {
     'NGO', 'Startup', 'Women\'s Group', 'Educational', 'Activist', 
     'Non-profit', 'Company', 'Collective', 'Community'
   ];
-  final List<String> _countries = [
-    'United States', 'United Kingdom', 'Canada', 'Australia', 'India',
-    'Nigeria', 'South Africa', 'Kenya', 'Ghana'
-  ];
+  
+  // UPDATED: Using the comprehensive Country list
+  final List<String> _countries = CountryData.allCountries;
+
   final List<String> _specializations = [
     'Anxiety', 'Trauma', 'Relationships', 'Depression', 'Self-esteem',
     'Stress Management', 'Grief', 'Addiction', 'Family Therapy'
@@ -661,30 +746,6 @@ class _SignupScreenState extends State<SignupScreen> {
     'Gender Equality', 'Education', 'Health', 'Advocacy',
     'Poverty Alleviation', 'Environmental Justice', 'Youth Development'
   ];
-
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        if (widget.accountType == AccountType.organization) {
-          _logoImage = File(pickedFile.path);
-        } else {
-          _profileImage = File(pickedFile.path);
-        }
-      });
-    }
-  }
-
-  Future<void> _pickTherapistImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _therapistProfileImage = File(pickedFile.path);
-      });
-    }
-  }
 
   Future<void> _pickCertificationFiles() async {
     final picker = ImagePicker();
@@ -717,8 +778,8 @@ class _SignupScreenState extends State<SignupScreen> {
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message, style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.red.shade400,
+        content: Text(message, style: TextStyle(color: AppColors.backgroundDeep)),
+        backgroundColor: AppColors.error,
       ),
     );
   }
@@ -735,21 +796,6 @@ class _SignupScreenState extends State<SignupScreen> {
         String? error;
         String profileUrl = '';
 
-        // Upload profile image
-        if (_profileImage != null || _therapistProfileImage != null || _logoImage != null) {
-          final fileToUpload = widget.accountType == AccountType.organization 
-              ? _logoImage 
-              : (widget.accountType == AccountType.therapist ? _therapistProfileImage : _profileImage);
-          if (fileToUpload != null) {
-            final ref = FirebaseStorage.instance
-                .ref()
-                .child('profile_images')
-                .child('${DateTime.now().millisecondsSinceEpoch}.jpg');
-            await ref.putFile(fileToUpload);
-            profileUrl = await ref.getDownloadURL();
-          }
-        }
-
         switch (widget.accountType) {
           case AccountType.personal:
             if (_dateOfBirth == null) {
@@ -760,7 +806,8 @@ class _SignupScreenState extends State<SignupScreen> {
             error = await AuthService().signUpPersonal(
               email: _emailController.text.trim(),
               password: _passwordController.text.trim(),
-              username: _usernameController.text.trim(),
+              // Force lowercase username
+              username: _usernameController.text.trim().toLowerCase(),
               fullName: _fullNameController.text.trim(),
               dateOfBirth: _dateOfBirth!,
               interests: _selectedInterests,
@@ -781,6 +828,7 @@ class _SignupScreenState extends State<SignupScreen> {
               category: _selectedCategory!,
               country: _selectedCountry!,
               missionStatement: _missionStatementController.text.trim(),
+              // Force lowercase username
               username: _organizationNameController.text.trim().toLowerCase().replaceAll(' ', '_'),
               profileImage: profileUrl,
               website: _websiteController.text.trim(),
@@ -797,7 +845,7 @@ class _SignupScreenState extends State<SignupScreen> {
               setState(() => _isLoading = false);
               return;
             }
-            // Upload certification files
+            
             List<String> certificationUrls = [];
             if (_certificationFiles.isNotEmpty) {
               for (var file in _certificationFiles) {
@@ -809,11 +857,13 @@ class _SignupScreenState extends State<SignupScreen> {
                 certificationUrls.add(await ref.getDownloadURL());
               }
             }
+
             error = await AuthService().signUpTherapist(
               email: _emailController.text.trim(),
               password: _passwordController.text.trim(),
               fullName: _therapistFullNameController.text.trim(),
-              username: _therapistUsernameController.text.trim(),
+              // Force lowercase username
+              username: _therapistUsernameController.text.trim().toLowerCase(),
               specialization: _selectedSpecializations,
               experienceLevel: _selectedExperienceLevel!,
               bio: _therapistBioController.text.trim(),
@@ -834,7 +884,7 @@ class _SignupScreenState extends State<SignupScreen> {
         } else {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => HomeScreen()),
+            MaterialPageRoute(builder: (context) => FeedScreen()),
           );
         }
       } catch (e) {
@@ -847,26 +897,12 @@ class _SignupScreenState extends State<SignupScreen> {
   Widget _buildPersonalForm() {
     return Column(
       children: [
-        // Profile Image
-        GestureDetector(
-          onTap: _pickImage,
-          child: CircleAvatar(
-            radius: 50,
-            backgroundImage: _profileImage != null ? FileImage(_profileImage!) : null,
-            backgroundColor: Colors.white,
-            child: _profileImage == null
-                ? Icon(Icons.camera_alt, size: 40, color: pinkMain)
-                : null,
-          ),
-        ),
-        SizedBox(height: 20),
-
-        // Username
+        // Username with NEW VALIDATOR
         _buildTextField(
           controller: _usernameController,
           hintText: "Username",
-          icon: Feather.user,
-          validator: (v) => v!.isEmpty ? "Enter a username" : null,
+          icon: Feather.at_sign, // Icon updated
+          validator: (v) => UsernameValidator.validate(v), // STRICT VALIDATION
         ),
 
         // Full Name
@@ -889,20 +925,6 @@ class _SignupScreenState extends State<SignupScreen> {
   Widget _buildOrganizationForm() {
     return Column(
       children: [
-        // Logo
-        GestureDetector(
-          onTap: _pickImage,
-          child: CircleAvatar(
-            radius: 50,
-            backgroundImage: _logoImage != null ? FileImage(_logoImage!) : null,
-            backgroundColor: Colors.white,
-            child: _logoImage == null
-                ? Icon(Icons.business, size: 40, color: pinkMain)
-                : null,
-          ),
-        ),
-        SizedBox(height: 20),
-
         // Organization Name
         _buildTextField(
           controller: _organizationNameController,
@@ -911,20 +933,22 @@ class _SignupScreenState extends State<SignupScreen> {
           validator: (v) => v!.isEmpty ? "Enter organization name" : null,
         ),
 
-        // Category Dropdown
+        // Category Dropdown (Updated UX)
         _buildDropdown(
           value: _selectedCategory,
           hint: "Select Category *",
           items: _organizationCategories,
+          icon: Feather.grid,
           onChanged: (value) => setState(() => _selectedCategory = value),
           validator: (value) => value == null ? "Select a category" : null,
         ),
 
-        // Country Dropdown
+        // Country Dropdown (Updated UX & List)
         _buildDropdown(
           value: _selectedCountry,
           hint: "Select Country *",
           items: _countries,
+          icon: Feather.globe,
           onChanged: (value) => setState(() => _selectedCountry = value),
           validator: (value) => value == null ? "Select a country" : null,
         ),
@@ -976,20 +1000,6 @@ class _SignupScreenState extends State<SignupScreen> {
   Widget _buildTherapistForm() {
     return Column(
       children: [
-        // Profile Image
-        GestureDetector(
-          onTap: _pickTherapistImage,
-          child: CircleAvatar(
-            radius: 50,
-            backgroundImage: _therapistProfileImage != null ? FileImage(_therapistProfileImage!) : null,
-            backgroundColor: Colors.white,
-            child: _therapistProfileImage == null
-                ? Icon(Icons.camera_alt, size: 40, color: pinkMain)
-                : null,
-          ),
-        ),
-        SizedBox(height: 20),
-
         // Full Name
         _buildTextField(
           controller: _therapistFullNameController,
@@ -998,12 +1008,12 @@ class _SignupScreenState extends State<SignupScreen> {
           validator: (v) => v!.isEmpty ? "Enter your full name" : null,
         ),
 
-        // Username
+        // Username with NEW VALIDATOR
         _buildTextField(
           controller: _therapistUsernameController,
           hintText: "Username *",
           icon: Feather.at_sign,
-          validator: (v) => v!.isEmpty ? "Enter a username" : null,
+          validator: (v) => UsernameValidator.validate(v), // STRICT VALIDATION
         ),
 
         // Specialization
@@ -1014,11 +1024,12 @@ class _SignupScreenState extends State<SignupScreen> {
           onChanged: (selected) => setState(() => _selectedSpecializations = selected),
         ),
 
-        // Experience Level
+        // Experience Level Dropdown (Updated UX)
         _buildDropdown(
           value: _selectedExperienceLevel,
           hint: "Experience Level *",
           items: _experienceLevels,
+          icon: Feather.activity,
           onChanged: (value) => setState(() => _selectedExperienceLevel = value),
           validator: (value) => value == null ? "Select experience level" : null,
         ),
@@ -1040,11 +1051,12 @@ class _SignupScreenState extends State<SignupScreen> {
           validator: (v) => v!.isEmpty ? "Enter available hours" : null,
         ),
 
-        // Region
+        // Region Dropdown (Updated UX)
         _buildDropdown(
           value: _selectedRegion,
           hint: "Region (optional)",
           items: _regions,
+          icon: Feather.map,
           onChanged: (value) => setState(() => _selectedRegion = value),
         ),
 
@@ -1056,11 +1068,12 @@ class _SignupScreenState extends State<SignupScreen> {
           onChanged: (selected) => setState(() => _selectedLanguages = selected),
         ),
 
-        // Gender Preference
+        // Gender Preference Dropdown (Updated UX)
         _buildDropdown(
           value: _selectedGenderPreference,
           hint: "Gender Preference (optional)",
           items: _genderPreferences,
+          icon: Feather.users,
           onChanged: (value) => setState(() => _selectedGenderPreference = value),
         ),
 
@@ -1069,7 +1082,7 @@ class _SignupScreenState extends State<SignupScreen> {
       ],
     );
   }
-
+  
   Widget _buildTextField({
     required TextEditingController controller,
     required String hintText,
@@ -1081,11 +1094,11 @@ class _SignupScreenState extends State<SignupScreen> {
       padding: const EdgeInsets.only(bottom: 16),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.elevation, 
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withOpacity(0.1),
               blurRadius: 6,
               offset: Offset(0, 2),
             ),
@@ -1093,15 +1106,15 @@ class _SignupScreenState extends State<SignupScreen> {
         ),
         child: TextFormField(
           controller: controller,
-          cursorColor: pinkMain,
-          style: TextStyle(color: pinkMain),
+          cursorColor: AppColors.primaryLavender,
+          style: TextStyle(color: AppColors.textHigh), 
           maxLines: maxLines,
           decoration: InputDecoration(
             filled: true,
-            fillColor: Colors.white,
+            fillColor: AppColors.elevation,
             hintText: hintText,
-            hintStyle: TextStyle(color: pinkMain.withOpacity(0.4)),
-            prefixIcon: Icon(icon, color: pinkMain),
+            hintStyle: TextStyle(color: AppColors.textDisabled),
+            prefixIcon: Icon(icon, color: AppColors.primaryLavender),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(24),
               borderSide: BorderSide.none,
@@ -1113,22 +1126,25 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
+  // ========== UPDATED DROPDOWN WIDGET ==========
+  // Matches style of TextFields and includes Icon support
   Widget _buildDropdown({
     required String? value,
     required String hint,
     required List<String> items,
     required Function(String?) onChanged,
+    required IconData icon,
     String? Function(String?)? validator,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.elevation, // Matches TextField background
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withOpacity(0.1),
               blurRadius: 6,
               offset: Offset(0, 2),
             ),
@@ -1136,23 +1152,47 @@ class _SignupScreenState extends State<SignupScreen> {
         ),
         child: DropdownButtonFormField<String>(
           value: value,
+          isExpanded: true, // Prevents overflow for long country names
+          menuMaxHeight: 300, // Limits height so list is scrollable
+          icon: Icon(Feather.chevron_down, color: AppColors.textDisabled),
+          style: TextStyle(
+            color: AppColors.textHigh,
+            fontSize: 16,
+            fontFamily: GoogleFonts.poppins().fontFamily,
+          ),
+          dropdownColor: AppColors.surface, // Dark dropdown menu
           decoration: InputDecoration(
             filled: true,
-            fillColor: Colors.white,
+            fillColor: Colors.transparent, // Transparent because Container handles color
+            contentPadding: EdgeInsets.symmetric(horizontal: 0, vertical: 16),
             hintText: hint,
-            hintStyle: TextStyle(color: pinkMain.withOpacity(0.4)),
-            prefixIcon: Icon(Feather.chevron_down, color: pinkMain),
+            hintStyle: TextStyle(color: AppColors.textDisabled),
+            prefixIcon: Icon(icon, color: AppColors.primaryLavender),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(24),
               borderSide: BorderSide.none,
             ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(24),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(24),
+              borderSide: BorderSide(color: AppColors.primaryLavender, width: 1),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(24),
+              borderSide: BorderSide(color: AppColors.error, width: 1),
+            ),
           ),
-          dropdownColor: Colors.white,
-          style: TextStyle(color: pinkMain),
           items: items.map((String item) {
             return DropdownMenuItem<String>(
               value: item,
-              child: Text(item, style: TextStyle(color: pinkMain)),
+              child: Text(
+                item,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: AppColors.textHigh),
+              ),
             );
           }).toList(),
           onChanged: onChanged,
@@ -1167,11 +1207,11 @@ class _SignupScreenState extends State<SignupScreen> {
       padding: const EdgeInsets.only(bottom: 16),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.elevation,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withOpacity(0.1),
               blurRadius: 6,
               offset: Offset(0, 2),
             ),
@@ -1179,15 +1219,15 @@ class _SignupScreenState extends State<SignupScreen> {
         ),
         child: ListTile(
           title: Text(
-            _dateOfBirth == null
-                ? "Select Date of Birth *"
-                : "DOB: ${_dateOfBirth!.toLocal()}".split(' ')[0],
+          _dateOfBirth == null
+              ? "Select Date of Birth *"
+              : "DOB: ${DateFormat('yyyy-MM-dd').format(_dateOfBirth!)}",
             style: TextStyle(
-              color: pinkMain,
+              color: AppColors.textHigh,
               fontWeight: FontWeight.w500,
             ),
           ),
-          trailing: Icon(Feather.calendar, color: pinkMain),
+          trailing: Icon(Feather.calendar, color: AppColors.primaryLavender),
           onTap: _selectDOB,
         ),
       ),
@@ -1200,6 +1240,19 @@ class _SignupScreenState extends State<SignupScreen> {
       initialDate: DateTime(2000),
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.dark(
+              primary: AppColors.primaryLavender,
+              onPrimary: AppColors.backgroundDeep,
+              surface: AppColors.surface,
+              onSurface: AppColors.textHigh,
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
     if (picked != null && picked != _dateOfBirth) {
       setState(() {
@@ -1214,11 +1267,11 @@ class _SignupScreenState extends State<SignupScreen> {
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.elevation,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withOpacity(0.1),
               blurRadius: 6,
               offset: Offset(0, 2),
             ),
@@ -1231,7 +1284,7 @@ class _SignupScreenState extends State<SignupScreen> {
             Text(
               "Select Interests",
               style: TextStyle(
-                color: pinkMain,
+                color: AppColors.primaryLavender,
                 fontWeight: FontWeight.w600,
                 fontSize: 16,
               ),
@@ -1245,7 +1298,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   label: Text(
                     i,
                     style: TextStyle(
-                      color: selected ? Colors.white : pinkMain,
+                      color: selected ? Colors.white : AppColors.textMedium,
                       fontWeight: selected ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
@@ -1254,13 +1307,13 @@ class _SignupScreenState extends State<SignupScreen> {
                     if (v) _selectedInterests.add(i);
                     else _selectedInterests.remove(i);
                   }),
-                  selectedColor: pinkMain,
-                  backgroundColor: pinkLight,
+                  selectedColor: AppColors.secondaryTeal, 
+                  backgroundColor: AppColors.backgroundDeep, 
                   checkmarkColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                     side: BorderSide(
-                      color: selected ? pinkMain : pinkLight,
+                      color: selected ? AppColors.secondaryTeal : AppColors.textDisabled,
                       width: 1,
                     ),
                   ),
@@ -1284,11 +1337,11 @@ class _SignupScreenState extends State<SignupScreen> {
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.elevation,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withOpacity(0.1),
               blurRadius: 6,
               offset: Offset(0, 2),
             ),
@@ -1301,7 +1354,7 @@ class _SignupScreenState extends State<SignupScreen> {
             Text(
               title,
               style: TextStyle(
-                color: pinkMain,
+                color: AppColors.primaryLavender,
                 fontWeight: FontWeight.w600,
                 fontSize: 16,
               ),
@@ -1312,7 +1365,7 @@ class _SignupScreenState extends State<SignupScreen> {
               children: options.map((option) {
                 final isSelected = selected.contains(option);
                 return FilterChip(
-                  label: Text(option),
+                  label: Text(option, style: TextStyle(color: isSelected ? Colors.white : AppColors.textMedium)),
                   selected: isSelected,
                   onSelected: (v) {
                     final newSelected = List<String>.from(selected);
@@ -1323,11 +1376,12 @@ class _SignupScreenState extends State<SignupScreen> {
                     }
                     onChanged(newSelected);
                   },
-                  selectedColor: pinkMain,
-                  backgroundColor: pinkLight,
+                  selectedColor: AppColors.secondaryTeal,
+                  backgroundColor: AppColors.backgroundDeep,
                   checkmarkColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(color: isSelected ? AppColors.secondaryTeal : AppColors.textDisabled),
                   ),
                 );
               }).toList(),
@@ -1344,11 +1398,11 @@ class _SignupScreenState extends State<SignupScreen> {
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.elevation,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withOpacity(0.1),
               blurRadius: 6,
               offset: Offset(0, 2),
             ),
@@ -1363,14 +1417,14 @@ class _SignupScreenState extends State<SignupScreen> {
                 Text(
                   "Social Links (optional)",
                   style: TextStyle(
-                    color: pinkMain,
+                    color: AppColors.primaryLavender,
                     fontWeight: FontWeight.w600,
                     fontSize: 16,
                   ),
                 ),
                 Spacer(),
                 IconButton(
-                  icon: Icon(Feather.plus, color: pinkMain),
+                  icon: Icon(Feather.plus, color: AppColors.primaryLavender),
                   onPressed: _addSocialLink,
                 ),
               ],
@@ -1384,34 +1438,27 @@ class _SignupScreenState extends State<SignupScreen> {
                     Expanded(
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.surface,
                           borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 4,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
                         ),
                         child: TextFormField(
                           decoration: InputDecoration(
                             hintText: "https://...",
-                            hintStyle: TextStyle(color: pinkMain.withOpacity(0.4)),
+                            hintStyle: TextStyle(color: AppColors.textDisabled),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(20),
                               borderSide: BorderSide.none,
                             ),
                             contentPadding: EdgeInsets.symmetric(horizontal: 16),
                           ),
-                          style: TextStyle(color: pinkMain),
+                          style: TextStyle(color: AppColors.textHigh),
                           onChanged: (value) => _updateSocialLink(index, value),
                         ),
                       ),
                     ),
                     if (_socialLinks.length > 1)
                       IconButton(
-                        icon: Icon(Feather.x, color: Colors.red),
+                        icon: Icon(Feather.x, color: AppColors.error),
                         onPressed: () => _removeSocialLink(index),
                       ),
                   ],
@@ -1430,11 +1477,11 @@ class _SignupScreenState extends State<SignupScreen> {
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.elevation,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withOpacity(0.1),
               blurRadius: 6,
               offset: Offset(0, 2),
             ),
@@ -1447,7 +1494,7 @@ class _SignupScreenState extends State<SignupScreen> {
             Text(
               "Certifications (optional)",
               style: TextStyle(
-                color: pinkMain,
+                color: AppColors.primaryLavender,
                 fontWeight: FontWeight.w600,
                 fontSize: 16,
               ),
@@ -1455,10 +1502,10 @@ class _SignupScreenState extends State<SignupScreen> {
             SizedBox(height: 10),
             if (_certificationFiles.isNotEmpty)
               ..._certificationFiles.map((file) => ListTile(
-                leading: Icon(Feather.file, color: pinkMain),
-                title: Text(file.path.split('/').last, style: TextStyle(color: pinkMain)),
+                leading: Icon(Feather.file, color: AppColors.primaryLavender),
+                title: Text(file.path.split('/').last, style: TextStyle(color: AppColors.textHigh)),
                 trailing: IconButton(
-                  icon: Icon(Feather.trash_2, color: Colors.red),
+                  icon: Icon(Feather.trash_2, color: AppColors.error),
                   onPressed: () => setState(() => _certificationFiles.remove(file)),
                 ),
               )).toList(),
@@ -1469,8 +1516,8 @@ class _SignupScreenState extends State<SignupScreen> {
                 icon: Icon(Feather.upload),
                 label: Text("Upload Certifications"),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: pinkLight,
-                  foregroundColor: pinkMain,
+                  backgroundColor: AppColors.surface,
+                  foregroundColor: AppColors.primaryLavender,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -1497,11 +1544,13 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.backgroundDeep,
       body: Container(
         decoration: BoxDecoration(
           image: DecorationImage(
             image: AssetImage('assets/femn_state.png'),
             fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.9), BlendMode.darken),
           ),
         ),
         child: SafeArea(
@@ -1511,11 +1560,10 @@ class _SignupScreenState extends State<SignupScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Back button
                   Align(
                     alignment: Alignment.topLeft,
                     child: IconButton(
-                      icon: Icon(Icons.arrow_back, color: Colors.white),
+                      icon: Icon(Icons.arrow_back, color: AppColors.textHigh),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ),
@@ -1524,11 +1572,11 @@ class _SignupScreenState extends State<SignupScreen> {
                     width: 100,
                     height: 100,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.surface,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
+                          color: Colors.black.withOpacity(0.3),
                           blurRadius: 12,
                           offset: Offset(0, 4),
                         ),
@@ -1545,7 +1593,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 48,
                       fontWeight: FontWeight.bold,
-                      color: pinkMain,
+                      color: AppColors.primaryLavender,
                       letterSpacing: 1.5,
                     ),
                   ),
@@ -1554,7 +1602,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     "Create your ${_getAccountTypeTitle().toLowerCase()}",
                     style: GoogleFonts.poppins(
                       fontSize: 18,
-                      color: pinkMain.withOpacity(0.8),
+                      color: AppColors.textMedium,
                     ),
                   ),
                   SizedBox(height: 30),
@@ -1590,23 +1638,23 @@ class _SignupScreenState extends State<SignupScreen> {
 
                         // Submit button
                         _isLoading
-                            ? CircularProgressIndicator(color: pinkMain)
+                            ? CircularProgressIndicator(color: AppColors.primaryLavender)
                             : SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton(
                                   onPressed: _signup,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.white,
+                                    backgroundColor: AppColors.primaryLavender,
                                     shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(24)),
                                     padding: EdgeInsets.symmetric(vertical: 16),
                                     elevation: 4,
-                                    shadowColor: Colors.black.withOpacity(0.05),
+                                    shadowColor: Colors.black.withOpacity(0.2),
                                   ),
                                   child: Text(
                                     "Sign Up",
                                     style: TextStyle(
-                                        color: pinkMain,
+                                        color: AppColors.backgroundDeep,
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold),
                                   ),
@@ -1651,8 +1699,8 @@ class _LoginScreenState extends State<LoginScreen> {
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message, style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.red.shade400,
+        content: Text(message, style: TextStyle(color: AppColors.backgroundDeep)),
+        backgroundColor: AppColors.error,
       ),
     );
   }
@@ -1668,9 +1716,9 @@ class _LoginScreenState extends State<LoginScreen> {
       if (error != null) {
         _showError(error);
       } else {
-        Navigator.pushReplacement(
+Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomeScreen()),
+          MaterialPageRoute(builder: (context) => FeedScreen()), 
         );
       }
     }
@@ -1679,11 +1727,13 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.backgroundDeep,
       body: Container(
         decoration: BoxDecoration(
           image: DecorationImage(
             image: AssetImage('assets/femn_state.png'),
             fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.9), BlendMode.darken),
           ),
         ),
         child: SafeArea(
@@ -1698,11 +1748,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     width: 120,
                     height: 120,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.surface,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
+                          color: Colors.black.withOpacity(0.3),
                           blurRadius: 12,
                           offset: Offset(0, 4),
                         ),
@@ -1719,7 +1769,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 48,
                       fontWeight: FontWeight.bold,
-                      color: pinkMain,
+                      color: AppColors.primaryLavender,
                       letterSpacing: 1.5,
                     ),
                   ),
@@ -1728,7 +1778,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     "Welcome Back!",
                     style: GoogleFonts.poppins(
                       fontSize: 18,
-                      color: pinkMain.withOpacity(0.8),
+                      color: AppColors.textMedium,
                     ),
                   ),
                   SizedBox(height: 40),
@@ -1742,11 +1792,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           padding: const EdgeInsets.only(bottom: 16),
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: AppColors.elevation,
                               borderRadius: BorderRadius.circular(24),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
+                                  color: Colors.black.withOpacity(0.1),
                                   blurRadius: 6,
                                   offset: Offset(0, 2),
                                 ),
@@ -1754,15 +1804,15 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             child: TextFormField(
                               controller: _emailController,
-                              cursorColor: pinkMain,
-                              style: TextStyle(color: pinkMain),
+                              cursorColor: AppColors.primaryLavender,
+                              style: TextStyle(color: AppColors.textHigh),
                               keyboardType: TextInputType.emailAddress,
                               decoration: InputDecoration(
                                 filled: true,
-                                fillColor: Colors.white,
+                                fillColor: AppColors.elevation,
                                 hintText: "Email",
-                                hintStyle: TextStyle(color: pinkMain.withOpacity(0.4)),
-                                prefixIcon: Icon(Feather.mail, color: pinkMain),
+                                hintStyle: TextStyle(color: AppColors.textDisabled),
+                                prefixIcon: Icon(Feather.mail, color: AppColors.primaryLavender),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(24),
                                   borderSide: BorderSide.none,
@@ -1777,11 +1827,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           padding: const EdgeInsets.only(bottom: 16),
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: AppColors.elevation,
                               borderRadius: BorderRadius.circular(24),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
+                                  color: Colors.black.withOpacity(0.1),
                                   blurRadius: 6,
                                   offset: Offset(0, 2),
                                 ),
@@ -1789,19 +1839,19 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             child: TextFormField(
                               controller: _passwordController,
-                              cursorColor: pinkMain,
-                              style: TextStyle(color: pinkMain),
+                              cursorColor: AppColors.primaryLavender,
+                              style: TextStyle(color: AppColors.textHigh),
                               obscureText: _obscurePassword,
                               decoration: InputDecoration(
                                 filled: true,
-                                fillColor: Colors.white,
+                                fillColor: AppColors.elevation,
                                 hintText: "Password",
-                                hintStyle: TextStyle(color: pinkMain.withOpacity(0.4)),
-                                prefixIcon: Icon(Feather.lock, color: pinkMain),
+                                hintStyle: TextStyle(color: AppColors.textDisabled),
+                                prefixIcon: Icon(Feather.lock, color: AppColors.primaryLavender),
                                 suffixIcon: IconButton(
                                   icon: Icon(
                                     _obscurePassword ? Feather.eye_off : Feather.eye,
-                                    color: pinkMain,
+                                    color: AppColors.primaryLavender,
                                   ),
                                   onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                                 ),
@@ -1817,24 +1867,24 @@ class _LoginScreenState extends State<LoginScreen> {
                         SizedBox(height: 20),
                         // LOGIN BUTTON
                         _isLoading
-                            ? CircularProgressIndicator(color: pinkMain)
+                            ? CircularProgressIndicator(color: AppColors.primaryLavender)
                             : SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton(
                                   onPressed: _login,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.white,
+                                    backgroundColor: AppColors.primaryLavender,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(24),
                                     ),
                                     padding: EdgeInsets.symmetric(vertical: 16),
                                     elevation: 4,
-                                    shadowColor: Colors.black.withOpacity(0.05),
+                                    shadowColor: Colors.black.withOpacity(0.2),
                                   ),
                                   child: Text(
                                     "Login",
                                     style: TextStyle(
-                                      color: pinkMain,
+                                      color: AppColors.backgroundDeep,
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -1852,7 +1902,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: Text(
                             "Don't have an account? Sign Up",
                             style: TextStyle(
-                              color: pinkMain,
+                              color: AppColors.primaryLavender,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -1875,18 +1925,24 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.backgroundDeep,
       appBar: AppBar(
-        title: Text("Femn", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        backgroundColor: pinkMain,
-        foregroundColor: Colors.white,
+        title: Text("Femn", style: TextStyle(color: AppColors.textHigh, fontWeight: FontWeight.bold)),
+        backgroundColor: AppColors.backgroundDeep,
+        foregroundColor: AppColors.textHigh,
         elevation: 0,
+        iconTheme: IconThemeData(color: AppColors.primaryLavender),
       ),
       body: Container(
+        // Subtle gradient background
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [pinkMain, pinkLight],
+            colors: [
+              AppColors.backgroundDeep,
+              AppColors.elevation,
+            ],
           ),
         ),
         child: Center(
@@ -1897,11 +1953,11 @@ class HomeScreen extends StatelessWidget {
                 width: 150,
                 height: 150,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withOpacity(0.2),
                       blurRadius: 15,
                       offset: Offset(0, 5),
                     ),
@@ -1918,7 +1974,7 @@ class HomeScreen extends StatelessWidget {
                 style: GoogleFonts.poppins(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: AppColors.textHigh,
                 ),
               ),
               SizedBox(height: 10),
@@ -1926,7 +1982,7 @@ class HomeScreen extends StatelessWidget {
                 "Connect, Share, and Heal Together",
                 style: GoogleFonts.poppins(
                   fontSize: 16,
-                  color: Colors.white.withOpacity(0.9),
+                  color: AppColors.textMedium,
                 ),
               ),
               SizedBox(height: 30),
@@ -1942,7 +1998,7 @@ class HomeScreen extends StatelessWidget {
                     });
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
+                    backgroundColor: AppColors.surface, // Surface colored button
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
                     ),
@@ -1952,7 +2008,7 @@ class HomeScreen extends StatelessWidget {
                   child: Text(
                     "Logout",
                     style: TextStyle(
-                      color: pinkMain,
+                      color: AppColors.primaryLavender, // Lavender Text
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),

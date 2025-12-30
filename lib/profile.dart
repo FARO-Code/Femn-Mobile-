@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:femn/auth.dart';
 import 'package:femn/post.dart';
+import 'package:femn/colors.dart'; // <--- IMPORT COLORS
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +12,7 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:image_picker/image_picker.dart';
 import 'addpost.dart';
 import 'settings.dart';
+import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 
 // ======== NEW: AccountBadge Widget ========
 class AccountBadge extends StatelessWidget {
@@ -31,17 +33,17 @@ class AccountBadge extends StatelessWidget {
     switch (accountType) {
       case 'organization':
         icon = isVerified ? Icons.verified : Icons.business;
-        color = isVerified ? Colors.blue : Colors.green;
+        color = isVerified ? Colors.blueAccent : Colors.greenAccent; // Brighter for dark mode
         label = isVerified ? 'Verified Organization' : 'Organization';
         break;
       case 'therapist':
         icon = isVerified ? Icons.verified_user : Icons.medical_services;
-        color = isVerified ? Colors.blue : Colors.purple;
+        color = isVerified ? Colors.blueAccent : Colors.purpleAccent; // Brighter for dark mode
         label = isVerified ? 'Verified Therapist' : 'Therapist';
         break;
       default:
         icon = Icons.person;
-        color = Colors.grey;
+        color = AppColors.textMedium;
         label = 'Personal';
     }
 
@@ -103,17 +105,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
-  // ======== NEW: Profile header builder ========
-  Widget _buildProfileHeader(DocumentSnapshot user) {
+  // ======== MODIFIED: Profile header builder ========
+ Widget _buildProfileHeader(DocumentSnapshot user) {
+    // 1. SAFELY EXTRACT DATA AS A MAP
+    final userData = user.data() as Map<String, dynamic>? ?? {};
+
+    // 2. CALCULATE NAME CHANGE ELIGIBILITY
+    bool canChangeName = true;
+    int daysRemaining = 0;
+    
+    if (userData['lastNameChangeDate'] != null) {
+      final Timestamp lastChange = userData['lastNameChangeDate'];
+      final date = lastChange.toDate();
+      final daysSince = DateTime.now().difference(date).inDays;
+      
+      if (daysSince < 30) {
+        canChangeName = false;
+        daysRemaining = 30 - daysSince;
+      }
+    }
+
     return Column(
       children: [
         Stack(
           children: [
-            CircleAvatar(
-              radius: 50,
-              backgroundImage: (user['profileImage'] ?? user['logo'] ?? '').isNotEmpty
-                  ? CachedNetworkImageProvider(user['profileImage'] ?? user['logo'] ?? '')
-                  : AssetImage('assets/default_avatar.png') as ImageProvider,
+            GestureDetector(
+              onTap: () {
+                if (_isEditing) {
+                  _pickProfileImage();
+                }
+              },
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundColor: AppColors.elevation,
+                    backgroundImage: (userData['profileImage'] ?? userData['logo'] ?? '').isNotEmpty
+                        ? CachedNetworkImageProvider(userData['profileImage'] ?? userData['logo'] ?? '')
+                        : AssetImage('assets/default_avatar.png') as ImageProvider,
+                  ),
+                  if (_isEditing)
+                    Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.3),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.camera_alt, color: Colors.white.withOpacity(0.8)),
+                    ),
+                ],
+              ),
             ),
             if (_isOwnProfile)
               Positioned(
@@ -121,13 +164,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 right: 0,
                 child: CircleAvatar(
                   radius: 12,
-                  backgroundColor: Theme.of(context).colorScheme.secondary,
+                  backgroundColor: AppColors.primaryLavender,
                   child: IconButton(
                     padding: EdgeInsets.zero,
                     constraints: BoxConstraints(),
                     icon: Icon(
                       _isEditing ? Icons.save : Icons.edit,
-                      color: Colors.white,
+                      color: AppColors.backgroundDeep,
                       size: 14,
                     ),
                     onPressed: () {
@@ -146,52 +189,110 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         SizedBox(height: 8),
 
-        // Account Badge
         AccountBadge(
-          accountType: user['accountType'] ?? 'personal',
-          isVerified: user['isVerified'] ?? false,
+          accountType: userData['accountType'] ?? 'personal',
+          isVerified: userData['isVerified'] ?? false,
         ),
         SizedBox(height: 8),
 
         _isEditing
-            ? TextFormField(
-                controller: _fullNameController,
-                decoration: InputDecoration(
-                  labelText: 'Full Name',
-                  border: OutlineInputBorder(),
-                ),
+            ? Column(
+                children: [
+                  TextFormField(
+                    controller: _fullNameController,
+                    // Disable field if they are within the 30-day limit
+                    enabled: canChangeName,
+                    style: TextStyle(
+                      color: canChangeName ? AppColors.textHigh : AppColors.textDisabled
+                    ),
+                    decoration: InputDecoration(
+                      labelText: 'Full Name',
+                      labelStyle: TextStyle(color: AppColors.textMedium),
+                      filled: true,
+                      fillColor: AppColors.elevation,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    ),
+                  ),
+                  
+                  // ======== NEW: WARNING WIDGET ========
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Container(
+                      padding: EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: canChangeName 
+                            ? Colors.orange.withOpacity(0.15) // Warning color
+                            : AppColors.error.withOpacity(0.15), // Error/Locked color
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: canChangeName ? Colors.orange : AppColors.error,
+                          width: 1
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            canChangeName ? Icons.warning_amber_rounded : Icons.lock_clock,
+                            color: canChangeName ? Colors.orange : AppColors.error,
+                            size: 20,
+                          ),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              canChangeName
+                                  ? "Note: You can only change your name once every 30 days."
+                                  : "Name change locked. You can change it again in $daysRemaining days.",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: canChangeName ? Colors.orange : AppColors.error,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // =====================================
+                ],
               )
             : Text(
-                user['fullName'] ?? user['organizationName'] ?? 'No Name',
+                userData['fullName'] ?? userData['organizationName'] ?? 'No Name',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
+                  color: AppColors.textHigh,
                 ),
               ),
+        
         SizedBox(height: 2),
-        Text('@${user['username']}'),
+        Text('@${userData['username'] ?? ''}', style: TextStyle(color: AppColors.textMedium)),
         SizedBox(height: 8),
 
-        // Organization-specific fields
-        if (user['accountType'] == 'organization') ..._buildOrganizationProfile(user),
+        if (userData['accountType'] == 'organization') ..._buildOrganizationProfile(user),
+        if (userData['accountType'] == 'therapist') ..._buildTherapistProfile(user),
 
-        // Therapist-specific fields
-        if (user['accountType'] == 'therapist') ..._buildTherapistProfile(user),
-
-        // Personal account bio
-        if (user['accountType'] == 'personal')
+        if ((userData['accountType'] ?? 'personal') == 'personal')
           _isEditing
-              ? TextFormField(
-                  controller: _bioController,
-                  decoration: InputDecoration(
-                    labelText: 'Bio',
-                    border: OutlineInputBorder(),
+              ? Padding(
+                  padding: const EdgeInsets.only(top: 8.0), // Add spacing after warning
+                  child: TextFormField(
+                    controller: _bioController,
+                    style: TextStyle(color: AppColors.textHigh),
+                    decoration: InputDecoration(
+                      labelText: 'Bio',
+                      labelStyle: TextStyle(color: AppColors.textMedium),
+                      filled: true,
+                      fillColor: AppColors.elevation,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    ),
+                    maxLines: 2,
                   ),
-                  maxLines: 2,
                 )
               : Text(
-                  user['bio'] ?? 'No bio yet',
+                  userData['bio'] ?? 'No bio yet',
                   textAlign: TextAlign.center,
+                  style: TextStyle(color: AppColors.textMedium),
                 ),
       ],
     );
@@ -199,33 +300,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ======== Helper: Organization Profile Fields ========
   List<Widget> _buildOrganizationProfile(DocumentSnapshot user) {
-    // Initialize controllers on first build if not editing
+    // Convert to map for safe access in helper methods too
+    final userData = user.data() as Map<String, dynamic>? ?? {};
+
     if (!_isEditing) {
-      _missionStatementController.text = user['missionStatement'] ?? '';
-      _websiteController.text = user['website'] ?? '';
-      _phoneController.text = user['phone'] ?? '';
-      _addressController.text = user['address'] ?? '';
+      _missionStatementController.text = userData['missionStatement'] ?? '';
+      _websiteController.text = userData['website'] ?? '';
+      _phoneController.text = userData['phone'] ?? '';
+      _addressController.text = userData['address'] ?? '';
     }
 
     return [
-      if (user['category'] != null)
+      if (userData['category'] != null)
         Text(
-          user['category'],
+          userData['category'],
           style: TextStyle(
-            color: Colors.grey.shade600,
+            color: AppColors.textDisabled,
             fontWeight: FontWeight.w500,
           ),
         ),
-      if (user['missionStatement'] != null)
+      if (userData['missionStatement'] != null)
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: Text(
-            user['missionStatement'],
+            userData['missionStatement'],
             textAlign: TextAlign.center,
-            style: TextStyle(fontStyle: FontStyle.italic),
+            style: TextStyle(fontStyle: FontStyle.italic, color: AppColors.textMedium),
           ),
         ),
-      if (user['website'] != null && user['website'].isNotEmpty)
+      if (userData['website'] != null && (userData['website'] as String).isNotEmpty)
         Padding(
           padding: const EdgeInsets.only(top: 4.0),
           child: InkWell(
@@ -233,9 +336,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // TODO: Launch URL
             },
             child: Text(
-              user['website'],
+              userData['website'],
               style: TextStyle(
-                color: Colors.blue.shade600,
+                color: AppColors.secondaryTeal,
                 decoration: TextDecoration.underline,
               ),
             ),
@@ -244,138 +347,118 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _isEditing
           ? Column(
               children: [
-                TextFormField(
-                  controller: _missionStatementController,
-                  decoration: InputDecoration(
-                    labelText: 'Mission Statement',
-                    border: OutlineInputBorder(),
-                  ),
-                  maxLines: 2,
-                ),
+                _buildTextField(controller: _missionStatementController, label: 'Mission Statement', maxLines: 2),
                 SizedBox(height: 8),
-                TextFormField(
-                  controller: _websiteController,
-                  decoration: InputDecoration(
-                    labelText: 'Website (optional)',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
+                _buildTextField(controller: _websiteController, label: 'Website (optional)'),
                 SizedBox(height: 8),
-                TextFormField(
-                  controller: _phoneController,
-                  decoration: InputDecoration(
-                    labelText: 'Phone',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
+                _buildTextField(controller: _phoneController, label: 'Phone'),
                 SizedBox(height: 8),
-                TextFormField(
-                  controller: _addressController,
-                  decoration: InputDecoration(
-                    labelText: 'Address',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
+                _buildTextField(controller: _addressController, label: 'Address'),
                 SizedBox(height: 8),
-                TextFormField(
-                  controller: _bioController,
-                  decoration: InputDecoration(
-                    labelText: 'About Us',
-                    border: OutlineInputBorder(),
-                  ),
-                  maxLines: 3,
-                ),
+                _buildTextField(controller: _bioController, label: 'About Us', maxLines: 3),
               ],
             )
           : Text(
-              user['bio'] ?? 'No description yet',
+              userData['bio'] ?? 'No description yet',
               textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textMedium),
             ),
     ];
   }
 
   // ======== Helper: Therapist Profile Fields ========
   List<Widget> _buildTherapistProfile(DocumentSnapshot user) {
+    final userData = user.data() as Map<String, dynamic>? ?? {};
+
     return [
-      if (user['specialization'] != null && (user['specialization'] as List?)?.isNotEmpty == true)
+      if (userData['specialization'] != null && (userData['specialization'] as List?)?.isNotEmpty == true)
         Padding(
           padding: const EdgeInsets.only(top: 4.0),
           child: Wrap(
             spacing: 8,
             runSpacing: 4,
-            children: (user['specialization'] as List).map<Widget>((spec) {
+            children: (userData['specialization'] as List).map<Widget>((spec) {
               return Chip(
                 label: Text(
                   spec.toString(),
-                  style: TextStyle(fontSize: 12),
+                  style: TextStyle(fontSize: 12, color: AppColors.textHigh),
                 ),
-                backgroundColor: Colors.purple.shade50,
+                backgroundColor: AppColors.elevation,
                 visualDensity: VisualDensity.compact,
               );
             }).toList(),
           ),
         ),
-      if (user['experienceLevel'] != null)
+      if (userData['experienceLevel'] != null)
         Padding(
           padding: const EdgeInsets.only(top: 4.0),
           child: Text(
-            user['experienceLevel'],
+            userData['experienceLevel'],
             style: TextStyle(
-              color: Colors.grey.shade600,
+              color: AppColors.textDisabled,
               fontWeight: FontWeight.w500,
             ),
           ),
         ),
-      if (user['region'] != null && user['region'].isNotEmpty)
+      if (userData['region'] != null && (userData['region'] as String).isNotEmpty)
         Text(
-          user['region'],
+          userData['region'],
           style: TextStyle(
-            color: Colors.grey.shade600,
+            color: AppColors.textDisabled,
           ),
         ),
-      if (user['availableHours'] != null)
+      if (userData['availableHours'] != null)
         Padding(
           padding: const EdgeInsets.only(top: 4.0),
           child: Text(
-            'Available: ${user['availableHours']}',
+            'Available: ${userData['availableHours']}',
             style: TextStyle(
-              color: Colors.green.shade600,
+              color: AppColors.success,
               fontWeight: FontWeight.w500,
             ),
           ),
         ),
       _isEditing
-          ? TextFormField(
-              controller: _bioController,
-              decoration: InputDecoration(
-                labelText: 'Professional Bio',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 3,
-            )
+          ? _buildTextField(controller: _bioController, label: 'Professional Bio', maxLines: 3)
           : Text(
-              user['bio'] ?? 'No bio yet',
+              userData['bio'] ?? 'No bio yet',
               textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textMedium),
             ),
-      if (user['languages'] != null && (user['languages'] as List?)?.isNotEmpty == true)
+      if (userData['languages'] != null && (userData['languages'] as List?)?.isNotEmpty == true)
         Padding(
           padding: const EdgeInsets.only(top: 8.0),
           child: Wrap(
             spacing: 8,
             runSpacing: 4,
-            children: (user['languages'] as List).map<Widget>((lang) {
+            children: (userData['languages'] as List).map<Widget>((lang) {
               return Chip(
                 label: Text(
                   lang.toString(),
-                  style: TextStyle(fontSize: 12),
+                  style: TextStyle(fontSize: 12, color: AppColors.textHigh),
                 ),
-                backgroundColor: Colors.blue.shade50,
+                backgroundColor: AppColors.secondaryTeal.withOpacity(0.2),
                 visualDensity: VisualDensity.compact,
               );
             }).toList(),
           ),
         ),
     ];
+  }
+
+  Widget _buildTextField({required TextEditingController controller, required String label, int maxLines = 1}) {
+    return TextFormField(
+      controller: controller,
+      style: TextStyle(color: AppColors.textHigh),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: AppColors.textMedium),
+        filled: true,
+        fillColor: AppColors.elevation,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      ),
+      maxLines: maxLines,
+    );
   }
 
   Future<void> _pickProfileImage() async {
@@ -389,17 +472,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // ======== UPDATED: Save Profile with account-type fields ========
+  // ======== MODIFIED: Save Logic with 30-Day Restriction ========
   Future<void> _saveProfileChanges() async {
     try {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(widget.userId).get();
+      // FIXED: Get data as Map first to safely check accountType
+      final userData = userDoc.data() as Map<String, dynamic>? ?? {};
+      
       Map<String, dynamic> updateData = {
-        'fullName': _fullNameController.text,
         'bio': _bioController.text,
       };
 
-      // Fetch current accountType to conditionally save fields
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(widget.userId).get();
-      String? accountType = userDoc['accountType'];
+      // Check Name Change Restriction
+      String currentName = userData['fullName'] ?? '';
+      String newName = _fullNameController.text.trim();
+
+      if (newName != currentName) {
+        Timestamp? lastChange = userData['lastNameChangeDate'];
+        if (lastChange != null) {
+          final date = lastChange.toDate();
+          final daysSinceChange = DateTime.now().difference(date).inDays;
+
+          if (daysSinceChange < 30) {
+            final daysRemaining = 30 - daysSinceChange;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('You can only change your name once every 30 days. Please try again in $daysRemaining days.'),
+                backgroundColor: AppColors.error,
+              ),
+            );
+            return; // Abort save if name change is invalid
+          }
+        }
+        // Update name and set new timestamp
+        updateData['fullName'] = newName;
+        updateData['lastNameChangeDate'] = FieldValue.serverTimestamp();
+      }
+
+      String accountType = userData['accountType'] ?? 'personal';
 
       if (accountType == 'organization') {
         updateData['missionStatement'] = _missionStatementController.text;
@@ -531,10 +641,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
         }
         if (snapshot.hasError) {
-          return Center(child: Text('Error loading posts'));
+          return Center(child: Text('Error loading posts', style: TextStyle(color: AppColors.error)));
         }
         final posts = snapshot.hasData ? snapshot.data!.docs : [];
         return Padding(
@@ -570,10 +680,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             imageUrl: post['mediaUrl'],
                             fit: BoxFit.cover,
                             placeholder: (context, url) => Container(
-                              color: Colors.grey[300],
-                              child: Icon(Icons.image, color: Colors.grey[400]),
+                              color: AppColors.elevation,
+                              child: Icon(Icons.image, color: AppColors.textDisabled),
                             ),
-                            errorWidget: (context, url, error) => Icon(Icons.error),
+                            errorWidget: (context, url, error) => Icon(Icons.error, color: AppColors.error),
                           )
                         : Container(
                             color: Colors.black,
@@ -603,9 +713,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12.0),
-          side: const BorderSide(color: Color(0xFFFFB7C5), width: 1.5),
+          side: const BorderSide(color: AppColors.primaryLavender, width: 1.5),
         ),
-        color: const Color(0xFFFFE1E0),
+        color: AppColors.elevation, // Dark container
         elevation: 0,
         child: ClipRRect(
           borderRadius: BorderRadius.circular(12.0),
@@ -615,15 +725,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Icon(
-                  Icons.add_circle_outline,
+                  Feather.plus_circle,
                   size: 40,
-                  color: Color(0xFFE56982),
+                  color: AppColors.primaryLavender,
                 ),
                 const SizedBox(height: 8),
                 const Text(
                   'Create Post',
                   style: TextStyle(
-                    color: Color(0xFFE56982),
+                    color: AppColors.primaryLavender,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
@@ -643,12 +753,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final isOwnProfile = widget.userId == currentUserId;
 
     return Scaffold(
+      backgroundColor: AppColors.backgroundDeep,
       appBar: AppBar(
-        title: Text('Profile'),
+        title: Text('Profile', style: TextStyle(color: AppColors.textHigh)),
+        backgroundColor: AppColors.backgroundDeep,
+        iconTheme: IconThemeData(color: AppColors.primaryLavender),
+        elevation: 0,
         actions: isOwnProfile
             ? [
                 IconButton(
-                  icon: Icon(Icons.settings),
+                  icon: Icon(Feather.settings, color: AppColors.textHigh),
                   onPressed: () {
                     Navigator.push(
                       context,
@@ -663,17 +777,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
         future: FirebaseFirestore.instance.collection('users').doc(widget.userId).get(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
           }
           if (!snapshot.hasData) {
-            return Center(child: Text('User not found'));
+            return Center(child: Text('User not found', style: TextStyle(color: AppColors.textHigh)));
           }
+          // We don't cast here because we pass the snapshot to _buildProfileHeader
+          // which now handles the casting safely.
           var user = snapshot.data!;
+          // But for text controller initialization, we should access data safely
+          var userData = user.data() as Map<String, dynamic>? ?? {};
 
-          // Initialize controllers safely (avoid re-initializing while editing)
           if (!_isEditing) {
-            _fullNameController.text = user['fullName'] ?? '';
-            _bioController.text = user['bio'] ?? '';
+            _fullNameController.text = userData['fullName'] ?? '';
+            _bioController.text = userData['bio'] ?? '';
           }
 
           return Column(
@@ -692,31 +809,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     if (!isOwnProfile)
                       ElevatedButton(
                         onPressed: () async {
-                          List followers = List.from(user['followers']);
+                          List followers = List.from(userData['followers'] ?? []);
                           if (followers.contains(currentUserId)) {
-                            await FirebaseFirestore.instance
-                                .collection('users')
-                                .doc(widget.userId)
-                                .update({
+                            await FirebaseFirestore.instance.collection('users').doc(widget.userId).update({
                               'followers': FieldValue.arrayRemove([currentUserId]),
                             });
-                            await FirebaseFirestore.instance
-                                .collection('users')
-                                .doc(currentUserId)
-                                .update({
+                            await FirebaseFirestore.instance.collection('users').doc(currentUserId).update({
                               'following': FieldValue.arrayRemove([widget.userId]),
                             });
                           } else {
-                            await FirebaseFirestore.instance
-                                .collection('users')
-                                .doc(widget.userId)
-                                .update({
+                            await FirebaseFirestore.instance.collection('users').doc(widget.userId).update({
                               'followers': FieldValue.arrayUnion([currentUserId]),
                             });
-                            await FirebaseFirestore.instance
-                                .collection('users')
-                                .doc(currentUserId)
-                                .update({
+                            await FirebaseFirestore.instance.collection('users').doc(currentUserId).update({
                               'following': FieldValue.arrayUnion([widget.userId]),
                             });
                             await FirebaseFirestore.instance.collection('notifications').add({
@@ -732,11 +837,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           future: FirebaseFirestore.instance.collection('users').doc(widget.userId).get(),
                           builder: (context, userSnapshot) {
                             if (userSnapshot.hasData) {
-                              List followers = List.from(userSnapshot.data!['followers']);
-                              return Text(followers.contains(currentUserId) ? 'Unfollow' : 'Follow');
+                              var data = userSnapshot.data!.data() as Map<String, dynamic>? ?? {};
+                              List followers = List.from(data['followers'] ?? []);
+                              return Text(followers.contains(currentUserId) ? 'Unfollow' : 'Follow',
+                                  style: TextStyle(color: AppColors.backgroundDeep));
                             }
-                            return Text('Follow');
+                            return Text('Follow', style: TextStyle(color: AppColors.backgroundDeep));
                           },
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryLavender,
                         ),
                       ),
                   ],
@@ -751,7 +861,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
-// =============== Rest of file (unchanged from original) ===============
+// =============== Rest of file (unchanged logic, updated colors) ===============
 
 class OtherUserProfileScreen extends StatefulWidget {
   final String userId;
@@ -773,7 +883,8 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
   void _checkIfFollowing() async {
     final userDoc = await FirebaseFirestore.instance.collection('users').doc(widget.userId).get();
     if (userDoc.exists) {
-      final followers = List<String>.from(userDoc['followers'] ?? []);
+      final data = userDoc.data() as Map<String, dynamic>? ?? {};
+      final followers = List<String>.from(data['followers'] ?? []);
       setState(() {
         _isFollowing = followers.contains(currentUserId);
       });
@@ -783,17 +894,23 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Profile')),
+      backgroundColor: AppColors.backgroundDeep,
+      appBar: AppBar(
+        title: Text('Profile', style: TextStyle(color: AppColors.textHigh)),
+        backgroundColor: AppColors.backgroundDeep,
+        iconTheme: IconThemeData(color: AppColors.primaryLavender),
+        elevation: 0,
+      ),
       body: FutureBuilder<DocumentSnapshot>(
         future: FirebaseFirestore.instance.collection('users').doc(widget.userId).get(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
           }
           if (!snapshot.hasData) {
-            return Center(child: Text('User not found'));
+            return Center(child: Text('User not found', style: TextStyle(color: AppColors.textHigh)));
           }
-          var user = snapshot.data!;
+          final user = snapshot.data!.data() as Map<String, dynamic>? ?? {};
           return Column(
             children: [
               Padding(
@@ -802,19 +919,20 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
                   children: [
                     CircleAvatar(
                       radius: 50,
-                      backgroundImage: user['profileImage'].isNotEmpty
+                      backgroundColor: AppColors.elevation,
+                      backgroundImage: (user['profileImage'] ?? '').isNotEmpty
                           ? CachedNetworkImageProvider(user['profileImage'])
                           : AssetImage('assets/default_avatar.png') as ImageProvider,
                     ),
                     SizedBox(height: 8),
                     Text(
-                      user['fullName'],
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      user['fullName'] ?? 'No Name',
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textHigh),
                     ),
                     SizedBox(height: 2),
-                    Text('@${user['username']}'),
+                    Text('@${user['username'] ?? ''}', style: TextStyle(color: AppColors.textMedium)),
                     SizedBox(height: 0),
-                    Text(user['bio'] ?? 'No bio yet', textAlign: TextAlign.center),
+                    Text(user['bio'] ?? 'No bio yet', textAlign: TextAlign.center, style: TextStyle(color: AppColors.textMedium)),
                     SizedBox(height: 4),
                     ProfileStatsWidget(userId: widget.userId, isOwnProfile: false),
                     SizedBox(height: 16),
@@ -839,7 +957,10 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
                           _isFollowing = !_isFollowing;
                         });
                       },
-                      child: Text(_isFollowing ? 'Unfollow' : 'Follow'),
+                      child: Text(_isFollowing ? 'Unfollow' : 'Follow', style: TextStyle(color: _isFollowing ? AppColors.textHigh : AppColors.backgroundDeep)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _isFollowing ? AppColors.elevation : AppColors.secondaryTeal,
+                      ),
                     ),
                   ],
                 ),
@@ -853,13 +974,13 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
                       .snapshots(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Center(child: CircularProgressIndicator());
+                      return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
                     }
                     if (snapshot.hasError) {
-                      return Center(child: Text('Error loading posts'));
+                      return Center(child: Text('Error loading posts', style: TextStyle(color: AppColors.error)));
                     }
                     if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                      return Center(child: Text('No posts yet'));
+                      return Center(child: Text('No posts yet', style: TextStyle(color: AppColors.textMedium)));
                     }
                     final posts = snapshot.data!.docs;
                     return Padding(
@@ -888,10 +1009,10 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
                                         imageUrl: post['mediaUrl'],
                                         fit: BoxFit.cover,
                                         placeholder: (context, url) => Container(
-                                          color: Colors.grey[300],
-                                          child: Icon(Icons.image, color: Colors.grey[400]),
+                                          color: AppColors.elevation,
+                                          child: Icon(Icons.image, color: AppColors.textDisabled),
                                         ),
-                                        errorWidget: (context, url, error) => Icon(Icons.error),
+                                        errorWidget: (context, url, error) => Icon(Icons.error, color: AppColors.error),
                                       )
                                     : Container(
                                         color: Colors.black,
@@ -937,23 +1058,29 @@ class _FollowListScreenState extends State<FollowListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.showFollowers ? 'Followers' : 'Following')),
+      backgroundColor: AppColors.backgroundDeep,
+      appBar: AppBar(
+        title: Text(widget.showFollowers ? 'Followers' : 'Following', style: TextStyle(color: AppColors.textHigh)),
+        backgroundColor: AppColors.backgroundDeep,
+        iconTheme: IconThemeData(color: AppColors.primaryLavender),
+        elevation: 0,
+      ),
       body: StreamBuilder<DocumentSnapshot>(
         stream: FirebaseFirestore.instance.collection('users').doc(widget.userId).snapshots(),
         builder: (context, userSnapshot) {
           if (userSnapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
           }
           if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
-            return Center(child: Text('User not found'));
+            return Center(child: Text('User not found', style: TextStyle(color: AppColors.textHigh)));
           }
-          final userData = userSnapshot.data!;
+          final userData = userSnapshot.data!.data() as Map<String, dynamic>? ?? {};
           final List<String> userIds = List<String>.from(
-            widget.showFollowers ? userData['followers'] : userData['following'],
+            widget.showFollowers ? (userData['followers'] ?? []) : (userData['following'] ?? []),
           );
           if (userIds.isEmpty) {
             return Center(
-              child: Text(widget.showFollowers ? 'No followers yet' : 'Not following anyone'),
+              child: Text(widget.showFollowers ? 'No followers yet' : 'Not following anyone', style: TextStyle(color: AppColors.textMedium)),
             );
           }
           return ListView.builder(
@@ -964,26 +1091,20 @@ class _FollowListScreenState extends State<FollowListScreen> {
                 future: FirebaseFirestore.instance.collection('users').doc(userId).get(),
                 builder: (context, userSnapshot) {
                   if (userSnapshot.connectionState == ConnectionState.waiting) {
-                    return ListTile(
-                      leading: CircleAvatar(),
-                      title: Text('Loading...'),
-                    );
+                    return ListTile(leading: CircleAvatar(backgroundColor: AppColors.elevation), title: Text('Loading...', style: TextStyle(color: AppColors.textDisabled)));
                   }
                   if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
-                    return ListTile(
-                      leading: CircleAvatar(),
-                      title: Text('User not found'),
-                    );
+                    return ListTile(leading: CircleAvatar(backgroundColor: AppColors.elevation), title: Text('User not found', style: TextStyle(color: AppColors.textDisabled)));
                   }
-                  final user = userSnapshot.data!;
+                  final user = userSnapshot.data!.data() as Map<String, dynamic>? ?? {};
                   return _buildUserTile(
-                    user['uid'],
-                    user['username'],
-                    user['fullName'],
-                    user['profileImage'],
+                    user['uid'] ?? userId,
+                    user['username'] ?? 'Unknown',
+                    user['fullName'] ?? 'No Name',
+                    user['profileImage'] ?? '',
                     isFollowing: _isOwnProfile
                         ? null
-                        : List.from(userData['followers']).contains(currentUserId),
+                        : List.from(userData['followers'] ?? []).contains(currentUserId),
                   );
                 },
               );
@@ -1003,12 +1124,13 @@ class _FollowListScreenState extends State<FollowListScreen> {
   }) {
     return ListTile(
       leading: CircleAvatar(
+        backgroundColor: AppColors.elevation,
         backgroundImage: profileImage.isNotEmpty
             ? CachedNetworkImageProvider(profileImage)
             : AssetImage('assets/default_avatar.png') as ImageProvider,
       ),
-      title: Text(username),
-      subtitle: Text(fullName),
+      title: Text(username, style: TextStyle(color: AppColors.textHigh)),
+      subtitle: Text(fullName, style: TextStyle(color: AppColors.textMedium)),
       trailing: _isOwnProfile
           ? null
           : isFollowing == null
@@ -1032,8 +1154,8 @@ class _FollowListScreenState extends State<FollowListScreen> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: isFollowing ? Colors.grey[300] : Theme.of(context).colorScheme.secondary,
-                    foregroundColor: isFollowing ? Colors.black : Colors.white,
+                    backgroundColor: isFollowing ? AppColors.elevation : AppColors.secondaryTeal,
+                    foregroundColor: isFollowing ? AppColors.textHigh : AppColors.backgroundDeep,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   ),
@@ -1057,17 +1179,16 @@ class ProfileStatsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currentUserId = FirebaseAuth.instance.currentUser!.uid;
     return Align(
       alignment: Alignment.center,
       child: SizedBox(
-        width: MediaQuery.of(context).size.width * 0.75,
+        width: MediaQuery.of(context).size.width * 0.85,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
           decoration: BoxDecoration(
-            color: const Color(0xFFFFE1E0),
+            color: AppColors.surface, // Dark Card
             borderRadius: BorderRadius.circular(25),
-            border: Border.all(color: const Color(0xFFFFB7C5), width: 1),
+            border: Border.all(color: AppColors.elevation, width: 1),
             boxShadow: [
               BoxShadow(color: Colors.black12, blurRadius: 4, offset: const Offset(0, 2)),
             ],
@@ -1118,18 +1239,19 @@ class ProfileStatsWidget extends StatelessWidget {
       builder: (context, snapshot) {
         int embers = 0;
         if (snapshot.hasData && snapshot.data!.exists) {
-          embers = snapshot.data!['embers'] ?? 0;
+          final data = snapshot.data!.data() as Map<String, dynamic>? ?? {};
+          embers = data['embers'] ?? 0;
         }
         return Column(
           children: [
             Text(
               "Embers",
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFFE56982)),
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryLavender),
             ),
             const SizedBox(height: 2),
             Text(
               embers.toString(),
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFFE56982)),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textHigh),
             ),
           ],
         );
@@ -1145,7 +1267,7 @@ class ProfileStatsWidget extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFFE56982)),
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryLavender),
         ),
         const SizedBox(height: 2),
         StreamBuilder<QuerySnapshot>(
@@ -1154,7 +1276,7 @@ class ProfileStatsWidget extends StatelessWidget {
             int count = snapshot.hasData ? snapshot.data!.docs.length : 0;
             return Text(
               count.toString(),
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFFE56982)),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textHigh),
             );
           },
         ),
@@ -1167,22 +1289,23 @@ class ProfileStatsWidget extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFFE56982)),
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryLavender),
         ),
         const SizedBox(height: 2),
         FutureBuilder<DocumentSnapshot>(
           future: FirebaseFirestore.instance.collection('users').doc(userId).get(),
           builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              List list = List.from(snapshot.data![followers ? 'followers' : 'following']);
+            if (snapshot.hasData && snapshot.data!.exists) {
+              final data = snapshot.data!.data() as Map<String, dynamic>? ?? {};
+              List list = List.from(data[followers ? 'followers' : 'following'] ?? []);
               return Text(
                 list.length.toString(),
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFFE56982)),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textHigh),
               );
             }
             return const Text(
               "0",
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFFE56982)),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textHigh),
             );
           },
         ),

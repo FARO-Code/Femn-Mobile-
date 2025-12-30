@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:uuid/uuid.dart';
 import 'package:femn/embers_service.dart';
+import 'package:femn/colors.dart'; // <--- IMPORT COLORS
 
 // --- STORY CREATION MODAL ---
 class StoryCreationModal extends StatefulWidget {
@@ -34,148 +35,171 @@ class _StoryCreationModalState extends State<StoryCreationModal> {
     }
   }
 
-Future<void> _uploadStory() async {
-  if (_mediaFile == null) return;
-  
-  setState(() { _isUploading = true; });
-  
-  try {
-    final currentUserId = FirebaseAuth.instance.currentUser!.uid;
-    final userDoc = await FirebaseFirestore.instance.collection('users').doc(currentUserId).get();
+  Future<void> _uploadStory() async {
+    if (_mediaFile == null) return;
     
-    // Check if user has enough embers first
-    final hasEnoughEmbers = await EmbersService.hasSufficientEmbers(1);
-    if (!hasEnoughEmbers) {
-      // The EmbersService will automatically show a snackbar via the button check
-      setState(() { _isUploading = false; });
-      return;
-    }
+    setState(() { _isUploading = true; });
     
-    // Upload media
-    String storyId = Uuid().v4();
-    Reference storageRef = FirebaseStorage.instance
-        .ref()
-        .child('stories')
-        .child(currentUserId)
-        .child('$storyId.jpg');
-    
-    await storageRef.putFile(_mediaFile!);
-    String mediaUrl = await storageRef.getDownloadURL();
+    try {
+      final currentUserId = FirebaseAuth.instance.currentUser!.uid;
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(currentUserId).get();
+      
+      // Check if user has enough embers first
+      final hasEnoughEmbers = await EmbersService.hasSufficientEmbers(1);
+      if (!hasEnoughEmbers) {
+        // The EmbersService will automatically show a snackbar via the button check
+        setState(() { _isUploading = false; });
+        return;
+      }
+      
+      // Upload media
+      String storyId = Uuid().v4();
+      Reference storageRef = FirebaseStorage.instance
+          .ref()
+          .child('stories')
+          .child(currentUserId)
+          .child('$storyId.jpg');
+      
+      await storageRef.putFile(_mediaFile!);
+      String mediaUrl = await storageRef.getDownloadURL();
 
-    // Create story document and get reference
-    DocumentReference storyDocRef = await FirebaseFirestore.instance.collection('stories').add({
-      'userId': currentUserId,
-      'username': userDoc['username'],
-      'profileImage': userDoc['profileImage'],
-      'mediaUrl': mediaUrl,
-      'caption': _captionController.text,
-      'mediaType': _mediaType,
-      'timestamp': DateTime.now(),
-      'expiresAt': DateTime.now().add(Duration(hours: 24)),
-      'viewers': [],
-    });
+      // Create story document and get reference
+      DocumentReference storyDocRef = await FirebaseFirestore.instance.collection('stories').add({
+        'userId': currentUserId,
+        'username': userDoc['username'],
+        'profileImage': userDoc['profileImage'],
+        'mediaUrl': mediaUrl,
+        'caption': _captionController.text,
+        'mediaType': _mediaType,
+        'timestamp': DateTime.now(),
+        'expiresAt': DateTime.now().add(Duration(hours: 24)),
+        'viewers': [],
+      });
 
-    // 🔥 DEDUCT 1 EMBER FOR STORY CREATION
-    final result = await EmbersService.processEmbersTransaction(
-      context: context,
-      amount: -1,
-      actionType: 'story_creation',
-      referenceId: storyDocRef.id,
-      insufficientFundsMessage: 'Need 1 Ember to create a story',
-    );
-
-    if (!result.success) {
-      // If embers deduction failed, delete the story and show error
-      await storyDocRef.delete();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to create story: ${result.message}')),
+      // 🔥 DEDUCT 1 EMBER FOR STORY CREATION
+      final result = await EmbersService.processEmbersTransaction(
+        context: context,
+        amount: -1,
+        actionType: 'story_creation',
+        referenceId: storyDocRef.id,
+        insufficientFundsMessage: 'Need 1 Ember to create a story',
       );
-      return;
+
+      if (!result.success) {
+        // If embers deduction failed, delete the story and show error
+        await storyDocRef.delete();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to create story: ${result.message}')),
+        );
+        return;
+      }
+
+      await Future.delayed(Duration(milliseconds: 500));
+      Navigator.pop(context);
+      
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error uploading story: $e')),
+      );
+    } finally {
+      setState(() { _isUploading = false; });
     }
-
-    await Future.delayed(Duration(milliseconds: 500));
-    Navigator.pop(context);
-    // Don't need to show success snackbar here - EmbersService already shows one
-    
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error uploading story: $e')),
-    );
-  } finally {
-    setState(() { _isUploading = false; });
   }
-}
 
-@override
-Widget build(BuildContext context) {
-  return Container(
-    padding: EdgeInsets.all(16),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text('Create Story', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        SizedBox(height: 16),
-        
-        if (_mediaFile != null) _buildMediaPreview(),
-        if (_mediaFile != null) SizedBox(height: 16),
-        
-        if (_mediaFile != null)
-          TextField(
-            controller: _captionController,
-            decoration: InputDecoration(
-              hintText: 'Add a caption...',
-              border: OutlineInputBorder(),
-            ),
-            maxLines: 2,
-          ),
-        
-        if (_mediaFile != null) SizedBox(height: 16),
-        
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            ElevatedButton.icon(
-              onPressed: () => _pickMedia(ImageSource.camera),
-              icon: Icon(Icons.camera_alt),
-              label: Text('Camera'),
-            ),
-            ElevatedButton.icon(
-              onPressed: () => _pickMedia(ImageSource.gallery),
-              icon: Icon(Icons.photo_library),
-              label: Text('Gallery'),
-            ),
-          ],
-        ),
-        
-        if (_mediaFile != null) SizedBox(height: 16),
-        
-        if (_mediaFile != null)
-          _isUploading
-              ? CircularProgressIndicator()
-              : ElevatedButton(
-                  onPressed: () async {
-                    // Check embers balance before uploading
-                    final hasEnoughEmbers = await EmbersService.hasSufficientEmbers(1);
-                    if (!hasEnoughEmbers) {
-                      // This will trigger the EmbersService to show the snackbar
-                      await EmbersService.processEmbersTransaction(
-                        context: context,
-                        amount: -1,
-                        actionType: 'story_creation_check',
-                        showSnackBar: true,
-                      );
-                      return;
-                    }
-                    
-                    // If they have enough embers, proceed with upload
-                    await _uploadStory();
-                  },
-                  child: Text('Share Story'),
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface, // Dark surface
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('Create Story', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
+          SizedBox(height: 16),
+          
+          if (_mediaFile != null) _buildMediaPreview(),
+          if (_mediaFile != null) SizedBox(height: 16),
+          
+          if (_mediaFile != null)
+            TextField(
+              controller: _captionController,
+              style: TextStyle(color: AppColors.textHigh),
+              decoration: InputDecoration(
+                hintText: 'Add a caption...',
+                hintStyle: TextStyle(color: AppColors.textDisabled),
+                filled: true,
+                fillColor: AppColors.elevation,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
                 ),
-      ],
-    ),
-  );
-}
+              ),
+              maxLines: 2,
+            ),
+          
+          if (_mediaFile != null) SizedBox(height: 16),
+          
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              ElevatedButton.icon(
+                onPressed: () => _pickMedia(ImageSource.camera),
+                icon: Icon(Icons.camera_alt),
+                label: Text('Camera'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.elevation,
+                  foregroundColor: AppColors.primaryLavender,
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: () => _pickMedia(ImageSource.gallery),
+                icon: Icon(Icons.photo_library),
+                label: Text('Gallery'),
+                 style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.elevation,
+                  foregroundColor: AppColors.primaryLavender,
+                ),
+              ),
+            ],
+          ),
+          
+          if (_mediaFile != null) SizedBox(height: 16),
+          
+          if (_mediaFile != null)
+            _isUploading
+                ? CircularProgressIndicator(color: AppColors.primaryLavender)
+                : ElevatedButton(
+                    onPressed: () async {
+                      // Check embers balance before uploading
+                      final hasEnoughEmbers = await EmbersService.hasSufficientEmbers(1);
+                      if (!hasEnoughEmbers) {
+                        // This will trigger the EmbersService to show the snackbar
+                        await EmbersService.processEmbersTransaction(
+                          context: context,
+                          amount: -1,
+                          actionType: 'story_creation_check',
+                          showSnackBar: true,
+                        );
+                        return;
+                      }
+                      
+                      // If they have enough embers, proceed with upload
+                      await _uploadStory();
+                    },
+                    child: Text('Share Story'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryLavender,
+                      foregroundColor: AppColors.backgroundDeep,
+                      minimumSize: Size(double.infinity, 50),
+                    ),
+                  ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildMediaPreview() {
     return Container(
@@ -185,9 +209,12 @@ Widget build(BuildContext context) {
         borderRadius: BorderRadius.circular(12),
         color: Colors.black,
       ),
-      child: _mediaType == 'image'
-          ? Image.file(_mediaFile!, fit: BoxFit.cover)
-          : Icon(Icons.play_arrow, size: 50, color: Colors.white),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: _mediaType == 'image'
+            ? Image.file(_mediaFile!, fit: BoxFit.cover)
+            : Center(child: Icon(Icons.play_arrow, size: 50, color: Colors.white)),
+      ),
     );
   }
 }
@@ -210,7 +237,7 @@ class _StoriesTabState extends State<StoriesTab> {
     if (pickedFile != null) {
       setState(() {
         _pickedStory = File(pickedFile.path);
-        _mediaType = 'image'; // Simplified to image for now
+        _mediaType = 'image'; 
       });
     }
   }
@@ -221,7 +248,7 @@ class _StoriesTabState extends State<StoriesTab> {
     if (pickedFile != null) {
       setState(() {
         _pickedStory = File(pickedFile.path);
-        _mediaType = 'image'; // Simplified to image for now
+        _mediaType = 'image'; 
       });
     }
   }
@@ -257,8 +284,8 @@ class _StoriesTabState extends State<StoriesTab> {
         'mediaUrl': mediaUrl,
         'mediaType': _mediaType,
         'timestamp': DateTime.now(),
-        'expiresAt': DateTime.now().add(Duration(hours: 24)), // 24-hour expiry
-        'viewers': [], // List of user IDs who viewed the story
+        'expiresAt': DateTime.now().add(Duration(hours: 24)), 
+        'viewers': [], 
       });
 
       setState(() {
@@ -290,26 +317,31 @@ class _StoriesTabState extends State<StoriesTab> {
           padding: const EdgeInsets.all(8.0),
           child: Card(
             elevation: 2,
+            color: AppColors.surface, // Dark card
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
-                  Text('Upload a Story', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text('Upload a Story', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
                   SizedBox(height: 10),
                   _isUploading
-                      ? CircularProgressIndicator()
+                      ? CircularProgressIndicator(color: AppColors.primaryLavender)
                       : _pickedStory != null
                           ? Column(
                               children: [
-                                _mediaType == 'image'
-                                    ? Image.file(_pickedStory!, height: 200)
-                                    : Container(
-                                        height: 200,
-                                        color: Colors.black,
-                                        child: Center(
-                                          child: Icon(Icons.play_arrow, color: Colors.white, size: 50),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: _mediaType == 'image'
+                                      ? Image.file(_pickedStory!, height: 200, fit: BoxFit.cover)
+                                      : Container(
+                                          height: 200,
+                                          color: Colors.black,
+                                          child: Center(
+                                            child: Icon(Icons.play_arrow, color: Colors.white, size: 50),
+                                          ),
                                         ),
-                                      ),
+                                ),
                                 SizedBox(height: 10),
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -317,6 +349,7 @@ class _StoriesTabState extends State<StoriesTab> {
                                     ElevatedButton(
                                       onPressed: _uploadStory,
                                       child: Text('Upload'),
+                                      style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryLavender, foregroundColor: AppColors.backgroundDeep),
                                     ),
                                     ElevatedButton(
                                       onPressed: () {
@@ -326,6 +359,7 @@ class _StoriesTabState extends State<StoriesTab> {
                                         });
                                       },
                                       child: Text('Cancel'),
+                                      style: ElevatedButton.styleFrom(backgroundColor: AppColors.error, foregroundColor: AppColors.backgroundDeep),
                                     ),
                                   ],
                                 ),
@@ -338,11 +372,13 @@ class _StoriesTabState extends State<StoriesTab> {
                                   onPressed: _pickStory,
                                   icon: Icon(Icons.photo_library),
                                   label: Text('Gallery'),
+                                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.elevation, foregroundColor: AppColors.primaryLavender),
                                 ),
                                 ElevatedButton.icon(
                                   onPressed: _takeStory,
                                   icon: Icon(Icons.camera_alt),
                                   label: Text('Camera'),
+                                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.elevation, foregroundColor: AppColors.primaryLavender),
                                 ),
                               ],
                             ),
@@ -361,10 +397,10 @@ class _StoriesTabState extends State<StoriesTab> {
                 .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(child: CircularProgressIndicator());
+                return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
               }
               if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                return Center(child: Text('No stories available'));
+                return Center(child: Text('No stories available', style: TextStyle(color: AppColors.textMedium)));
               }
 
               // Group stories by user
@@ -388,7 +424,7 @@ class _StoriesTabState extends State<StoriesTab> {
                 itemBuilder: (context, index) {
                   final userId = groupedStories.keys.elementAt(index);
                   final userStories = groupedStories[userId]!;
-                  final latestStory = userStories.first; // Most recent story
+                  final latestStory = userStories.first; 
 
                   bool isOwnStory = userId == currentUserId;
                   bool isSeen = userStories.every((story) => List.from(story['viewers']).contains(currentUserId));
@@ -400,14 +436,9 @@ class _StoriesTabState extends State<StoriesTab> {
                         MaterialPageRoute(
                           builder: (context) => StoryViewerScreen(
                             userId: userId,
-                            stories: userStories, username: '', profileImage: '',
-                            // Removed isOwnStory: isOwnStory,
-                            // You might need to pass username and profileImage if they are required
-                            // by the StoryViewerScreen constructor in your actual code.
-                            // Check the constructor definition.
-                            // Example (if needed):
-                            // username: latestStory['username'], 
-                            // profileImage: latestStory['profileImage'],
+                            stories: userStories, 
+                            username: latestStory['username'] ?? '', 
+                            profileImage: latestStory['profileImage'] ?? '',
                           ),
                         ),
                       );
@@ -419,10 +450,11 @@ class _StoriesTabState extends State<StoriesTab> {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
+                              // Lavender for Own, Teal for Unseen, Grey for Seen
                               color: isOwnStory
-                                  ? Colors.blue
-                                  : (isSeen ? Colors.grey : Theme.of(context).colorScheme.secondary),
-                              width: 2,
+                                  ? AppColors.primaryLavender
+                                  : (isSeen ? AppColors.textDisabled : AppColors.secondaryTeal),
+                              width: 2.5,
                             ),
                           ),
                           child: ClipRRect(
@@ -431,12 +463,16 @@ class _StoriesTabState extends State<StoriesTab> {
                                 ? CachedNetworkImage(
                                     imageUrl: latestStory['mediaUrl'],
                                     fit: BoxFit.cover,
-                                    placeholder: (context, url) => Container(color: Colors.grey[300]),
-                                    errorWidget: (context, url, error) => Icon(Icons.error),
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    placeholder: (context, url) => Container(color: AppColors.elevation),
+                                    errorWidget: (context, url, error) => Icon(Icons.error, color: AppColors.error),
                                   )
                                 : Container(
                                     color: Colors.black,
-                                    child: Icon(Icons.play_arrow, color: Colors.white),
+                                    child: Center(
+                                      child: Icon(Icons.play_arrow, color: Colors.white, size: 30),
+                                    ),
                                   ),
                           ),
                         ),
@@ -446,7 +482,7 @@ class _StoriesTabState extends State<StoriesTab> {
                           left: 0,
                           right: 0,
                           child: Container(
-                            padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                            padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                             decoration: BoxDecoration(
                               color: Colors.black54,
                               borderRadius: BorderRadius.only(
@@ -455,9 +491,10 @@ class _StoriesTabState extends State<StoriesTab> {
                               ),
                             ),
                             child: Text(
-                              isOwnStory ? 'Your Story' : latestStory['username'],
+                              isOwnStory ? 'Your Story' : (latestStory['username'] ?? 'User'),
                               style: TextStyle(color: Colors.white, fontSize: 10),
                               overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
                             ),
                           ),
                         ),
@@ -475,17 +512,11 @@ class _StoriesTabState extends State<StoriesTab> {
 }
 
 // --- STORY VIEWER SCREEN ---
-// --- UPDATED STORY VIEWER SCREEN ---
-// Ensure the class definition and constructor match the parameters you are passing
 class StoryViewerScreen extends StatefulWidget {
   final String userId;
   final List<DocumentSnapshot> stories;
   final String username;
   final String profileImage;
-
-  // Note: isOwnStory is removed from the constructor parameters
-  // as it's not defined in the original constructor and causes an error.
-  // We can calculate it inside the state if needed.
 
   const StoryViewerScreen({
     Key? key,
@@ -493,7 +524,6 @@ class StoryViewerScreen extends StatefulWidget {
     required this.stories,
     required this.username,
     required this.profileImage,
-    // required this.isOwnStory, // Removed this line causing the error
   }) : super(key: key);
 
   @override
@@ -505,16 +535,15 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> {
   int _currentIndex = 0;
   late Timer _timer;
   final Duration _storyDuration = Duration(seconds: 5);
-  late bool _isOwnStory; // Add a variable to track if it's the current user's story
+  late bool _isOwnStory; 
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
-    // Determine if these are the current user's own stories
     _isOwnStory = widget.userId == FirebaseAuth.instance.currentUser!.uid;
     _startTimer();
-    if (!_isOwnStory) { // Only mark as seen if it's not the user's own story
+    if (!_isOwnStory) { 
       _markAsSeen();
     }
   }
@@ -524,17 +553,15 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> {
       if (_currentIndex < widget.stories.length - 1) {
         _nextStory();
       } else {
-        Navigator.pop(context); // Close screen after last story
+        Navigator.pop(context); 
       }
     });
   }
 
   void _markAsSeen() async {
     final currentUserId = FirebaseAuth.instance.currentUser!.uid;
-    // No need to check _isOwnStory again here as it's checked in initState
-    // Iterate through the stories passed to this screen instance
     for (var story in widget.stories) {
-      final viewers = List.from(story['viewers'] ?? []); // Handle potential null
+      final viewers = List.from(story['viewers'] ?? []); 
       if (!viewers.contains(currentUserId)) {
         try {
           await FirebaseFirestore.instance.collection('stories').doc(story.id).update({
@@ -542,7 +569,6 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> {
           });
         } catch (e) {
           print("Error marking story as seen: $e");
-          // Optionally handle error (e.g., show snackbar if critical)
         }
       }
     }
@@ -581,7 +607,6 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Check bounds to prevent index errors
     if (widget.stories.isEmpty || _currentIndex >= widget.stories.length) {
       return Scaffold(
         backgroundColor: Colors.black,
@@ -600,53 +625,45 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.black,
+        backgroundColor: Colors.black, // Full screen media is usually black bg
         body: Stack(
           children: [
             // Story content
             PageView.builder(
               controller: _pageController,
               itemCount: widget.stories.length,
+              physics: NeverScrollableScrollPhysics(), // Disable swipe to not interfere with tap logic
               onPageChanged: (index) {
                 setState(() => _currentIndex = index);
               },
               itemBuilder: (context, index) {
-                 if (index >= widget.stories.length) {
-                   // Extra safety check for PageView itemBuilder
-                   return Container(); // Return empty widget if index is out of bounds
-                 }
+                 if (index >= widget.stories.length) return Container();
                 final story = widget.stories[index];
                 return Stack(
                   children: [
-                    // Media - Handle potential loading errors
-                    Builder(
-                      builder: (context) {
-                        if (story['mediaType'] == 'image') {
-                          return CachedNetworkImage(
-                            imageUrl: story['mediaUrl'],
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                            height: double.infinity,
-                            placeholder: (context, url) => Center(child: CircularProgressIndicator(color: Colors.white)),
-                            errorWidget: (context, url, error) => Center(
-                              child: Icon(Icons.error, color: Colors.white),
+                    // Media
+                    Center(
+                      child: story['mediaType'] == 'image'
+                          ? CachedNetworkImage(
+                              imageUrl: story['mediaUrl'],
+                              fit: BoxFit.contain,
+                              width: double.infinity,
+                              placeholder: (context, url) => Center(child: CircularProgressIndicator(color: Colors.white)),
+                              errorWidget: (context, url, error) => Center(
+                                child: Icon(Icons.error, color: Colors.white),
+                              ),
+                            )
+                          : Container(
+                              color: Colors.black,
+                              child: Center(
+                                child: Icon(Icons.play_arrow, color: Colors.white, size: 50),
+                              ),
                             ),
-                          );
-                        } else {
-                          // Placeholder for video or other types
-                          return Container(
-                            color: Colors.black,
-                            child: Center(
-                              child: Icon(Icons.play_arrow, color: Colors.white, size: 50),
-                            ),
-                          );
-                        }
-                      }
                     ),
-                    // Caption - Check for null or empty
+                    // Caption overlay
                     if ((story['caption'] as String?)?.isNotEmpty == true)
                       Positioned(
-                        bottom: 100,
+                        bottom: 40,
                         left: 0,
                         right: 0,
                         child: Container(
@@ -665,13 +682,12 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> {
             ),
             // Progress bars
             Positioned(
-              top: 40,
-              left: 16,
-              right: 16,
+              top: 50,
+              left: 10,
+              right: 10,
               child: Row(
                 children: widget.stories.asMap().entries.map((entry) {
                   int index = entry.key;
-// Not directly used here, but available
                   return Expanded(
                     child: Container(
                       height: 3,
@@ -683,7 +699,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> {
                       child: Stack(
                         children: [
                           if (index == _currentIndex)
-                            // Animated progress for current story
+                            // Animated progress
                             TweenAnimationBuilder<double>(
                               tween: Tween(begin: 0.0, end: 1.0),
                               duration: _storyDuration,
@@ -701,14 +717,13 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> {
                               },
                             )
                           else if (index < _currentIndex)
-                            // Completed stories
+                            // Completed
                             Container(
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(2),
                               ),
                             ),
-                          // Upcoming stories remain the background color (white30)
                         ],
                       ),
                     ),
@@ -716,15 +731,14 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> {
                 }).toList(),
               ),
             ),
-             // User info and close button row
+             // User info and close button
             Positioned(
-              top: 60,
+              top: 65,
               left: 16,
-              right: 16, // Extend to the right to accommodate close button
+              right: 16, 
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space between items
+                mainAxisAlignment: MainAxisAlignment.spaceBetween, 
                 children: [
-                  // User info (left side)
                   Row(
                     children: [
                       CircleAvatar(
@@ -732,21 +746,23 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> {
                         backgroundImage: widget.profileImage.isNotEmpty
                             ? CachedNetworkImageProvider(widget.profileImage)
                             : AssetImage('assets/default_avatar.png') as ImageProvider,
-                        // Add error handling if needed for profile image
                       ),
                       SizedBox(width: 12),
-                      Text(
-                        widget.username,
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        timeago.format(currentStory['timestamp'].toDate()),
-                        style: TextStyle(color: Colors.white70),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.username,
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            timeago.format(currentStory['timestamp'].toDate()),
+                            style: TextStyle(color: Colors.white70, fontSize: 12),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                  // Close button (right side)
                   IconButton(
                     icon: Icon(Icons.close, color: Colors.white),
                     onPressed: () => Navigator.pop(context),
@@ -754,7 +770,6 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> {
                 ],
               ),
             ),
-
           ],
         ),
       ),
