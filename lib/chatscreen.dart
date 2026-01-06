@@ -207,7 +207,7 @@ class _ChatScreenState extends State<ChatScreen> {
             CircleAvatar(
               backgroundColor: AppColors.primaryLavender,
               child: IconButton(
-                icon: const Icon(Icons.send, color: AppColors.backgroundDeep),
+                icon: Icon(Icons.send, color: AppColors.backgroundDeep),
                 onPressed: _sendMessage,
               ),
             ),
@@ -247,7 +247,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   Text(
                     widget.otherUserName,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 16, color: AppColors.textHigh),
+                    style: TextStyle(fontSize: 16, color: AppColors.textHigh),
                   ),
                   StreamBuilder<DocumentSnapshot>(
                     stream: FirebaseFirestore.instance.collection('users').doc(widget.otherUserId).snapshots(),
@@ -263,7 +263,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                         );
                       } else {
-                        return const Text(
+                        return Text(
                           'Offline',
                           style: TextStyle(fontSize: 12, color: AppColors.textDisabled),
                         );
@@ -286,7 +286,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   return Center(child: Text('Error: ${snapshot.error}', style: TextStyle(color: AppColors.error)));
                 }
                 if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
+                  return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
                 }
 
                 final docs = snapshot.data!.docs;

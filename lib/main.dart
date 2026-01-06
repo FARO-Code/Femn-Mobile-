@@ -13,6 +13,9 @@ import 'post.dart';
 import 'campaign.dart'; // Ensure filename matches (campaign.dart or campaigns.dart)
 import 'auth_provider.dart';
 import 'fonts.dart';
+import 'package:app_links/app_links.dart'; // <--- ADD THIS IMPORT
+import 'dart:async';
+import 'package:femn/deep_link_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -153,6 +156,10 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
+  
+  // --- DEEP LINKING VARIABLES ---
+  late AppLinks _appLinks;
+  StreamSubscription<Uri>? _linkSubscription;
 
   final List<Widget> _screens = [
     FeedScreen(),
@@ -161,6 +168,61 @@ class _HomeScreenState extends State<HomeScreen> {
     CampaignsScreen(),
     MessagingScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _initDeepLinks(); // <--- Initialize Listener on Startup
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel(); // <--- Clean up when screen closes
+    super.dispose();
+  }
+
+  // --- DEEP LINKING LOGIC ---
+  Future<void> _initDeepLinks() async {
+    _appLinks = AppLinks();
+
+    // 1. Handle "Cold Start" (App was closed, link opened it)
+    try {
+      final Uri? initialUri = await _appLinks.getInitialLink();
+      if (initialUri != null) {
+        _handleLink(initialUri);
+      }
+    } catch (e) {
+      print("Deep Link Error: $e");
+    }
+
+    // 2. Handle "Warm Start" (App was in background, link brought it to front)
+    _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
+      _handleLink(uri);
+    });
+  }
+
+  void _handleLink(Uri uri) {
+    // Expected URL: https://femn-9cabb.web.app/post/12345
+    print("Link received: $uri");
+    
+    if (uri.pathSegments.contains('post')) {
+      final String postId = uri.pathSegments.last;
+      
+      // Navigate to your Post Details Page
+      // We use a helper function to ensure Context is available
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => Scaffold(
+              // TEMPORARY PLACEHOLDER: Replace this with your actual PostDetailsScreen
+              appBar: AppBar(title: Text("Post Found!")),
+              body: Center(child: Text("Loading Post ID: $postId")),
+            ),
+          ),
+        );
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -24,7 +24,13 @@ class EmbersService {
       // Check if spending and has sufficient funds
       if (amount < 0) {
         final userDoc = await userRef.get();
-        final currentEmbers = userDoc['embers'] ?? 0;
+        // --- SAFE READ FIX START ---
+        final userData = userDoc.data();
+        final int currentEmbers = (userData != null && userData.containsKey('embers')) 
+            ? userData['embers'] 
+            : 0; // Default to 0 if missing
+        // --- SAFE READ FIX END ---
+
         if (currentEmbers < amount.abs()) {
           final message = insufficientFundsMessage ?? 'Insufficient Embers. Need ${amount.abs()} but only have $currentEmbers.';
           if (showSnackBar) {
@@ -39,7 +45,14 @@ class EmbersService {
       // Process the transaction
       await FirebaseFirestore.instance.runTransaction((transaction) async {
         final userDoc = await transaction.get(userRef);
-        final currentEmbers = userDoc['embers'] ?? 0;
+        
+        // --- SAFE READ FIX START ---
+        final userData = userDoc.data();
+        final int currentEmbers = (userData != null && userData.containsKey('embers')) 
+            ? userData['embers'] 
+            : 0;
+        // --- SAFE READ FIX END ---
+
         final newEmbers = currentEmbers + amount;
         
         transaction.update(userRef, {'embers': newEmbers});
@@ -71,16 +84,17 @@ class EmbersService {
       
     } catch (e) {
       final errorMessage = 'Error processing Embers: $e';
+      print(errorMessage); // Log to console
       if (showSnackBar) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+          SnackBar(content: Text("Transaction failed. Please try again."), backgroundColor: Colors.red),
         );
       }
       return EmbersResult(success: false, message: errorMessage, newBalance: 0);
     }
   }
 
-  // SPECIFIC ACTION WRAPPERS - Super simple to use
+  // SPECIFIC ACTION WRAPPERS
   static Future<EmbersResult> earnForPost(BuildContext context, String postId) {
     return processEmbersTransaction(
       context: context,
@@ -111,7 +125,13 @@ class EmbersService {
   static Future<int> _getCurrentEmbers() async {
     final currentUserId = FirebaseAuth.instance.currentUser!.uid;
     final userDoc = await FirebaseFirestore.instance.collection('users').doc(currentUserId).get();
-    return userDoc['embers'] ?? 0;
+    
+    // --- SAFE READ FIX ---
+    final userData = userDoc.data();
+    if (userData != null && userData.containsKey('embers')) {
+      return userData['embers'];
+    }
+    return 0; // Return 0 if field doesn't exist
   }
 
   static Future<void> _recordTransaction({

@@ -18,6 +18,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:femn/profile.dart'; 
 import 'package:femn/auth.dart'; 
 import 'package:femn/colors.dart'; 
+import 'streak_service.dart';
 
 // --- 1. Security Service (Updated for UID) ---
 class SecurityService {
@@ -1039,6 +1040,7 @@ class _ComposeEntryScreenState extends State<ComposeEntryScreen> {
       'timestamp': FieldValue.serverTimestamp(),
     });
 
+    await StreakService.updateStreakOnEntry();
     Navigator.pop(context);
   }
 

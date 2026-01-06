@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Femn | Your Safety. Your Community.</title>
+    <link rel="icon" type="image/png" href="femnlogo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                fontFamily: {
+                    sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                },
+                extend: {
+                    colors: {
+                        femn: {
+                            50: '#fdf2f8',
+                            100: '#fce7f3',
+                            200: '#fbcfe8',
+                            500: '#ec4899', // Primary Pink
+                            600: '#db2777',
+                            900: '#831843',
+                        }
+                    },
+                    boxShadow: {
+                        'glow': '0 10px 40px -10px rgba(236, 72, 153, 0.4)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Utilities */
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        .text-gradient {
+            background: linear-gradient(135deg, #111827 0%, #db2777 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-mockup-shadow {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Hide scrollbar for clean inputs */
+        textarea::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-femn-50 text-slate-800 antialiased overflow-x-hidden selection:bg-femn-500 selection:text-white">
+
+    <div class="fixed top-0 left-0 w-full z-50 flex justify-center pt-6 px-4" id="navbar">
+        <nav class="glass-nav rounded-full pl-3 pr-4 py-2 flex items-center justify-between w-full max-w-3xl shadow-sm hover:shadow-md transition-shadow duration-300">
+            
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-femn-600 to-purple-600 p-0.5 overflow-hidden">
+                    <img src="femnlogo.png" alt="Femn Logo" class="w-full h-full rounded-full object-cover bg-white">
+                </div>
+                <span class="font-bold text-lg tracking-tight text-femn-600 hidden sm:block">Femn.</span>
+            </div>
+
+            <div class="hidden md:flex gap-6 text-sm font-medium text-slate-600">
+                <a href="#safety" class="hover:text-femn-600 transition-colors">Safety</a>
+                <a href="#community" class="hover:text-femn-600 transition-colors">Community</a>
+                <a href="#mission" class="hover:text-femn-600 transition-colors">Mission</a>
+            </div>
+
+            <a href="#join" class="bg-slate-900 text-white text-xs font-bold px-5 py-2.5 rounded-full hover:bg-femn-600 transition-colors shadow-lg shadow-slate-900/20">
+                Get Early Access
+            </a>
+        </nav>
+    </div>
+
+    <section class="relative pt-40 pb-20 px-6 min-h-screen flex flex-col items-center justify-center overflow-hidden">
+        <div class="absolute top-20 left-10 w-72 h-72 bg-femn-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
+        <div class="absolute top-20 right-10 w-72 h-72 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+
+        <div class="text-center max-w-4xl mx-auto z-10 hero-element">
+            <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight leading-tight mb-6">
+                Your Safety. Your Community.<br>
+                <span class="text-gradient">Your Revolution.</span>
+            </h1>
+            <p class="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto mb-10 leading-relaxed">
+                Stop juggling apps for safety and support. Join the first digital ecosystem designed to protect your physical well-being while amplifying your voice through community and activism.
+            </p>
+        </div>
+
+        <div class="relative w-full max-w-5xl mx-auto mt-8 hero-visual perspective-1000">
+            <div class="grid md:grid-cols-2 gap-8 items-center bg-white rounded-3xl p-4 md:p-8 border border-white/50 shadow-2xl hero-mockup-shadow transform hover:scale-[1.01] transition-transform duration-500">
+                
+                <div class="bg-slate-100 rounded-2xl h-64 md:h-80 relative overflow-hidden group">
+                    <img src="app.jpg" alt="Femn App Interface" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
+                    
+                    <div class="absolute bottom-4 left-4 right-4 bg-white/90 backdrop-blur-md rounded-xl p-3 shadow-lg border border-white/50">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold text-slate-700">Check-in Timer</span>
+                            <span class="text-xs font-mono text-femn-600 animate-pulse">14:59</span>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-1.5">
+                            <div class="bg-femn-500 h-1.5 rounded-full" style="width: 80%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col h-64 md:h-80 justify-center">
+                    <div class="bg-slate-50 border border-slate-100 rounded-2xl p-6 relative">
+                        <div class="flex items-center gap-3 mb-4 border-b border-slate-200 pb-3">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-400 to-femn-400"></div>
+                            <div>
+                                <h3 class="font-bold text-sm text-slate-800">Navigating Toxic Workplaces</h3>
+                                <p class="text-xs text-slate-500">Spark Group • 142 Members</p>
+                            </div>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="bg-white p-3 rounded-lg rounded-tl-none shadow-sm text-xs text-slate-600 border border-slate-100 w-fit max-w-[90%]">
+                                Has anyone else dealt with gaslighting during reviews?
+                            </div>
+                            <div class="bg-femn-50 p-3 rounded-lg rounded-tr-none ml-auto text-xs text-slate-700 border border-femn-100 w-fit max-w-[90%]">
+                                Yes! Document everything. We are here for you. 🤍
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p class="text-center text-sm font-medium text-slate-400 mt-6 tracking-wide uppercase">Real-world safety meets real-talk community</p>
+        </div>
+    </section>
+
+    <section id="safety" class="py-24 px-6 bg-white border-t border-slate-100">
+        <div class="max-w-6xl mx-auto">
+            <div class="grid md:grid-cols-2 gap-16 items-center">
+                <div class="section-content">
+                    <div class="inline-block bg-red-50 text-red-600 px-4 py-1.5 rounded-full text-sm font-bold mb-6">
+                        🛡️ Physical Safety
+                    </div>
+                    <h2 class="text-3xl md:text-5xl font-bold mb-6 text-slate-900">Navigate the world without looking over your shoulder.</h2>
+                    <p class="text-slate-600 text-lg mb-8 leading-relaxed">
+                        Data from standard maps doesn't tell the full story. Femn relies on community-verified inputs to keep you safe.
+                    </p>
+                    
+                    <ul class="space-y-6">
+                        <li class="flex gap-4">
+                            <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 flex-shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/></svg>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-900">Crowd-Sourced Heatmaps</h4>
+                                <p class="text-sm text-slate-500">Real-time red/green zones based on lighting, reports, and foot traffic.</p>
+                            </div>
+                        </li>
+                        <li class="flex gap-4">
+                            <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 flex-shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/></svg>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-900">Check-in Timers</h4>
+                                <p class="text-sm text-slate-500">Set a timer. If you don't check in, your Safety Buddies get your last location instantly.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="bg-slate-50 rounded-3xl h-full min-h-[400px] flex items-center justify-center relative overflow-hidden section-visual group">
+                    <img src="heatmap.png" alt="Safety Heatmap Preview" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
+
+                    <div class="relative z-10 p-5 bg-white/60 backdrop-blur-md rounded-full shadow-lg">
+                        <div class="text-6xl drop-shadow-md">📍</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="community" class="py-24 px-6 bg-femn-50">
+        <div class="max-w-6xl mx-auto">
+            <div class="grid md:grid-cols-2 gap-16 items-center md:flex-row-reverse">
+                <div class="order-2 md:order-1 bg-white rounded-3xl p-8 h-full min-h-[400px] shadow-sm flex flex-col justify-center relative overflow-hidden section-visual">
+                    <div class="space-y-4">
+                        <div class="bg-slate-100 p-4 rounded-2xl rounded-bl-none max-w-[80%]">
+                            <p class="text-xs text-slate-500 mb-1">@Tosinbkdk</p>
+                            <p class="text-sm text-slate-800">Has anyone tried the new STEM internship? and who has access?</p>
+                        </div>
+                        <div class="bg-femn-100 p-4 rounded-2xl rounded-br-none max-w-[80%] ml-auto">
+                            <p class="text-xs text-femn-600 mb-1 text-right">You</p>
+                            <p class="text-sm text-femn-900">Yes! The mentorship is amazing. Let's go for the next one together</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-content order-1 md:order-2">
+                    <div class="inline-block bg-femn-100 text-femn-600 px-4 py-1.5 rounded-full text-sm font-bold mb-6">
+                        💬 Community & Tribes
+                    </div>
+                    <h2 class="text-3xl md:text-5xl font-bold mb-6 text-slate-900">Find Your Tribe,<br>Unfiltered.</h2>
+                    <p class="text-slate-600 text-lg mb-8 leading-relaxed">
+                        Social media is toxic. Femn is a sanctuary. Join "Spark Groups" based on shared experiences, not algorithms.
+                    </p>
+                    
+                    <ul class="space-y-6">
+                        <li class="flex gap-4">
+                            <div class="w-10 h-10 rounded-full bg-femn-100 flex items-center justify-center text-femn-600 flex-shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7Zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm-5.784 6A2.238 2.238 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1h4.216ZM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/></svg>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-900">Verified Spaces</h4>
+                                <p class="text-sm text-slate-500">Strict verification keeps trolls out. Safe spaces remain safe.</p>
+                            </div>
+                        </li>
+                        <li class="flex gap-4">
+                            <div class="w-10 h-10 rounded-full bg-femn-100 flex items-center justify-center text-femn-600 flex-shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M11.315 10.014a.5.5 0 0 1 .548.736A4.498 4.498 0 0 1 7.965 13a4.498 4.498 0 0 1-3.898-2.25.5.5 0 0 1 .548-.736h.005l.017.005.067.015.252.055c.215.046.515.108.894.189.759.16 1.717.36 2.752.52 1.035.16 2.115.36 3.033.497.458.068.828.116 1.065.148a.5.5 0 0 0 .567-.655 4.492 4.492 0 0 0-1.918-2.091.5.5 0 0 0-.547.098l-.004.004-.017.017-.063.065c-.172.18-.466.495-.873.916-.813.84-2.008 2.05-3.665 3.32-.415.318-.87.586-1.347.802-.477.216-.99.358-1.517.419a.5.5 0 0 1-.532-.693z"/></svg>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-900">Earn Pinks</h4>
+                                <p class="text-sm text-slate-500">Get rewarded for kindness and helpful advice, not for getting likes.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="mission" class="py-24 px-6 bg-slate-900 text-white">
+        <div class="max-w-4xl mx-auto text-center">
+            <div class="inline-block bg-slate-800 text-femn-200 px-4 py-1.5 rounded-full text-sm font-bold mb-8">
+                ✊ The Mission
+            </div>
+            <h2 class="text-3xl md:text-5xl font-bold mb-8">This is not just an app.<br>It's an ecosystem.</h2>
+            <p class="text-xl text-slate-300 leading-relaxed mb-10">
+                We are building Femn because existing platforms weren’t built with our safety or our stories in mind. It’s time for technology that actually has your back, turns outrage into action, and protects your peace.
+            </p>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center opacity-70">
+                <div>
+                    <div class="text-3xl font-bold text-femn-400">100%</div>
+                    <div class="text-xs uppercase tracking-widest mt-1">Data Privacy</div>
+                </div>
+                <div>
+                    <div class="text-3xl font-bold text-femn-400">NGO</div>
+                    <div class="text-xs uppercase tracking-widest mt-1">Partnerships</div>
+                </div>
+                <div>
+                    <div class="text-3xl font-bold text-femn-400">Real</div>
+                    <div class="text-xs uppercase tracking-widest mt-1">Impact</div>
+                </div>
+                <div>
+                    <div class="text-3xl font-bold text-femn-400">Zero</div>
+                    <div class="text-xs uppercase tracking-widest mt-1">Tolerance</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="join" class="py-24 px-6 relative overflow-hidden bg-gradient-to-b from-white to-femn-50">
+        <div class="max-w-2xl mx-auto relative z-10">
+            
+            <div id="signup-form-container" class="bg-white p-8 md:p-12 rounded-3xl shadow-xl border border-slate-100">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl md:text-4xl font-bold mb-4">Join the Resistance.</h2>
+                    <p class="text-slate-600">Secure your username and help shape the features before we launch.</p>
+                </div>
+                
+                <form id="waitlist-form" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 ml-2">Email Address</label>
+                        <input type="email" name="email" placeholder="you@example.com" required class="w-full px-6 py-4 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-femn-500 bg-slate-50 transition-all">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 ml-2">Any Suggestions? (Optional)</label>
+                        <textarea name="suggestion" rows="3" placeholder="What feature would make you feel safer?" class="w-full px-6 py-4 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-femn-500 bg-slate-50 resize-none transition-all"></textarea>
+                    </div>
+
+                    <button type="submit" class="w-full bg-slate-900 text-white px-8 py-5 rounded-xl font-bold shadow-lg hover:shadow-xl hover:bg-femn-600 hover:-translate-y-1 transition-all duration-300 mt-4">
+                        Secure My Safe Space
+                    </button>
+                </form>
+                
+                <div class="mt-8 flex flex-wrap gap-2 justify-center">
+                    <span class="text-xs font-bold text-femn-600 bg-femn-50 px-3 py-1 rounded-full">#FemnApp</span>
+                    <span class="text-xs font-bold text-femn-600 bg-femn-50 px-3 py-1 rounded-full">#WomenEmpowerment</span>
+                    <span class="text-xs font-bold text-femn-600 bg-femn-50 px-3 py-1 rounded-full">#InclusiveTech</span>
+                    <span class="text-xs font-bold text-femn-600 bg-femn-50 px-3 py-1 rounded-full">#DigitalSafety</span>
+                    <span class="text-xs font-bold text-femn-600 bg-femn-50 px-3 py-1 rounded-full">#CommunityCare</span>
+                </div>
+            </div>
+
+            <div id="success-message" class="hidden text-center pt-10">
+                <div class="text-6xl mb-6">🎉</div>
+                <h2 class="text-3xl font-bold mb-4">You’re in. Welcome to the ecosystem.</h2>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 max-w-md mx-auto mt-6">
+                    <p class="text-slate-800 font-medium mb-4">Safety is better in numbers.</p>
+                    <p class="text-slate-500 text-sm mb-6">Invite 3 friends to unlock the <span class="text-femn-600 font-bold">Founding Member Badge + 500 Pinks</span> at launch.</p>
+                    
+                    <div class="flex gap-3 justify-center">
+                        <button class="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-80 transition">Share on X</button>
+                        <button class="bg-[#25D366] text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-80 transition">WhatsApp</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <section id="download-help" class="py-20 px-6 bg-white border-t border-slate-100">
+        <div class="max-w-3xl mx-auto">
+            
+            <div class="text-center mb-12">
+                <div class="inline-block bg-green-50 text-green-700 px-4 py-1.5 rounded-full text-sm font-bold mb-6">
+                    🚀 Internal Beta Access
+                </div>
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-6">Got an invite link or can't open a post?</h2>
+                <p class="text-slate-600 mb-8">If you have received a link, click below to install directly from the Google Play Store.</p>
+                
+                <a href="https://play.google.com/apps/test/com.blueparticle.femn/2" target="_blank" class="inline-flex items-center gap-3 bg-slate-900 text-white px-8 py-4 rounded-xl font-bold shadow-lg hover:shadow-xl hover:bg-femn-600 hover:-translate-y-1 transition-all duration-300 group">
+                    <svg class="w-6 h-6 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256.6-256L47 0zm425.2 225.6l-58.9-34.1-37.2 37.2 37.2 37.2 58.9-34.1c32.6-18.8 32.6-65.6 0-84.4zM325.3 277.7l60.1 60.1-280.8 161.2 220.7-221.3z"/>
+                    </svg>
+                    <span>Install App</span>
+                </a>
+            </div>
+
+            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-6 md:p-8 shadow-sm">
+                <div class="flex flex-col md:flex-row gap-6">
+                    <div class="shrink-0">
+                        <div class="w-12 h-12 bg-femn-100 text-femn-600 rounded-full flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-slate-900 mb-2">Link saying "Item not found"?</h3>
+                        <p class="text-slate-600 text-sm mb-4">
+                            If you are trying to install an internal test version, you likely need to enable <strong>Internal App Sharing</strong> on your device first. Follow these steps:
+                        </p>
+                        
+                        <ol class="list-decimal list-inside space-y-3 text-sm text-slate-700 bg-white p-5 rounded-xl border border-slate-100">
+                            <li>Open the <span class="font-bold text-slate-900">Google Play Store</span> app.</li>
+                            <li>Tap <span class="font-bold text-slate-900">Menu</span> (Profile Icon) > <span class="font-bold text-slate-900">Settings</span>.</li>
+                            <li>Tap the <span class="font-bold text-slate-900">"About"</span> section to expand it.</li>
+                            <li>Tap the <span class="font-bold text-slate-900">Play Store version</span> label 7 times quickly.</li>
+                            <li>Once the <em>"Internal app sharing"</em> setting appears, tap the switch to turn it on.</li>
+                            <li>Tap <span class="font-bold text-slate-900">Turn on</span> to confirm.</li>
+                        </ol>
+                        <p class="text-xs text-slate-400 mt-4 italic">After doing this, try clicking the install link again.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-white pt-16 pb-10 border-t border-slate-100">
+        <div class="max-w-6xl mx-auto px-6">
+            
+            <div class="flex flex-col items-center mb-10 text-center">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="w-6 h-6 rounded-full bg-gradient-to-tr from-femn-600 to-purple-600 p-0.5 overflow-hidden">
+                        <img src="femnlogo.png" class="w-full h-full rounded-full object-cover bg-white">
+                    </div>
+                    <span class="font-bold text-xl text-slate-900">Femn.</span>
+                </div>
+                
+            <div class="flex gap-6 mt-2">
+                <a href="https://www.tiktok.com/@femncommunity" target="_blank" class="text-slate-400 hover:text-black transition-colors" aria-label="TikTok">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16"><path d="M9 0h1.98c.144.715.54 1.617 1.235 2.512C12.895 3.389 13.797 4 15 4v2c-1.753 0-3.07-.814-4-1.829V11a5 5 0 1 1-5-5v2a3 3 0 1 0 3 3V0Z"/></svg>
+                </a>
+                
+                <a href="https://www.instagram.com/femncommunity" target="_blank" class="text-slate-400 hover:text-femn-600 transition-colors" aria-label="Instagram">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16"><path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.917 3.917 0 0 0-1.417.923A3.927 3.927 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.916 3.916 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.926 3.926 0 0 0-.923-1.417A3.911 3.911 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0h.003zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599.28.28.453.546.598.92.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.47 2.47 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.232-.047c-.78-.036-1.203-.166-1.485-.276a2.478 2.478 0 0 1-.92-.598 2.48 2.48 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233 0-2.136.008-2.388.046-3.231.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92.28-.28.546-.453.92-.598.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045v.002zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92zm-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217zm0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334z"/></svg>
+                </a>
+                
+                <a href="https://blueparticles.tech/" target="_blank" class="text-slate-400 hover:text-blue-600 transition-colors" aria-label="Blue Particle Website">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0ZM2.04 4.326c.325 1.329 2.532 2.54 6.354 2.913l-.489.94c-.164.318-.358.59-.567.825-1.782-.258-4.008-1.01-5.298-4.678ZM2 8c0 .245.02.485.056.721 1.472-1.579 4.097-2.308 6.556-2.368l-.134.256c-.504.966-.932 2.064-1.24 3.235C4.667 10.64 2.455 11.232 2.064 8H2Zm5.578 3.79c.106.518.196.993.266 1.405-2.074-.53-3.796-1.528-4.322-3.153 1.144-.06 2.766-.346 4.056-1.378l.493 3.126Zm1.437-3.237c.394 1.18.72 2.378.966 3.553a13.3 13.3 0 0 1-2.91 0c.246-1.175.572-2.373.966-3.553l.978-.001Zm1.314-1.298c.49 2.112-.047 4.793-1.636 6.551-.62-1.324-1.127-2.824-1.464-4.407 1.258.077 2.336.561 3.1.92v-3.064ZM9.68 3.018l.848 1.628c1.393-.157 2.65-.67 3.43-1.67-.847-1.408-2.618-2.148-4.278-1.958ZM8.428 1.053a6.8 6.8 0 0 1 2.228 1.343c-.452-.313-.96-.543-1.498-.675-.246-.613-.503-1.107-.73-1.428v.76ZM7.568 1.053v.76c-.227.32-.484.815-.73 1.428-.538.132-1.046.362-1.498.675a6.8 6.8 0 0 1 2.228-1.343ZM6.32 4.646l.848-1.628c-1.66-.19-3.43.55-4.278 1.958.78 1 2.037 1.513 3.43 1.67Z"/>
+                    </svg>
+                </a>
+            </div>
+            </div>
+
+            <hr class="border-slate-100 mb-10">
+
+            <div class="flex flex-col md:flex-row justify-between items-center text-sm text-slate-500">
+                <div class="flex gap-6 mb-4 md:mb-0">
+                    <a href="#" class="hover:text-femn-600">Privacy Policy</a>
+                    <a href="#" class="hover:text-femn-600">Community Guidelines</a>
+                    <a href="#" class="hover:text-femn-600">Feminist Library</a>
+                </div>
+                <div>
+                    &copy; 2025 <span class="font-bold text-slate-700">Femn by Blue Particle</span>. All rights reserved.
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // GSAP Animations
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Navbar Entrance
+        gsap.from("#navbar", {
+            y: -100,
+            opacity: 0,
+            duration: 1,
+            ease: "power3.out",
+            delay: 0.5
+        });
+
+        // Hero Text Stagger
+        gsap.from(".hero-element", {
+            y: 50,
+            opacity: 0,
+            duration: 1,
+            stagger: 0.2,
+            ease: "power3.out",
+            delay: 0.2
+        });
+
+        // Hero Visual Entrance
+        gsap.from(".hero-visual", {
+            y: 100,
+            opacity: 0,
+            duration: 1.2,
+            ease: "power3.out",
+            delay: 0.8
+        });
+
+        // Generalized Reveal for Sections
+        const sections = ['#safety', '#community', '#mission'];
+        sections.forEach(id => {
+            gsap.from(`${id} .section-content`, {
+                scrollTrigger: {
+                    trigger: id,
+                    start: "top 80%",
+                },
+                y: 50,
+                opacity: 0,
+                duration: 0.8,
+                ease: "power2.out"
+            });
+            gsap.from(`${id} .section-visual`, {
+                scrollTrigger: {
+                    trigger: id,
+                    start: "top 80%",
+                },
+                scale: 0.95,
+                opacity: 0,
+                duration: 1,
+                delay: 0.2,
+                ease: "power2.out"
+            });
+        });
+
+        // Viral Loop Logic & Google Sheet Connection
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbz9uuxEiR9CeFCO4ysLrlrvhr1aM2rOHQRYYgHstu9N0EEoglJaVl5EpaLA-2wNjAgg/exec';
+        const form = document.getElementById('waitlist-form');
+        const formContainer = document.getElementById('signup-form-container');
+        const successMessage = document.getElementById('success-message');
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const btn = form.querySelector('button');
+            const originalText = btn.innerText;
+            btn.innerText = "Securing...";
+            btn.disabled = true;
+
+            // Create FormData object
+            let requestBody = new FormData(form);
+
+            fetch(scriptURL, { method: 'POST', body: requestBody})
+                .then(response => {
+                    // Success Animation
+                    gsap.to(formContainer, {
+                        opacity: 0,
+                        y: -20,
+                        duration: 0.5,
+                        onComplete: () => {
+                            formContainer.classList.add('hidden');
+                            successMessage.classList.remove('hidden');
+                            // Transition in success
+                            gsap.fromTo(successMessage, 
+                                { opacity: 0, y: 20 }, 
+                                { opacity: 1, y: 0, duration: 0.5 }
+                            );
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Error!', error.message);
+                    alert("Something went wrong. Please try again.");
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                });
+        });
+    </script>
+</body>
+</html>

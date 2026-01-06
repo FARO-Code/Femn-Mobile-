@@ -1,18 +1,14 @@
 // settings.dart
-
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:femn/auth.dart';
-import 'package:femn/profile.dart'; // Import ProfileScreen for navigation
-import 'package:femn/colors.dart'; // <--- IMPORT COLORS
+import 'package:femn/colors.dart'; 
 
 class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep, // Deep background
+      backgroundColor: AppColors.backgroundDeep,
       appBar: AppBar(
         title: Text(
           "Settings",
@@ -30,11 +26,27 @@ class SettingsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Profile Option
+            // --- THEMES SECTION ---
+            Text(
+              "Appearance",
+              style: TextStyle(color: AppColors.primaryLavender, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 10),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _buildThemeCard(context, "Default", Color(0xFFAD80BF), Color(0xFF120E13)),
+                  _buildThemeCard(context, "Spotify", Color(0xFF1DB954), Color(0xFF121212)),
+                  _buildThemeCard(context, "YouTube", Color(0xFFFF0000), Color(0xFF0F0F0F)),
+                ],
+              ),
+            ),
+            SizedBox(height: 20),
 
             Divider(color: AppColors.elevation),
             
-            // Logout Option
+            // --- LOGOUT OPTION ---
             ListTile(
               leading: Container(
                 padding: EdgeInsets.all(8),
@@ -62,101 +74,50 @@ class SettingsScreen extends StatelessWidget {
       ),
     );
   }
-}
 
-// --- Placeholder/Utility Classes (Refactored for Dark Theme) ---
-
-// If these screens are used elsewhere, they now match the theme. 
-// (Note: ProfileScreen in profile.dart likely replaces OtherUserProfileScreen logic, 
-// but keeping this consistent just in case).
-
-class OtherUserProfileScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.backgroundDeep,
-      appBar: AppBar(
-        title: Text("Other User Profile", style: TextStyle(color: AppColors.textHigh)),
-        backgroundColor: AppColors.backgroundDeep,
-        iconTheme: IconThemeData(color: AppColors.primaryLavender),
-        elevation: 0,
-      ),
-      body: Center(
-        child: Text("This is another user's profile.", style: TextStyle(color: AppColors.textMedium)),
-      ),
-    );
-  }
-}
-
-class FollowListScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.backgroundDeep,
-      appBar: AppBar(
-        title: Text("Follow List", style: TextStyle(color: AppColors.textHigh)),
-        backgroundColor: AppColors.backgroundDeep,
-        iconTheme: IconThemeData(color: AppColors.primaryLavender),
-        elevation: 0,
-      ),
-      body: Center(
-        child: Text("List of followers/following.", style: TextStyle(color: AppColors.textMedium)),
-      ),
-    );
-  }
-}
-
-class ProfileStatsWidget extends StatelessWidget {
-  final int posts;
-  final int followers;
-  final int following;
-
-  ProfileStatsWidget({
-    required this.posts, 
-    required this.followers, 
-    required this.following
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.elevation),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildStatItem("Posts", posts),
-          _buildStatItem("Followers", followers),
-          _buildStatItem("Following", following),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatItem(String label, int count) {
-    return Column(
-      children: [
-        Text(
-          count.toString(),
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textHigh,
-          ),
+  Widget _buildThemeCard(BuildContext context, String name, Color primary, Color bg) {
+    return GestureDetector(
+      onTap: () {
+        // This triggers the instant update via ThemeManager
+        //ThemeManager().setTheme(name);
+      },
+      child: Container(
+        margin: EdgeInsets.only(right: 12),
+        width: 100,
+        height: 120,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.elevation, width: 2),
         ),
-        SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: AppColors.textMedium,
-          ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Color Circle Preview
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: bg,
+                shape: BoxShape.circle,
+                border: Border.all(color: primary, width: 3),
+              ),
+              child: Center(
+                child: Icon(Icons.circle, color: primary, size: 12),
+              ),
+            ),
+            SizedBox(height: 10),
+            Text(
+              name,
+              style: TextStyle(
+                color: AppColors.textHigh, 
+                fontWeight: FontWeight.bold,
+                fontSize: 14
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

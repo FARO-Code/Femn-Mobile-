@@ -85,6 +85,60 @@ class CycleService {
   static DateTime predictNextPeriod(DateTime lastPeriodStart, {int avgCycle = kDefaultCycleLength}) {
     return lastPeriodStart.add(Duration(days: avgCycle));
   }
+
+  // --- NEW: Calculate Phase/Season ---
+  static CyclePhaseData? getCurrentPhase(DateTime? lastPeriodStart, int cycleLength) {
+    if (lastPeriodStart == null) return null;
+
+    final now = DateTime.now();
+    final diff = now.difference(lastPeriodStart).inDays;
+    
+    // Normalize day to current cycle (1-based index)
+    // If diff is 30 and cycle is 28, day is 2.
+    int currentDay = (diff % cycleLength) + 1; 
+
+    // Logic for Seasons
+    // Winter (Menstruation): Days 1-5
+    if (currentDay <= 5) {
+      return CyclePhaseData(
+        seasonName: "Winter",
+        phaseName: "Menstruation",
+        bgColor: Color(0xFF102A43), // Midnight Navy
+        textColor: Color(0xFFD9E2EC), // Frosty Ice Blue
+        icon: Feather.cloud_snow,
+      );
+    }
+    // Summer (Ovulation): Approx 14 days before end of cycle (+/- 1 day)
+    // For 28 days, Ovulation is ~14. Range 13-15.
+    int ovulationDay = cycleLength - 14; 
+    if (currentDay >= ovulationDay - 1 && currentDay <= ovulationDay + 1) {
+      return CyclePhaseData(
+        seasonName: "Summer",
+        phaseName: "Ovulation",
+        bgColor: Color(0xFFFFD700), // Solar Gold
+        textColor: Color(0xFF4E342E), // Dark Earth Brown
+        icon: Feather.sun,
+      );
+    }
+    // Spring (Follicular): After Winter, Before Summer
+    if (currentDay > 5 && currentDay < ovulationDay - 1) {
+      return CyclePhaseData(
+        seasonName: "Spring",
+        phaseName: "Follicular",
+        bgColor: Color(0xFF98FB98), // Pale Mint Green
+        textColor: Color(0xFF1B5E20), // Deep Fern Green
+        icon: Feather.cloud_drizzle, // or a flower/sprout icon if available
+      );
+    }
+    // Autumn (Luteal): After Summer, until end
+    return CyclePhaseData(
+      seasonName: "Autumn",
+      phaseName: "Luteal",
+      bgColor: Color(0xFFC0392B), // Deep Rust
+      textColor: Color(0xFFFDF2E9), // Warm Vanilla
+      icon: Feather.wind,
+    );
+  }
 }
 
 // --- 3. Security Service (User Specific) ---
@@ -1724,4 +1778,20 @@ class _PinScreenState extends State<PinScreen> {
       ),
     );
   }
+}
+
+class CyclePhaseData {
+  final String seasonName; // Winter, Spring, Summer, Autumn
+  final String phaseName;  // Menstruation, Follicular, etc.
+  final Color bgColor;
+  final Color textColor;
+  final IconData icon;
+
+  CyclePhaseData({
+    required this.seasonName,
+    required this.phaseName,
+    required this.bgColor,
+    required this.textColor,
+    required this.icon,
+  });
 }

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class AppColors {
   // --- 1. The Core Palette ---
   static const Color primaryLavender = Color(0xFFAD80BF); // Main buttons, active tabs, links
-  static const Color secondaryTeal = Color(0xFF0F525C);   // Secondary containers, chips
+  static const Color secondaryTeal = Color.fromARGB(255, 15, 103, 117);   // Secondary containers, chips
   static const Color accentMustard = Color(0xFFBA8736);   // FAB, "New" badges, highlights
 
   // --- 2. The Backgrounds ("Tinted Grays") ---
