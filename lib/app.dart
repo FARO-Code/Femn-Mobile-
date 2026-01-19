@@ -7,7 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:femn/colors.dart'; // <--- IMPORT YOUR COLORS FILE
+import 'package:femn/customization/colors.dart'; // <--- IMPORT YOUR COLORS FILE
 
 // Firebase Services
 final FirebaseAuth _auth = FirebaseAuth.instance;

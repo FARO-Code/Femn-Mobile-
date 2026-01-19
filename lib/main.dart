@@ -1,25 +1,31 @@
-import 'package:femn/addpost.dart';
-import 'package:femn/groups.dart';
-import 'package:femn/messaging.dart';
-import 'package:femn/wellness.dart';
-import 'package:femn/colors.dart'; // <--- IMPORT YOUR COLORS FILE
+import 'package:femn/feed/addpost.dart';
+import 'package:femn/circle/groups.dart';
+import 'package:femn/hub_screens/messaging.dart';
+import 'package:femn/hub_screens/wellness.dart';
+import 'package:femn/customization/colors.dart'; // <--- IMPORT YOUR COLORS FILE
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
-import 'auth.dart';
-import 'post.dart';
-import 'campaign.dart'; // Ensure filename matches (campaign.dart or campaigns.dart)
-import 'auth_provider.dart';
-import 'fonts.dart';
+import 'auth/auth.dart';
+import 'hub_screens/post.dart';
+import 'circle/campaign.dart'; // Ensure filename matches (campaign.dart or campaigns.dart)
+import 'auth/auth_provider.dart';
+import 'customization/fonts.dart';
 import 'package:app_links/app_links.dart'; // <--- ADD THIS IMPORT
 import 'dart:async';
-import 'package:femn/deep_link_service.dart';
+import 'package:femn/services/deep_link_service.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  
+  // 2. Update this line to include the options
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(
     ChangeNotifierProvider(
       create: (context) => AuthProvider(),
