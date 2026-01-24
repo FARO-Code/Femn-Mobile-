@@ -7,7 +7,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:femn/customization/colors.dart'; // <--- IMPORT YOUR COLORS FILE
+import 'package:femn/customization/colors.dart';
+import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 
 // Firebase Services
 final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -517,7 +518,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep,
+      backgroundColor: Colors.transparent,
       body: PageView.builder(
         controller: _pageController,
         itemCount: _onboardingPages.length + 1,
@@ -597,10 +598,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _buildInterestsPage() {
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('Pick your interests', style: TextStyle(color: AppColors.textHigh)),
-        backgroundColor: AppColors.backgroundDeep,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: IconThemeData(color: AppColors.primaryLavender),
       ),
@@ -691,6 +692,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
+  bool _obscurePassword = true;
 
   @override
   void initState() {
@@ -729,9 +731,9 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     final authProvider = Provider.of<AuthProvider>(context);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: AppColors.backgroundDeep,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         title: const Text('FEMN', style: TextStyle(color: AppColors.textHigh, fontWeight: FontWeight.bold)),
         iconTheme: IconThemeData(color: AppColors.primaryLavender),
@@ -764,15 +766,16 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
           _buildTextField(
             controller: _emailController,
             label: 'Email',
-            icon: Icons.email,
+            icon: Feather.mail,
             keyboardType: TextInputType.emailAddress,
           ),
           const SizedBox(height: 16),
           _buildTextField(
             controller: _passwordController,
             label: 'Password',
-            icon: Icons.lock,
-            obscureText: true,
+            icon: Feather.lock,
+            obscureText: _obscurePassword,
+            onToggleObscure: () => setState(() => _obscurePassword = !_obscurePassword),
           ),
           const SizedBox(height: 24),
           if (authProvider.error != null)
@@ -806,21 +809,22 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
           _buildTextField(
             controller: _nameController,
             label: 'Full Name',
-            icon: Icons.person,
+            icon: Feather.user,
           ),
           const SizedBox(height: 16),
           _buildTextField(
             controller: _emailController,
             label: 'Email',
-            icon: Icons.email,
+            icon: Feather.mail,
             keyboardType: TextInputType.emailAddress,
           ),
           const SizedBox(height: 16),
           _buildTextField(
             controller: _passwordController,
             label: 'Password',
-            icon: Icons.lock,
-            obscureText: true,
+            icon: Feather.lock,
+            obscureText: _obscurePassword,
+            onToggleObscure: () => setState(() => _obscurePassword = !_obscurePassword),
           ),
           const SizedBox(height: 24),
           if (authProvider.error != null)
@@ -852,6 +856,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     required IconData icon,
     bool obscureText = false,
     TextInputType? keyboardType,
+    VoidCallback? onToggleObscure,
   }) {
     return TextField(
       controller: controller,
@@ -860,6 +865,15 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
         labelText: label,
         labelStyle: TextStyle(color: AppColors.textMedium),
         prefixIcon: Icon(icon, color: AppColors.primaryLavender),
+        suffixIcon: (label.toLowerCase().contains('password') && onToggleObscure != null)
+            ? IconButton(
+                icon: Icon(
+                  obscureText ? Feather.eye_off : Feather.eye,
+                  color: AppColors.primaryLavender,
+                ),
+                onPressed: onToggleObscure,
+              )
+            : null,
         filled: true,
         fillColor: AppColors.elevation,
         border: OutlineInputBorder(
@@ -899,7 +913,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep,
+      backgroundColor: Colors.transparent,
       body: _screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: AppColors.surface,
@@ -914,23 +928,23 @@ class _MainAppScreenState extends State<MainAppScreen> {
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
+            icon: Icon(Feather.home),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.search),
+            icon: Icon(Feather.search),
             label: 'Search',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.add),
+            icon: Icon(Feather.plus),
             label: 'Create',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.notifications),
+            icon: Icon(Feather.bell),
             label: 'Notifications',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person),
+            icon: Icon(Feather.user),
             label: 'Profile',
           ),
         ],
@@ -996,14 +1010,14 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
     Provider.of<AuthProvider>(context);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('FEMN', style: TextStyle(color: AppColors.textHigh, fontWeight: FontWeight.bold)),
-        backgroundColor: AppColors.backgroundDeep,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.tune, color: AppColors.primaryLavender),
+            icon: const Icon(Feather.sliders, color: AppColors.primaryLavender),
             onPressed: () {
               // Show feed tuning options
             },
@@ -1103,7 +1117,7 @@ class PinCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: Row(
                 children: [
-                  const Icon(Icons.push_pin, size: 14, color: AppColors.accentMustard), // Mustard for saves
+                  const Icon(Feather.map_pin, size: 14, color: AppColors.accentMustard), // Mustard for saves
                   const SizedBox(width: 4),
                   Text(
                     '${pin.saves}',
@@ -1111,7 +1125,7 @@ class PinCard extends StatelessWidget {
                   ),
                   const Spacer(),
                   IconButton(
-                    icon: const Icon(Icons.more_vert, size: 16, color: AppColors.textMedium),
+                    icon: const Icon(Feather.more_vertical, size: 16, color: AppColors.textMedium),
                     onPressed: () {
                       // Show more options
                     },
@@ -1137,14 +1151,14 @@ class PinDetailScreen extends StatelessWidget {
     final authProvider = Provider.of<AuthProvider>(context);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep,
+      backgroundColor: Colors.transparent,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            backgroundColor: AppColors.backgroundDeep,
+            backgroundColor: Colors.transparent,
             expandedHeight: 300,
             leading: IconButton(
-              icon: Icon(Icons.arrow_back, color: AppColors.primaryLavender),
+              icon: Icon(Feather.arrow_left, color: AppColors.primaryLavender),
               onPressed: () => Navigator.pop(context),
             ),
             flexibleSpace: FlexibleSpaceBar(
@@ -1156,13 +1170,13 @@ class PinDetailScreen extends StatelessWidget {
             pinned: true,
             actions: [
               IconButton(
-                icon: const Icon(Icons.save_alt, color: AppColors.primaryLavender),
+                icon: const Icon(Feather.download, color: AppColors.primaryLavender),
                 onPressed: () {
                   _showSaveDialog(context, authProvider.user!.uid);
                 },
               ),
               IconButton(
-                icon: const Icon(Icons.share, color: AppColors.primaryLavender),
+                icon: const Icon(Feather.share_2, color: AppColors.primaryLavender),
                 onPressed: () {
                   _sharePin(context);
                 },
@@ -1203,11 +1217,11 @@ class PinDetailScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      const Icon(Icons.push_pin, size: 16, color: AppColors.accentMustard),
+                      const Icon(Feather.map_pin, size: 16, color: AppColors.accentMustard),
                       const SizedBox(width: 4),
                       Text('${pin.saves} saves', style: TextStyle(color: AppColors.textMedium)),
                       const SizedBox(width: 16),
-                      const Icon(Icons.favorite, size: 16, color: AppColors.error), // Soft red for likes
+                      const Icon(Feather.heart, size: 16, color: AppColors.error), // Soft red for likes
                       const SizedBox(width: 4),
                       Text('${pin.likes} likes', style: TextStyle(color: AppColors.textMedium)),
                     ],
@@ -1223,13 +1237,13 @@ class PinDetailScreen extends StatelessWidget {
         child: Row(
           children: [
             IconButton(
-              icon: const Icon(Icons.favorite_border, color: AppColors.primaryLavender),
+              icon: const Icon(Feather.heart, color: AppColors.primaryLavender),
               onPressed: () {
                 // Like pin
               },
             ),
             IconButton(
-              icon: const Icon(Icons.comment, color: AppColors.primaryLavender),
+              icon: const Icon(Feather.message_circle, color: AppColors.primaryLavender),
               onPressed: () {
                 // Show comments
               },
@@ -1284,7 +1298,7 @@ class PinDetailScreen extends StatelessWidget {
                       itemBuilder: (context, index) {
                         if (index == 0) {
                           return ListTile(
-                            leading: const Icon(Icons.add, color: AppColors.primaryLavender),
+                            leading: const Icon(Feather.plus, color: AppColors.primaryLavender),
                             title: const Text('Create new board', style: TextStyle(color: AppColors.textHigh)),
                             onTap: () {
                               _createNewBoard(context);
@@ -1293,7 +1307,7 @@ class PinDetailScreen extends StatelessWidget {
                         }
                         final board = pinProvider.boards[index - 1];
                         return ListTile(
-                          leading: const Icon(Icons.bookmark, color: AppColors.textMedium),
+                          leading: const Icon(Feather.bookmark, color: AppColors.textMedium),
                           title: Text(board.name, style: TextStyle(color: AppColors.textMedium)),
                           onTap: () {
                             _saveToBoard(context, board.id);
@@ -1426,7 +1440,7 @@ class PinDetailScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.link, color: AppColors.textMedium),
+                leading: const Icon(Feather.link, color: AppColors.textMedium),
                 title: const Text('Copy link', style: TextStyle(color: AppColors.textHigh)),
                 onTap: () {
                   // Copy link to clipboard
@@ -1437,7 +1451,7 @@ class PinDetailScreen extends StatelessWidget {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.share, color: AppColors.textMedium),
+                leading: const Icon(Feather.share_2, color: AppColors.textMedium),
                 title: const Text('Share via...', style: TextStyle(color: AppColors.textHigh)),
                 onTap: () {
                   // Share via native share sheet
@@ -1524,14 +1538,14 @@ class _CreatePinScreenState extends State<CreatePinScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('Create Pin', style: TextStyle(color: AppColors.textHigh)),
-        backgroundColor: AppColors.backgroundDeep,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.check, color: AppColors.primaryLavender),
+            icon: const Icon(Feather.check, color: AppColors.primaryLavender),
             onPressed: _isLoading ? null : _createPin,
           ),
         ],
@@ -1553,7 +1567,7 @@ class _CreatePinScreenState extends State<CreatePinScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.add_photo_alternate, size: 48, color: AppColors.textDisabled),
+                            Icon(Feather.image, size: 48, color: AppColors.textDisabled),
                             SizedBox(height: 8),
                             Text('Tap to add image', style: TextStyle(color: AppColors.textMedium)),
                           ],
@@ -1607,7 +1621,7 @@ class SearchScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      backgroundColor: AppColors.backgroundDeep,
+      backgroundColor: Colors.transparent,
       appBar: SearchAppBar(),
       body: Center(
         child: Text('Search functionality would go here', style: TextStyle(color: AppColors.textMedium)),
@@ -1626,7 +1640,7 @@ class SearchAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      backgroundColor: AppColors.backgroundDeep,
+      backgroundColor: Colors.transparent,
       elevation: 0,
       title: Container(
         height: 40,
@@ -1637,7 +1651,7 @@ class SearchAppBar extends StatelessWidget implements PreferredSizeWidget {
         child: const TextField(
           style: TextStyle(color: AppColors.textHigh),
           decoration: InputDecoration(
-            prefixIcon: Icon(Icons.search, color: AppColors.textMedium),
+            prefixIcon: Icon(Feather.search, color: AppColors.textMedium),
             hintText: 'Search for ideas',
             hintStyle: TextStyle(color: AppColors.textDisabled),
             border: InputBorder.none,
@@ -1656,10 +1670,10 @@ class NotificationsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('Notifications', style: TextStyle(color: AppColors.textHigh)),
-        backgroundColor: AppColors.backgroundDeep,
+        backgroundColor: Colors.transparent,
         elevation: 0,
       ),
       body: const Center(
@@ -1683,14 +1697,14 @@ class ProfileScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('Profile', style: TextStyle(color: AppColors.textHigh)),
-        backgroundColor: AppColors.backgroundDeep,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings, color: AppColors.textHigh),
+            icon: const Icon(Feather.settings, color: AppColors.textHigh),
             onPressed: () {
               // Navigate to settings
             },

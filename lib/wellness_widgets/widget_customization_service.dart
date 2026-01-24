@@ -94,7 +94,7 @@ class WidgetCustomizationService {
     WidgetLayout(
       id: 'cycle',
       name: 'Cycle',
-      icon: Ionicons.water_outline,
+      icon: Feather.droplet,
       description: 'Period & ovulation tracker',
       crossAxisCellCount: 3,
       mainAxisCellCount: 2,
@@ -111,7 +111,7 @@ class WidgetCustomizationService {
     WidgetLayout(
       id: 'twin_finder',
       name: 'Twin Finder',
-      icon: Ionicons.people_outline,
+      icon: Feather.users,
       description: 'Find your personality twin',
       crossAxisCellCount: 2,
       mainAxisCellCount: 2,
@@ -119,7 +119,7 @@ class WidgetCustomizationService {
     WidgetLayout(
       id: 'leak_guard',
       name: 'LeakGuard',
-      icon: MaterialCommunityIcons.shield_check_outline,
+      icon: Feather.shield,
       description: 'Protection reminders',
       crossAxisCellCount: 3,
       mainAxisCellCount: 2,

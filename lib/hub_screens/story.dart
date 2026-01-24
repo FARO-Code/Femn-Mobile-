@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:uuid/uuid.dart';
+import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'package:femn/services/embers_service.dart';
 import 'package:femn/customization/colors.dart'; // <--- IMPORT COLORS
 
@@ -147,7 +148,7 @@ class _StoryCreationModalState extends State<StoryCreationModal> {
             children: [
               ElevatedButton.icon(
                 onPressed: () => _pickMedia(ImageSource.camera),
-                icon: Icon(Icons.camera_alt),
+                icon: Icon(Feather.camera),
                 label: Text('Camera'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.elevation,
@@ -156,7 +157,7 @@ class _StoryCreationModalState extends State<StoryCreationModal> {
               ),
               ElevatedButton.icon(
                 onPressed: () => _pickMedia(ImageSource.gallery),
-                icon: Icon(Icons.photo_library),
+                icon: Icon(Feather.image),
                 label: Text('Gallery'),
                  style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.elevation,
@@ -213,7 +214,7 @@ class _StoryCreationModalState extends State<StoryCreationModal> {
         borderRadius: BorderRadius.circular(12),
         child: _mediaType == 'image'
             ? Image.file(_mediaFile!, fit: BoxFit.cover)
-            : Center(child: Icon(Icons.play_arrow, size: 50, color: Colors.white)),
+            : Center(child: Icon(Feather.play, size: 50, color: Colors.white)),
       ),
     );
   }
@@ -338,7 +339,7 @@ class _StoriesTabState extends State<StoriesTab> {
                                           height: 200,
                                           color: Colors.black,
                                           child: Center(
-                                            child: Icon(Icons.play_arrow, color: Colors.white, size: 50),
+                                            child: Icon(Feather.play, color: Colors.white, size: 50),
                                           ),
                                         ),
                                 ),
@@ -370,13 +371,13 @@ class _StoriesTabState extends State<StoriesTab> {
                               children: [
                                 ElevatedButton.icon(
                                   onPressed: _pickStory,
-                                  icon: Icon(Icons.photo_library),
+                                  icon: Icon(Feather.image),
                                   label: Text('Gallery'),
                                   style: ElevatedButton.styleFrom(backgroundColor: AppColors.elevation, foregroundColor: AppColors.primaryLavender),
                                 ),
                                 ElevatedButton.icon(
                                   onPressed: _takeStory,
-                                  icon: Icon(Icons.camera_alt),
+                                  icon: Icon(Feather.camera),
                                   label: Text('Camera'),
                                   style: ElevatedButton.styleFrom(backgroundColor: AppColors.elevation, foregroundColor: AppColors.primaryLavender),
                                 ),
@@ -466,12 +467,12 @@ class _StoriesTabState extends State<StoriesTab> {
                                     width: double.infinity,
                                     height: double.infinity,
                                     placeholder: (context, url) => Container(color: AppColors.elevation),
-                                    errorWidget: (context, url, error) => Icon(Icons.error, color: AppColors.error),
+                                    errorWidget: (context, url, error) => Icon(Feather.alert_circle, color: AppColors.error),
                                   )
                                 : Container(
                                     color: Colors.black,
                                     child: Center(
-                                      child: Icon(Icons.play_arrow, color: Colors.white, size: 30),
+                                      child: Icon(Feather.play, color: Colors.white, size: 30),
                                     ),
                                   ),
                           ),
@@ -650,13 +651,13 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> {
                               width: double.infinity,
                               placeholder: (context, url) => Center(child: CircularProgressIndicator(color: Colors.white)),
                               errorWidget: (context, url, error) => Center(
-                                child: Icon(Icons.error, color: Colors.white),
+                                child: Icon(Feather.alert_circle, color: Colors.white),
                               ),
                             )
                           : Container(
                               color: Colors.black,
                               child: Center(
-                                child: Icon(Icons.play_arrow, color: Colors.white, size: 50),
+                                child: Icon(Feather.play, color: Colors.white, size: 50),
                               ),
                             ),
                     ),
@@ -764,7 +765,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> {
                     ],
                   ),
                   IconButton(
-                    icon: Icon(Icons.close, color: Colors.white),
+                    icon: Icon(Feather.x, color: Colors.white),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],

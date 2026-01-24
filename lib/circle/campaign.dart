@@ -9,6 +9,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:flutter_vector_icons/flutter_vector_icons.dart';
+import 'petitions.dart'; // <--- ADD THIS
+
 
 class CampaignsScreen extends StatefulWidget {
   @override
@@ -23,9 +26,9 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
     return DefaultTabController(
       length: _tabs.length,
       child: Scaffold(
-        backgroundColor: AppColors.backgroundDeep,
+        backgroundColor: Colors.transparent,
         appBar: AppBar(
-          backgroundColor: AppColors.backgroundDeep,
+          backgroundColor: Colors.transparent,
           elevation: 0,
           title: Text('Campaigns', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textHigh)),
           bottom: TabBar(
@@ -46,7 +49,7 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
           onPressed: () {
             _showCreateBottomSheet(context);
           },
-          child: Icon(Icons.add, color: AppColors.backgroundDeep),
+          child: Icon(Feather.plus, color: AppColors.backgroundDeep),
           backgroundColor: AppColors.accentMustard, // Mustard for FAB
         ),
       ),
@@ -70,7 +73,7 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
               Text('Create New', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
               SizedBox(height: 16),
               ListTile(
-                leading: Icon(Icons.poll, color: AppColors.primaryLavender),
+                leading: Icon(Feather.bar_chart_2, color: AppColors.primaryLavender),
                 title: Text('Poll', style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.textHigh)),
                 onTap: () {
                   Navigator.pop(context);
@@ -78,15 +81,15 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
                 },
               ),
               ListTile(
-                leading: Icon(Icons.assignment, color: AppColors.secondaryTeal),
+                leading: Icon(Feather.file_text, color: AppColors.secondaryTeal),
                 title: Text('Petition', style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.textHigh)),
                 onTap: () {
                   Navigator.pop(context);
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => CreatePetitionScreen()));
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => EnhancedPetitionCreationScreen()));
                 },
               ),
               ListTile(
-                leading: Icon(Icons.event, color: AppColors.accentMustard),
+                leading: Icon(Feather.calendar, color: AppColors.accentMustard),
                 title: Text('Event', style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.textHigh)),
                 onTap: () {
                   Navigator.pop(context);
@@ -122,7 +125,7 @@ class PollsTab extends StatelessWidget {
         }
         
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return _buildEmptyState('No polls yet 👀', Icons.poll);
+          return _buildEmptyState('No polls yet 👀', Feather.bar_chart_2);
         }
         
         final polls = snapshot.data!.docs;
@@ -184,7 +187,7 @@ class PollsTab extends StatelessWidget {
                         color: AppColors.elevation,
                         child: Center(child: CircularProgressIndicator(color: AppColors.primaryLavender)),
                       ),
-                      errorWidget: (context, url, error) => Icon(Icons.error, color: AppColors.error),
+                      errorWidget: (context, url, error) => Icon(Feather.alert_circle, color: AppColors.error),
                     ),
                   ),
                 ),
@@ -252,7 +255,7 @@ class PollsTab extends StatelessWidget {
                     style: TextStyle(color: AppColors.textDisabled, fontSize: 12),
                   ),
                   if (hasVoted)
-                    Icon(Icons.check_circle, color: AppColors.secondaryTeal, size: 16),
+                    Icon(Feather.check_circle, color: AppColors.secondaryTeal, size: 16),
                 ],
               ),
             ],
@@ -284,31 +287,69 @@ class PetitionsTab extends StatelessWidget {
         }
         
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return _buildEmptyState('No petitions yet 👀', Icons.assignment);
+          return _buildEmptyState('No petitions yet 👀', Feather.file_text);
         }
         
         final petitions = snapshot.data!.docs;
-        return ListView.builder(
+        
+        // Extract trending (top 5 by signatures)
+        final trendingPetitions = List<DocumentSnapshot>.from(petitions);
+        trendingPetitions.sort((a, b) => (b['currentSignatures'] ?? 0).compareTo(a['currentSignatures'] ?? 0));
+        final topTrending = trendingPetitions.take(5).toList();
+
+        return ListView(
           padding: EdgeInsets.all(12),
-          itemCount: petitions.length,
-          itemBuilder: (context, index) {
-            final petition = petitions[index];
-            final hasSigned = user != null ? (petition['signers'] as List).contains(user.uid) : false;
-            
-            return _buildPetitionCard(petition, context, hasSigned);
-          },
+          children: [
+            if (topTrending.isNotEmpty) ...[
+              Padding(
+                padding: const EdgeInsets.only(left: 4, bottom: 12),
+                child: Row(
+                  children: [
+                    Icon(Feather.trending_up, color: AppColors.accentMustard, size: 20),
+                    SizedBox(width: 8),
+                    Text('Trending Now', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
+                  ],
+                ),
+              ),
+              SizedBox(
+                height: 180,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: topTrending.length,
+                  itemBuilder: (context, index) {
+                    final petition = topTrending[index];
+                    final hasSigned = user != null ? (petition['signers'] as List).contains(user.uid) : false;
+                    return Container(
+                      width: 280,
+                      margin: EdgeInsets.only(right: 12),
+                      child: _buildPetitionCard(petition, context, hasSigned, isMini: true),
+                    );
+                  },
+                ),
+              ),
+              SizedBox(height: 24),
+              Padding(
+                padding: const EdgeInsets.only(left: 4, bottom: 12),
+                child: Text('All Petitions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
+              ),
+            ],
+            ...petitions.map((petition) {
+              final hasSigned = user != null ? (petition['signers'] as List).contains(user.uid) : false;
+              return _buildPetitionCard(petition, context, hasSigned);
+            }).toList(),
+          ],
         );
       },
     );
   }
 
-  Widget _buildPetitionCard(DocumentSnapshot petition, BuildContext context, bool hasSigned) {
+  Widget _buildPetitionCard(DocumentSnapshot petition, BuildContext context, bool hasSigned, {bool isMini = false}) {
     final petitionData = petition.data() as Map<String, dynamic>?;
-    final imageUrl = petitionData?['imageUrl'] as String?;
+    final imageUrl = petitionData?['bannerImageUrl'] as String? ?? petitionData?['imageUrl'] as String?;
     final title = petitionData?['title'] as String? ?? 'Untitled Petition';
     final description = petitionData?['description'] as String? ?? '';
     final creatorName = petitionData?['creatorName'] as String? ?? 'Unknown';
-    final signatures = (petitionData?['signatures'] as int?) ?? 0;
+    final signatures = (petitionData?['currentSignatures'] as int?) ?? (petitionData?['signatures'] as int?) ?? 0;
     final goal = (petitionData?['goal'] as int?) ?? 1000;
     final progress = goal > 0 ? signatures / goal : 0;
 
@@ -320,7 +361,7 @@ class PetitionsTab extends StatelessWidget {
       child: InkWell(
         onTap: () {
           Navigator.push(context, MaterialPageRoute(
-            builder: (context) => PetitionDetailScreen(petitionId: petition.id)
+            builder: (context) => EnhancedPetitionDetailScreen(petitionId: petition.id)
           ));
         },
         child: Padding(
@@ -334,23 +375,26 @@ class PetitionsTab extends StatelessWidget {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: CachedNetworkImage(
-                      imageUrl: imageUrl,
-                      height: 150,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        height: 150,
-                        color: AppColors.elevation,
-                        child: Center(child: CircularProgressIndicator(color: AppColors.primaryLavender)),
-                      ),
-                      errorWidget: (context, url, error) => Icon(Icons.error, color: AppColors.error),
+                    imageUrl: imageUrl,
+                    height: isMini ? 100 : 150,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      height: isMini ? 100 : 150,
+                      color: AppColors.elevation,
+                      child: Center(child: CircularProgressIndicator(color: AppColors.primaryLavender)),
                     ),
+                    errorWidget: (context, url, error) => Icon(Feather.alert_circle, color: AppColors.error),
                   ),
                 ),
-              Text(
-                title,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.textHigh),
               ),
+            Text(
+              title,
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: isMini ? 14 : 18, color: AppColors.textHigh),
+              maxLines: isMini ? 1 : 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            if (!isMini) ...[
               SizedBox(height: 8),
               Text(
                 description,
@@ -358,6 +402,7 @@ class PetitionsTab extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
+            ],
               SizedBox(height: 12),
               ClipRRect(
                 borderRadius: BorderRadius.circular(4),
@@ -380,7 +425,7 @@ class PetitionsTab extends StatelessWidget {
                     style: TextStyle(color: AppColors.textMedium, fontSize: 12),
                   ),
                   if (hasSigned)
-                    Icon(Icons.check_circle, color: AppColors.success, size: 16),
+                    Icon(Feather.check_circle, color: AppColors.success, size: 16),
                 ],
               ),
               SizedBox(height: 8),
@@ -417,7 +462,7 @@ class EventsTab extends StatelessWidget {
         }
         
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return _buildEmptyState('No events yet 👀', Icons.event);
+          return _buildEmptyState('No events yet 👀', Feather.calendar);
         }
         
         final events = snapshot.data!.docs;
@@ -486,7 +531,7 @@ class EventsTab extends StatelessWidget {
                         color: AppColors.elevation,
                         child: Center(child: CircularProgressIndicator(color: AppColors.primaryLavender)),
                       ),
-                      errorWidget: (context, url, error) => Icon(Icons.error, color: AppColors.error),
+                      errorWidget: (context, url, error) => Icon(Feather.alert_circle, color: AppColors.error),
                     ),
                   ),
                 ),
@@ -497,7 +542,7 @@ class EventsTab extends StatelessWidget {
               SizedBox(height: 8),
               Row(
                 children: [
-                  Icon(Icons.calendar_today, size: 16, color: AppColors.primaryLavender),
+                  Icon(Feather.calendar, size: 16, color: AppColors.primaryLavender),
                   SizedBox(width: 8),
                   Text(
                     DateFormat('MMM d, yyyy • h:mm a').format(date),
@@ -508,7 +553,7 @@ class EventsTab extends StatelessWidget {
               SizedBox(height: 4),
               Row(
                 children: [
-                  Icon(Icons.location_on, size: 16, color: AppColors.primaryLavender),
+                  Icon(Feather.map_pin, size: 16, color: AppColors.primaryLavender),
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -535,7 +580,7 @@ class EventsTab extends StatelessWidget {
                     style: TextStyle(color: AppColors.textDisabled, fontSize: 12),
                   ),
                   if (isAttending)
-                    Icon(Icons.check_circle, color: AppColors.success, size: 16),
+                    Icon(Feather.check_circle, color: AppColors.success, size: 16),
                 ],
               ),
             ],
@@ -634,7 +679,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
         iconTheme: IconThemeData(color: AppColors.primaryLavender),
         actions: [
           IconButton(
-            icon: Icon(Icons.check, color: AppColors.primaryLavender),
+            icon: Icon(Feather.check, color: AppColors.primaryLavender),
             onPressed: _isLoading ? null : _createPoll,
           ),
         ],
@@ -664,7 +709,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                             : Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.add_photo_alternate, size: 40, color: AppColors.textDisabled),
+                                  Icon(Feather.image, size: 40, color: AppColors.textDisabled),
                                   Text('Add Image', style: TextStyle(color: AppColors.textMedium)),
                                 ],
                               ),
@@ -782,7 +827,7 @@ class _CreatePetitionScreenState extends State<CreatePetitionScreen> {
         iconTheme: IconThemeData(color: AppColors.primaryLavender),
         actions: [
           IconButton(
-            icon: Icon(Icons.check, color: AppColors.primaryLavender),
+            icon: Icon(Feather.check, color: AppColors.primaryLavender),
             onPressed: _isLoading ? null : _createPetition,
           ),
         ],
@@ -812,7 +857,7 @@ class _CreatePetitionScreenState extends State<CreatePetitionScreen> {
                             : Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.add_photo_alternate, size: 40, color: AppColors.textDisabled),
+                                  Icon(Feather.image, size: 40, color: AppColors.textDisabled),
                                   Text('Add Image', style: TextStyle(color: AppColors.textMedium)),
                                 ],
                               ),
@@ -983,7 +1028,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         iconTheme: IconThemeData(color: AppColors.primaryLavender),
         actions: [
           IconButton(
-            icon: Icon(Icons.check, color: AppColors.primaryLavender),
+            icon: Icon(Feather.check, color: AppColors.primaryLavender),
             onPressed: _isLoading ? null : _createEvent,
           ),
         ],
@@ -1013,7 +1058,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                             : Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.add_photo_alternate, size: 40, color: AppColors.textDisabled),
+                                  Icon(Feather.image, size: 40, color: AppColors.textDisabled),
                                   Text('Add Image', style: TextStyle(color: AppColors.textMedium)),
                                 ],
                               ),
@@ -1038,7 +1083,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                             : '${DateFormat('MMM d, yyyy').format(_selectedDate!)} at ${_selectedTime!.format(context)}',
                           style: TextStyle(color: AppColors.textHigh),
                         ),
-                        trailing: Icon(Icons.calendar_today, color: AppColors.primaryLavender),
+                        trailing: Icon(Feather.calendar, color: AppColors.primaryLavender),
                         onTap: _selectDateTime,
                       ),
                     ),
@@ -1391,7 +1436,7 @@ class _PetitionDetailScreenState extends State<PetitionDetailScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.check_circle, color: AppColors.success),
+                          Icon(Feather.check_circle, color: AppColors.success),
                           SizedBox(width: 8),
                           Text('Already Signed', style: TextStyle(color: AppColors.success)),
                         ],
@@ -1517,7 +1562,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 
                 Row(
                   children: [
-                    Icon(Icons.calendar_today, color: AppColors.primaryLavender),
+                    Icon(Feather.calendar, color: AppColors.primaryLavender),
                     SizedBox(width: 12),
                     Text(
                       DateFormat('MMM d, yyyy • h:mm a').format(date),
@@ -1530,7 +1575,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 
                 Row(
                   children: [
-                    Icon(Icons.location_on, color: AppColors.primaryLavender),
+                    Icon(Feather.map_pin, color: AppColors.primaryLavender),
                     SizedBox(width: 12),
                     Expanded(
                       child: Text(
@@ -1552,7 +1597,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 
                 Row(
                   children: [
-                    Icon(Icons.people, color: AppColors.secondaryTeal),
+                    Icon(Feather.users, color: AppColors.secondaryTeal),
                     SizedBox(width: 8),
                     Text(
                       '$attendees people attending',

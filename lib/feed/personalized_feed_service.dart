@@ -288,6 +288,8 @@ Future<Map<String, dynamic>> _buildUserInterestProfile(String userId) async {
     required String postId,
     String? authorId,
     double? value,
+    String? source, // 'feed', 'profile', 'search', 'hashtag'
+    String collection = 'posts', // NEW: Target collection
   }) async {
     final userId = _auth.currentUser?.uid;
     if (userId == null) return;
@@ -301,8 +303,37 @@ Future<Map<String, dynamic>> _buildUserInterestProfile(String userId) async {
           'postId': postId,
           'authorId': authorId,
           'value': value,
+          'source': source ?? 'feed', // Default to feed if unknown
           'timestamp': FieldValue.serverTimestamp(),
         });
+
+      // --- NEW: Update Author Traffic Analytics ---
+      if (authorId != null && (type == 'view' || type == 'click_link')) {
+        String sourceKey = source ?? 'feed';
+        _db.collection('users').doc(authorId).update({
+          'trafficBreakdown.$sourceKey': FieldValue.increment(1)
+        }).onError((_, __) => null);
+      }
+
+
+      // --- NEW: Increment Global Counters ---
+      // We assume most interactions are on 'posts' collection for now. 
+      // Ideally, we'd pass collection name or infer it.
+      // For now, try updating 'posts'. If it fails (doc not found), it's fine.
+      final docRef = _db.collection(collection).doc(postId);
+      
+      if (type == 'view') {
+        docRef.update({'views': FieldValue.increment(1)}).onError((_, __) => null);
+      } else if (type == 'share') {
+        docRef.update({'shares': FieldValue.increment(1)}).onError((_, __) => null);
+      } else if (type == 'save') {
+        docRef.update({'saves': FieldValue.increment(1)}).onError((_, __) => null);
+      } else if (type == 'click_link') {
+        docRef.update({'linkClicks': FieldValue.increment(1)}).onError((_, __) => null);
+      } else if (type == 'unsave') {
+        docRef.update({'saves': FieldValue.increment(-1)}).onError((_, __) => null);
+      }
+
     } catch (e) {
       print('Error recording interaction: $e');
     }

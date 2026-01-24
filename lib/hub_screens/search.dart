@@ -1,3 +1,4 @@
+import 'package:femn/circle/petitions.dart';
 import 'dart:async';
 import 'post.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -9,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
+import 'package:femn/customization/layout.dart';
 
 // Enhanced Search Screen with multiple search types and smart features
 class SearchScreen extends StatefulWidget {
@@ -288,6 +290,10 @@ class _SearchScreenState extends State<SearchScreen> {
       // Search hashtags
       final hashtags = await _searchHashtags(query);
       results.addAll(hashtags);
+      
+      // Search petitions
+      final petitions = await _searchPetitions(query);
+      results.addAll(petitions);
 
       // Sort by relevance score
       results.sort((a, b) => (b['relevanceScore'] ?? 0).compareTo(a['relevanceScore'] ?? 0));
@@ -418,7 +424,59 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
 
+  Future<List<Map<String, dynamic>>> _searchPetitions(String query) async {
+    try {
+      final petitionsSnapshot = await FirebaseFirestore.instance
+          .collection('petitions')
+          .get();
+
+      return petitionsSnapshot.docs
+          .where((doc) {
+            final petition = doc.data();
+            final title = petition['title']?.toString().toLowerCase() ?? '';
+            final description = petition['description']?.toString().toLowerCase() ?? '';
+            final queryLower = query.toLowerCase();
+            
+            return title.contains(queryLower) || description.contains(queryLower);
+          })
+          .map((doc) {
+            final petition = doc.data();
+            petition['id'] = doc.id; // Ensure ID is in the data map
+            double relevanceScore = _calculatePetitionRelevanceScore(petition, query);
+            
+            return {
+              'type': 'petition',
+              'data': petition,
+              'relevanceScore': relevanceScore,
+              'id': doc.id,
+            };
+          })
+          .toList();
+    } catch (e) {
+      print('Error searching petitions: $e');
+      return [];
+    }
+  }
+
   // Relevance scoring algorithms
+  double _calculatePetitionRelevanceScore(Map<String, dynamic> petition, String query) {
+    double score = 0.0;
+    final title = petition['title']?.toString().toLowerCase() ?? '';
+    final queryLower = query.toLowerCase();
+
+    if (title == queryLower) score += 100;
+    else if (title.startsWith(queryLower)) score += 60;
+    else if (title.contains(queryLower)) score += 30;
+
+    final goal = petition['goal'] ?? 0;
+    final signatures = petition['currentSignatures'] ?? 0;
+    if (goal > 0) {
+      score += (signatures / goal) * 50;
+    }
+    
+    return score;
+  }
+
   double _calculateUserRelevanceScore(Map<String, dynamic> user, String query) {
     double score = 0.0;
     final username = user['username']?.toString().toLowerCase() ?? '';
@@ -484,6 +542,8 @@ class _SearchScreenState extends State<SearchScreen> {
           return item['type'] == 'post';
         case SearchCategory.hashtags:
           return item['type'] == 'hashtag';
+        case SearchCategory.petitions:
+          return item['type'] == 'petition';
         default:
           return true;
       }
@@ -493,7 +553,7 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep, // Deep background
+      backgroundColor: Colors.transparent, // Deep background
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -623,7 +683,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Widget _buildSearchContent() {
     if (_isSearching) {
-      return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
+      return const GridShimmerSkeleton();
     }
 
     if (_searchController.text.isNotEmpty) {
@@ -657,7 +717,7 @@ class _SearchScreenState extends State<SearchScreen> {
         final suggestion = _searchSuggestions[index];
         return ListTile(
           leading: Icon(
-            suggestion.startsWith('@') ? Icons.person : Icons.tag,
+            suggestion.startsWith('@') ? Feather.user : Feather.hash,
             color: AppColors.textMedium,
           ),
           title: Text(suggestion, style: TextStyle(color: AppColors.textHigh)),
@@ -686,6 +746,8 @@ class _SearchScreenState extends State<SearchScreen> {
               return _buildUserResult(item['data']);
             case 'hashtag':
               return _buildHashtagResult(item['data']);
+            case 'petition':
+              return _buildPetitionResult(item['data']);
             default:
               return SizedBox();
           }
@@ -702,7 +764,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Widget _buildPostGrid(List<dynamic> posts) {
     return MasonryGridView.count(
-      crossAxisCount: 3, 
+      crossAxisCount: ResponsiveLayout.getColumnCount(context), 
       mainAxisSpacing: 10,
       crossAxisSpacing: 10,
       shrinkWrap: true,
@@ -767,7 +829,7 @@ class _SearchScreenState extends State<SearchScreen> {
                             height: imageHeight,
                             color: AppColors.elevation,
                             child: const Center(
-                              child: Icon(Icons.error, color: AppColors.error),
+                              child: Icon(Feather.alert_circle, color: AppColors.error),
                             ),
                           ),
                         )
@@ -775,7 +837,7 @@ class _SearchScreenState extends State<SearchScreen> {
                           height: imageHeight,
                           color: Colors.black,
                           child: const Center(
-                            child: Icon(Icons.play_arrow, color: Colors.white, size: 36),
+                            child: Icon(Feather.play, color: Colors.white, size: 36),
                           ),
                         ),
                 ),
@@ -861,7 +923,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       ),
                       if (user['isVerified'] == true) const SizedBox(width: 4),
                       if (user['isVerified'] == true)
-                        const Icon(Icons.verified, color: Colors.blue, size: 16),
+                        const Icon(Feather.check_circle, color: Colors.blue, size: 16),
                     ],
                   ),
                   const SizedBox(height: 2),
@@ -944,10 +1006,77 @@ class _SearchScreenState extends State<SearchScreen> {
           '${hashtag['popularity']} posts',
           style: TextStyle(fontSize: 12, color: AppColors.textMedium),
         ),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.textDisabled),
+        trailing: const Icon(Feather.chevron_right, size: 16, color: AppColors.textDisabled),
         onTap: () {
           _searchController.text = hashtag['tag'].toString();
           _performSearch(hashtag['tag'].toString());
+        },
+      ),
+    );
+  }
+
+  Widget _buildPetitionResult(Map<String, dynamic> petition) {
+    final title = petition['title'] ?? 'Untitled Petition';
+    final progress = (petition['goal'] ?? 0) > 0 
+        ? (petition['currentSignatures'] ?? 0) / petition['goal'] 
+        : 0.0;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        leading: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: AppColors.elevation,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: (petition['bannerImageUrl'] != null && petition['bannerImageUrl'].toString().isNotEmpty)
+                ? CachedNetworkImage(
+                    imageUrl: petition['bannerImageUrl'],
+                    fit: BoxFit.cover,
+                  )
+                : const Icon(Feather.flag, color: AppColors.primaryLavender),
+          ),
+        ),
+        title: Text(title, style: const TextStyle(color: AppColors.textHigh, fontWeight: FontWeight.bold, fontSize: 14)),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('${petition['currentSignatures'] ?? 0} signed', style: const TextStyle(color: AppColors.textMedium, fontSize: 12)),
+            const SizedBox(height: 4),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(2),
+              child: LinearProgressIndicator(
+                value: progress,
+                backgroundColor: AppColors.elevation,
+                color: AppColors.secondaryTeal,
+                minHeight: 4,
+              ),
+            ),
+          ],
+        ),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => EnhancedPetitionDetailScreen(petitionId: petition['id']),
+            ),
+          );
         },
       ),
     );
@@ -958,7 +1087,7 @@ class _SearchScreenState extends State<SearchScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.search_off, size: 64, color: AppColors.textDisabled),
+          Icon(Feather.search, size: 64, color: AppColors.textDisabled),
           SizedBox(height: 16),
           Text(
             'No results found',
@@ -1021,10 +1150,10 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Widget _buildRecentSearchItem(Map<String, dynamic> search) {
     return ListTile(
-      leading: Icon(Icons.history, color: AppColors.textMedium),
+      leading: Icon(Feather.clock, color: AppColors.textMedium),
       title: Text(search['query']?.toString() ?? '', style: TextStyle(color: AppColors.textHigh)),
       trailing: IconButton(
-        icon: Icon(Icons.close, size: 16, color: AppColors.textDisabled),
+        icon: Icon(Feather.x, size: 16, color: AppColors.textDisabled),
         onPressed: () => _removeRecentSearch(search['query']?.toString() ?? ''),
       ),
       onTap: () {
@@ -1078,6 +1207,7 @@ enum SearchCategory {
   users,
   posts,
   hashtags,
+  petitions,
 }
 
 // Extension to get display names
@@ -1092,6 +1222,8 @@ extension SearchCategoryExtension on SearchCategory {
         return 'Posts';
       case SearchCategory.hashtags:
         return 'Hashtags';
+      case SearchCategory.petitions:
+        return 'Petitions';
     }
   }
 }

@@ -16,6 +16,9 @@ import '../wellness_widgets/tracker.dart';
 import '../services/streak_service.dart'; 
 import '../wellness_widgets/twin_finder.dart'; 
 import '../wellness_widgets/leakguard/leakguard.dart'; 
+import '../therapy/screens/therapy_discovery_screen.dart'; 
+import '../therapy/screens/therapist_dashboard.dart'; 
+import '../circle/petitions.dart'; 
 
 // --- Enums & Models ---
 enum WidgetType {
@@ -28,7 +31,10 @@ enum WidgetType {
   selfDefense,
   literature,
   leakGuard,
-  checkInTimer
+  checkInTimer,
+  therapy,
+  clientDashboard,
+  petitionsDashboard
 }
 
 class GridItem {
@@ -136,6 +142,24 @@ class _WellnessScreenState extends State<WellnessScreen> {
       'name': 'Check-in Timer', 
       'icon': Feather.clock, 
       'desc': 'Set reminders'
+    },
+    WidgetType.therapy: {
+      'name': 'Therapy',
+      'icon': Feather.heart,
+      'desc': 'Professional support',
+      'onTap': (context) => Navigator.push(context, MaterialPageRoute(builder: (c) => TherapyDiscoveryScreen()))
+    },
+    WidgetType.clientDashboard: {
+      'name': 'Client Dashboard',
+      'icon': Feather.grid,
+      'desc': 'Manage your clients',
+      'onTap': (context) => Navigator.push(context, MaterialPageRoute(builder: (c) => TherapistDashboard()))
+    },
+    WidgetType.petitionsDashboard: {
+      'name': 'Petitions Dashboard',
+      'icon': Feather.flag,
+      'desc': 'Manage your causes',
+      'onTap': (context) => Navigator.push(context, MaterialPageRoute(builder: (c) => UserPetitionsDashboard()))
     },
   };
 
@@ -337,7 +361,7 @@ class _WellnessScreenState extends State<WellnessScreen> {
     final currentUserId = FirebaseAuth.instance.currentUser!.uid;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep,
+      backgroundColor: Colors.transparent,
       body: GestureDetector(
         onTap: () {
           if (_isEditMode) setState(() => _isEditMode = false);
@@ -348,12 +372,12 @@ class _WellnessScreenState extends State<WellnessScreen> {
         child: RefreshIndicator(
           onRefresh: _onRefresh,
           color: AppColors.primaryLavender,
-          backgroundColor: AppColors.surface,
+          backgroundColor: Colors.transparent,
           child: CustomScrollView(
             physics: AlwaysScrollableScrollPhysics(),
             slivers: [
               SliverAppBar(
-                backgroundColor: AppColors.backgroundDeep,
+                backgroundColor: Colors.transparent,
                 elevation: 0,
                 pinned: true,
                 automaticallyImplyLeading: false,
@@ -620,7 +644,7 @@ class _WellnessScreenState extends State<WellnessScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          streakActive ? Ionicons.flame : Ionicons.flame_outline, 
+                          streakActive ? Feather.zap : Feather.zap, 
                           size: 16, 
                           color: streakActive ? Colors.orange : AppColors.textDisabled),
                         SizedBox(width: 4),
@@ -735,7 +759,7 @@ class _WellnessScreenState extends State<WellnessScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Ionicons.flame_outline, size: 48, color: AppColors.textDisabled),
+            Icon(Feather.zap, size: 48, color: AppColors.textDisabled),
             SizedBox(height: 16),
             Text(
               "Streak Extinguished!",

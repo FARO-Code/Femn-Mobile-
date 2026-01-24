@@ -25,9 +25,9 @@ class _MessagingScreenState extends State<MessagingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep, // Deep background
+      backgroundColor: Colors.transparent, // Deep background
       appBar: AppBar(
-        backgroundColor: AppColors.backgroundDeep,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         shadowColor: Colors.transparent,
         automaticallyImplyLeading: false,
@@ -55,7 +55,7 @@ class _MessagingScreenState extends State<MessagingScreen> {
             const SizedBox(width: 8),
             // Screen Title
             Text(
-              'Circles',
+              'Inbox',
               style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textHigh,),
             ),
           ],
@@ -223,7 +223,7 @@ class _MessagingScreenState extends State<MessagingScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               decoration: BoxDecoration(
-                color: AppColors.backgroundDeep, // Blend with bg or make AppColors.surface for card look
+                color: Colors.transparent, // Blend with bg or make AppColors.surface for card look
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
@@ -238,7 +238,7 @@ class _MessagingScreenState extends State<MessagingScreen> {
                       border: Border.all(color: AppColors.secondaryTeal.withOpacity(0.5), width: 1),
                     ),
                     child: Center(
-                      child: Icon(Icons.favorite, color: AppColors.secondaryTeal, size: 24),
+                      child: Icon(Feather.heart, color: AppColors.secondaryTeal, size: 24),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -298,7 +298,7 @@ class _MessagingScreenState extends State<MessagingScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           decoration: BoxDecoration(
-             color: AppColors.backgroundDeep,
+             color: Colors.transparent,
              borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -335,7 +335,7 @@ class _MessagingScreenState extends State<MessagingScreen> {
                           ),
                         ),
                         SizedBox(width: 4),
-                        Icon(Icons.verified, size: 14, color: AppColors.primaryLavender),
+                        Icon(Feather.check_circle, size: 14, color: AppColors.primaryLavender),
                       ],
                     ),
                     const SizedBox(height: 4),

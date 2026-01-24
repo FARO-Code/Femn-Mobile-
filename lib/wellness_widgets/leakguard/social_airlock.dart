@@ -262,7 +262,7 @@ class SocialAirlockScreen extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(Icons.circle, size: 10, color: color),
+            Icon(Feather.circle, size: 10, color: color),
             SizedBox(width: 8),
             Text(
               title,

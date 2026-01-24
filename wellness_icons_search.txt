@@ -1,0 +1,3 @@
+﻿C:\Code\femn\lib\wellness_widgets\widget_customization_service.dart:122:      icon: MaterialCommunityIcons.shield_check_outline,
+C:\Code\femn\lib\wellness_widgets\leakguard\leakguard.dart:627:                      Icons.favorite, // Filled heart
+C:\Code\femn\lib\wellness_widgets\leakguard\social_airlock.dart:158:      icon: MaterialCommunityIcons.discord,

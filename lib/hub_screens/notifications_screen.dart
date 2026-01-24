@@ -13,9 +13,9 @@ class NotificationScreen extends StatelessWidget {
     final currentUserId = FirebaseAuth.instance.currentUser!.uid;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: AppColors.backgroundDeep,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Feather.chevron_left, color: AppColors.primaryLavender),
@@ -77,7 +77,7 @@ class NotificationScreen extends StatelessWidget {
 
     switch (type) {
       case 'like':
-        iconData = Icons.favorite;
+        iconData = Feather.heart;
         iconColor = AppColors.error;
         textPreview = 'liked your post.';
         break;

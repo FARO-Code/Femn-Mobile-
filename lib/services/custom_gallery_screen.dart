@@ -2,9 +2,10 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:femn/customization/colors.dart'; 
 import 'package:flutter/material.dart';
-import 'package:flutter_feather_icons/flutter_feather_icons.dart'; // Uses FeatherIcons class
+import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:femn/customization/layout.dart';
 
 class CustomGalleryScreen extends StatefulWidget {
   @override
@@ -106,7 +107,7 @@ Future<void> _fetchAssets({RequestType type = RequestType.common}) async {
                       : Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16.0),
                           child: MasonryGridView.count(
-                            crossAxisCount: 2, // 2 columns looks better for Staggered in galleries
+                            crossAxisCount: ResponsiveLayout.getColumnCount(context), // Responsive columns
                             mainAxisSpacing: 8,
                             crossAxisSpacing: 8,
                             itemCount: _assets.length,
@@ -146,8 +147,8 @@ Future<void> _fetchAssets({RequestType type = RequestType.common}) async {
               ],
             ),
             child: IconButton(
-              // FIXED: Changed Feather.x to FeatherIcons.x
-              icon: Icon(FeatherIcons.x, color: Colors.white, size: 22),
+              // Standardized to Feather.x
+              icon: Icon(Feather.x, color: Colors.white, size: 22),
               onPressed: () => Navigator.pop(context),
             ),
           ),
@@ -283,8 +284,8 @@ Future<void> _fetchAssets({RequestType type = RequestType.common}) async {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // FIXED: Changed Feather.play to FeatherIcons.play
-                        Icon(FeatherIcons.play, color: Colors.white, size: 10),
+                        // Standardized to Feather.play
+                        Icon(Feather.play, color: Colors.white, size: 10),
                         SizedBox(width: 4),
                         Text(
                           _formatDuration(asset.duration),

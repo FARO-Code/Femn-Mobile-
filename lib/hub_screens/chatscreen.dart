@@ -5,6 +5,7 @@ import 'package:femn/customization/colors.dart'; // <--- IMPORT YOUR COLORS FILE
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 
 // --- UPDATED CHAT SCREEN WITH READ RECEIPTS ---
 class ChatScreen extends StatefulWidget {
@@ -163,7 +164,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 if (isMe && isLastMessage) const SizedBox(width: 6),
                 if (isMe && isLastMessage)
                   Icon(
-                    isRead ? Icons.done_all : Icons.done,
+                    isRead ? Feather.check : Feather.check, // Feather doesn't have double check, using check for both with color difference
                     size: 14,
                     // Blue for read doesn't fit the palette, let's use Success Green or Lavender
                     color: isRead ? AppColors.primaryLavender : Colors.white70,
@@ -207,7 +208,7 @@ class _ChatScreenState extends State<ChatScreen> {
             CircleAvatar(
               backgroundColor: AppColors.primaryLavender,
               child: IconButton(
-                icon: Icon(Icons.send, color: AppColors.backgroundDeep),
+                icon: Icon(Feather.send, color: AppColors.backgroundDeep),
                 onPressed: _sendMessage,
               ),
             ),
@@ -227,9 +228,9 @@ class _ChatScreenState extends State<ChatScreen> {
         .snapshots();
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep, // Deep background
+      backgroundColor: Colors.transparent, // Deep background
       appBar: AppBar(
-        backgroundColor: AppColors.backgroundDeep,
+        backgroundColor: Colors.transparent,
         iconTheme: IconThemeData(color: AppColors.primaryLavender),
         title: Row(
           children: [
@@ -420,10 +421,10 @@ class _NewChatScreenState extends State<NewChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text('New Message', style: TextStyle(color: AppColors.textHigh)),
-        backgroundColor: AppColors.backgroundDeep,
+        backgroundColor: Colors.transparent,
         iconTheme: IconThemeData(color: AppColors.primaryLavender),
       ),
       body: Column(
@@ -436,7 +437,7 @@ class _NewChatScreenState extends State<NewChatScreen> {
               decoration: InputDecoration(
                 hintText: 'Search users...',
                 hintStyle: TextStyle(color: AppColors.textDisabled),
-                prefixIcon: Icon(Icons.search, color: AppColors.primaryLavender),
+                prefixIcon: Icon(Feather.search, color: AppColors.primaryLavender),
                 filled: true,
                 fillColor: AppColors.elevation,
                 border: OutlineInputBorder(

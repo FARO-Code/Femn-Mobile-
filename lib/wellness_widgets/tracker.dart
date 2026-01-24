@@ -4,10 +4,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'package:femn/customization/colors.dart'; // <--- IMPORT COLORS
 
 import '../circle/petitions.dart';
 import '../circle/polls.dart';
+import 'package:femn/customization/layout.dart';
 
 class TrackerScreen extends StatefulWidget {
   @override
@@ -28,7 +30,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep, // Deep background
+      backgroundColor: Colors.transparent, // Deep background
       appBar: AppBar(
         title: Text(
           'My Trackers',
@@ -37,7 +39,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
             color: AppColors.textHigh,
           ),
         ),
-        backgroundColor: AppColors.backgroundDeep,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: IconThemeData(color: AppColors.primaryLavender),
       ),
@@ -79,14 +81,14 @@ class _TrackerScreenState extends State<TrackerScreen> {
 
         if (allTrackedItems.isEmpty) {
           return _buildEmptyState(
-            icon: Icons.track_changes_rounded,
+            icon: Feather.target,
             title: 'No Tracked Items',
             subtitle: 'Your created and interacted petitions and polls will appear here',
           );
         }
 
         return MasonryGridView.count(
-          crossAxisCount: 2,
+          crossAxisCount: ResponsiveLayout.getColumnCount(context),
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
           itemCount: allTrackedItems.length,
@@ -229,7 +231,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
                     errorWidget: (context, url, error) => Container(
                       color: AppColors.elevation,
                       height: 80,
-                      child: Icon(Icons.error, color: AppColors.error),
+                      child: Icon(Feather.alert_circle, color: AppColors.error),
                     ),
                   ),
                 ),
@@ -398,7 +400,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(Icons.poll, size: 16, color: AppColors.primaryLavender),
+                  Icon(Feather.bar_chart_2, size: 16, color: AppColors.primaryLavender),
                   Text(
                     '$totalVotes votes',
                     style: TextStyle(
@@ -471,7 +473,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
             ),
             errorWidget: (context, url, error) => Container(
               color: AppColors.elevation,
-              child: Icon(Icons.poll, color: AppColors.primaryLavender),
+              child: Icon(Feather.bar_chart_2, color: AppColors.primaryLavender),
             ),
           ),
         );
@@ -480,7 +482,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
     
     // Fallback to poll icon
     return Center(
-      child: Icon(Icons.poll, size: 40, color: AppColors.primaryLavender),
+      child: Icon(Feather.bar_chart_2, size: 40, color: AppColors.primaryLavender),
     );
   }
 
@@ -540,7 +542,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.error_outline,
+            Feather.alert_circle,
             size: 64,
             color: AppColors.error.withOpacity(0.5),
           ),

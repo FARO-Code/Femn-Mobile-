@@ -1,0 +1,3 @@
+﻿C:\Code\femn\lib\circle\petitions.dart:2104:                leading: Icon(FontAwesome.whatsapp, color: Colors.green),
+C:\Code\femn\lib\circle\petitions.dart:2239:              if (link.contains('tiktok.com')) icon = FontAwesome.music; // Closest for TikTok
+C:\Code\femn\lib\circle\petitions.dart:2240:              if (link.contains('instagram.com')) icon = FontAwesome.instagram;

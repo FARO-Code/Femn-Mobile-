@@ -1,0 +1,13 @@
+[33m453cf7d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m HEAD@{0}: reset: moving to HEAD~1
+[33me4b7a84[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{1}: commit: Your commit message here
+[33m453cf7d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m HEAD@{2}: reset: moving to 453cf7d
+[33m453cf7d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m HEAD@{3}: commit: start over on fyp optimisation
+[33m9ab01e0[m HEAD@{4}: reset: moving to 9ab01e0
+[33m9ab01e0[m HEAD@{5}: commit: optimizing fyp
+[33m5dee97f[m HEAD@{6}: reset: moving to 5dee97f
+[33m2229931[m HEAD@{7}: checkout: moving from 5dee97f4311adfd3119cdc60e44bbebbd3318a84 to main
+[33m5dee97f[m HEAD@{8}: commit: Prep for connections and algo update
+[33m735b40c[m HEAD@{9}: reset: moving to origin/main
+[33md8190b9[m HEAD@{10}: pull origin main --rebase (start): checkout d8190b91cd6da6968a558f6523fe7dc1262845c0
+[33m2229931[m HEAD@{11}: Branch: renamed refs/heads/master to refs/heads/main
+[33m2229931[m HEAD@{13}: commit (initial): Initial commit

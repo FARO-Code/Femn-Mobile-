@@ -15,6 +15,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:femn/customization/layout.dart';
 
 import 'package:share_plus/share_plus.dart';
 
@@ -37,7 +38,8 @@ import 'package:flutter/foundation.dart';
 import 'package:femn/feed/feed_service.dart';
 
 import 'package:femn/feed/personalized_feed_service.dart';
-
+import 'package:femn/circle/petitions.dart';
+import 'package:femn/circle/polls.dart';
 import 'package:shimmer/shimmer.dart';
 
 import 'package:url_launcher/url_launcher.dart';
@@ -131,6 +133,9 @@ class _FeedScreenState extends State<FeedScreen> {
   // --- FOLLOWING LIST ---
 
   List<String> _followingIds = [];
+  List<DocumentSnapshot> _trendingPetitions = [];
+  bool _isLoadingTrending = false;
+  Future<DocumentSnapshot>? _currentUserFuture;
 
 
 
@@ -139,10 +144,12 @@ class _FeedScreenState extends State<FeedScreen> {
   void initState() {
 
     super.initState();
+    
+    _currentUserFuture = FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid).get();
 
     _fetchFollowingList();
-
     _checkDailyQuote();
+    _loadTrendingPetitions();
 
 
 
@@ -233,6 +240,17 @@ class _FeedScreenState extends State<FeedScreen> {
             .get()).docs;
 
       }
+      
+      // Fetch Petitions and Polls to mix in
+      final petitionsSnap = await FirebaseFirestore.instance.collection('petitions').limit(5).get();
+      final pollsSnap = await FirebaseFirestore.instance.collection('polls').limit(5).get();
+      
+      List<DocumentSnapshot> mixedItems = [];
+      mixedItems.addAll(newPosts);
+      mixedItems.addAll(petitionsSnap.docs);
+      mixedItems.addAll(pollsSnap.docs);
+      mixedItems.shuffle();
+      newPosts = mixedItems;
 
 
 
@@ -360,6 +378,13 @@ class _FeedScreenState extends State<FeedScreen> {
 
     }
 
+    // Fetch some petitions and polls to mix in
+    final petitionsSnap = await FirebaseFirestore.instance.collection('petitions').limit(3).get();
+    final pollsSnap = await FirebaseFirestore.instance.collection('polls').limit(3).get();
+    List<DocumentSnapshot> mixedNewItems = [...newPosts, ...petitionsSnap.docs, ...pollsSnap.docs];
+    mixedNewItems.shuffle();
+    newPosts = mixedNewItems;
+
     
 
     final existingIds = _posts.map((e) => e.id).toSet();
@@ -440,8 +465,8 @@ class _FeedScreenState extends State<FeedScreen> {
 
     });
 
+    _loadTrendingPetitions();
     await _loadInitialPosts();
-
   }
 
 
@@ -642,6 +667,61 @@ class _FeedScreenState extends State<FeedScreen> {
 
   }
 
+  Widget _buildTrendingPetitionsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
+          child: Row(
+            children: [
+              Icon(Feather.trending_up, color: AppColors.accentMustard, size: 18),
+              SizedBox(width: 8),
+              Text('TRENDING NOW', style: TextStyle(color: AppColors.textHigh, fontWeight: FontWeight.bold, fontSize: 14, letterSpacing: 1.0)),
+            ],
+          ),
+        ),
+        SizedBox(
+          height: 200,
+          child: ListView.builder(
+            padding: EdgeInsets.symmetric(horizontal: 20),
+            scrollDirection: Axis.horizontal,
+            itemCount: _trendingPetitions.length,
+            itemBuilder: (context, index) {
+              return TrendingPetitionCard(petition: _trendingPetitions[index]);
+            },
+          ),
+        ),
+        SizedBox(height: 10),
+      ],
+    );
+  }
+
+  Future<void> _loadTrendingPetitions() async {
+    if (mounted) setState(() => _isLoadingTrending = true);
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('petitions')
+          .orderBy('currentSignatures', descending: true)
+          .limit(10)
+          .get();
+      
+      if (mounted) {
+        setState(() {
+          _trendingPetitions = snapshot.docs;
+          _isLoadingTrending = false;
+        });
+      }
+    } catch (e) {
+      print("Error loading trending petitions: $e");
+      if (mounted) setState(() => _isLoadingTrending = false);
+    }
+  }
+
+  void _loadMixedFeed() async {
+    // This will be called inside _loadInitialPosts
+  }
+
 
 
   @override
@@ -669,33 +749,19 @@ class _FeedScreenState extends State<FeedScreen> {
 
 
     return Scaffold(
-
-      backgroundColor: AppColors.backgroundDeep,
-
+      backgroundColor: Colors.transparent,
       body: RefreshIndicator(
-
         color: AppColors.primaryLavender,
-
-        backgroundColor: AppColors.surface,
-
+        backgroundColor: Colors.transparent,
         onRefresh: _onRefresh,
-
         child: CustomScrollView(
-
           controller: _scrollController,
-
           slivers: [
-
             // 1. TOP BAR (Logo, Search, Profile)
-
             SliverAppBar(
-
-              backgroundColor: AppColors.backgroundDeep,
-
+              backgroundColor: Colors.transparent,
               elevation: 0,
-
               floating: true,
-
               snap: true,
 
               pinned: false,
@@ -704,28 +770,26 @@ class _FeedScreenState extends State<FeedScreen> {
 
               toolbarHeight: 55,
 
-              title: Container(
-
-                width: 42,
-
-                height: 42,
-
-                decoration: BoxDecoration(
-
-                  shape: BoxShape.circle,
-
-                  color: AppColors.elevation,
-
-                  boxShadow: [
-
-                    BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 15, offset: const Offset(0, 2)),
-
-                  ],
-
-                ),
-
-                child: ClipOval(child: Image.asset('assets/femnlogo.png', fit: BoxFit.cover)),
-
+              title: Row(
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.elevation,
+                      boxShadow: [
+                        BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 15, offset: const Offset(0, 2)),
+                      ],
+                    ),
+                    child: ClipOval(child: Image.asset('assets/femnlogo.png', fit: BoxFit.cover)),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Femn',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textHigh,),
+                  ),
+                ],
               ),
 
               actions: [
@@ -766,13 +830,13 @@ class _FeedScreenState extends State<FeedScreen> {
 
                 FutureBuilder<DocumentSnapshot>(
 
-                  future: FirebaseFirestore.instance.collection('users').doc(currentUserId).get(),
+                  future: _currentUserFuture,
 
                   builder: (context, snapshot) {
 
                     Widget avatar;
 
-                    if (snapshot.connectionState == ConnectionState.waiting || !snapshot.hasData || !snapshot.data!.exists) {
+                    if (!snapshot.hasData || !snapshot.data!.exists) {
 
                       avatar = Image.asset('assets/default_avatar.png', fit: BoxFit.cover);
 
@@ -846,7 +910,7 @@ class _FeedScreenState extends State<FeedScreen> {
 
                 child: Container(
 
-                  color: AppColors.backgroundDeep,
+                  color: Colors.transparent,
 
                   padding: const EdgeInsets.only(top: 20.0, left: 8.0, right: 8.0, bottom: 5.0),
 
@@ -986,6 +1050,12 @@ class _FeedScreenState extends State<FeedScreen> {
 
             ),
 
+            // 4. TRENDING PETITIONS
+            if (_trendingPetitions.isNotEmpty)
+              SliverToBoxAdapter(
+                child: _buildTrendingPetitionsSection(),
+              ),
+
 
 
             if (_isLoadingInitial)
@@ -1012,7 +1082,7 @@ class _FeedScreenState extends State<FeedScreen> {
 
                 sliver: SliverMasonryGrid.count(
 
-                  crossAxisCount: 2,
+                  crossAxisCount: ResponsiveLayout.getColumnCount(context),
 
                   mainAxisSpacing: 12,
 
@@ -1300,6 +1370,8 @@ class PostCard extends StatefulWidget {
 
   final double? metaHeight;
 
+  final String source; // 'feed', 'profile', 'search', etc.
+
 
 
   const PostCard({
@@ -1333,6 +1405,8 @@ class PostCard extends StatefulWidget {
     this.metaWidth,
 
     this.metaHeight,
+
+    this.source = 'feed',
 
   });
 
@@ -1379,6 +1453,11 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
     super.initState();
 
     isLiked = widget.likes.contains(currentUserId);
+    
+    // Log View (Impression)
+    if (currentUserId.isNotEmpty) {
+       _sendAlgorithmSignal('view', weight: 0.1); 
+    }
 
     _checkIfSaved();
 
@@ -1561,7 +1640,7 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
         authorId: widget.userId,
 
         value: weight,
-
+        source: widget.source, // Pass source
       );
 
     } catch (e) {}
@@ -1623,39 +1702,30 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
 
 
   Future<void> _toggleSave() async {
-
-    
-
     setState(() => isSaved = !isSaved);
-
-    final ref = FirebaseFirestore.instance.collection('users').doc(currentUserId);
+    final userRef = FirebaseFirestore.instance.collection('users').doc(currentUserId);
+    final postRef = FirebaseFirestore.instance.collection('posts').doc(widget.postId);
 
     if (isSaved) {
-
-      await ref.update({'savedPosts': FieldValue.arrayUnion([widget.postId])});
-
+      await userRef.update({'savedPosts': FieldValue.arrayUnion([widget.postId])});
+      postRef.update({'saves': FieldValue.increment(1)}); // Increment Saves
       _sendAlgorithmSignal('save', weight: 2.0);
-
       _showMinimalSnack("Saved", AppColors.accentMustard);
-
     } else {
-
-      await ref.update({'savedPosts': FieldValue.arrayRemove([widget.postId])});
-
+      await userRef.update({'savedPosts': FieldValue.arrayRemove([widget.postId])});
+      postRef.update({'saves': FieldValue.increment(-1)}); // Decrement Saves
     }
-
   }
 
 
 
   Future<void> _sharePost() async {
-
     final String deepLink = "https://femn-9cabb.web.app/post/${widget.postId}";
-
     await Share.share('Check out this post on Femn: $deepLink');
-
+    FirebaseFirestore.instance.collection('posts').doc(widget.postId).update({
+      'shares': FieldValue.increment(1)
+    });
     _sendAlgorithmSignal('share', weight: 2.5);
-
   }
 
 
@@ -1793,23 +1863,17 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
   // Helper for opening link
 
   Future<void> _launchURL() async {
-
     if (widget.linkUrl != null && widget.linkUrl!.isNotEmpty) {
-
       final Uri uri = Uri.parse(widget.linkUrl!);
-
       if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-
         _showMinimalSnack("Could not open link", AppColors.error);
-
       } else {
-
+        FirebaseFirestore.instance.collection('posts').doc(widget.postId).update({
+          'linkClicks': FieldValue.increment(1)
+        });
         _sendAlgorithmSignal('click_link', weight: 2.0);
-
       }
-
     }
-
   }
 
 
@@ -1888,7 +1952,7 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
 
             color: AppColors.elevation,
 
-            child: const Icon(Icons.error, color: AppColors.error)),
+            child: const Icon(Feather.alert_circle, color: AppColors.error)),
 
       );
 
@@ -1968,7 +2032,7 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
 
                               opacity: _heartOpacityAnimation,
 
-                              child: const Icon(Icons.favorite, size: 100, color: Colors.red, shadows: [Shadow(color: Colors.black45, blurRadius: 15, offset: Offset(0, 4))]),
+                              child: const Icon(Feather.heart, size: 100, color: Colors.red, shadows: [Shadow(color: Colors.black45, blurRadius: 15, offset: Offset(0, 4))]),
 
                             ),
 
@@ -2200,7 +2264,7 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
 
                                   onTap: () { _toggleLike(); Navigator.pop(context); },
 
-                                  child: Icon(isLiked ? Icons.favorite : Icons.favorite_border, size: 26, color: isLiked ? AppColors.error : AppColors.textHigh),
+                                  child: Icon(isLiked ? Feather.heart : Feather.heart, size: 26, color: isLiked ? AppColors.error : AppColors.textHigh),
 
                                 ),
 
@@ -2208,7 +2272,7 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
 
                                   onTap: () { _toggleSave(); Navigator.pop(context); },
 
-                                  child: Icon(isSaved ? Icons.bookmark : Icons.bookmark_border, size: 26, color: isSaved ? AppColors.accentMustard : AppColors.textHigh),
+                                  child: Icon(isSaved ? Feather.bookmark : Feather.bookmark, size: 26, color: isSaved ? AppColors.accentMustard : AppColors.textHigh),
 
                                 ),
 
@@ -2501,10 +2565,10 @@ class _MoreLikeThisDialog extends StatelessWidget {
 class PostDetailScreen extends StatefulWidget {
 
   final String postId;
-
   final String? userId;
+  final String source; // NEW
 
-  const PostDetailScreen({required this.postId, this.userId});
+  const PostDetailScreen({required this.postId, this.userId, this.source = 'feed'});
 
 
 
@@ -2529,6 +2593,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   bool _showCommentInput = false;
 
   late Future<void> _refreshPost;
+  Future<DocumentSnapshot>? _userDataFuture;
 
 
 
@@ -2537,7 +2602,19 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   void initState() {
 
     super.initState();
+    
+    _userDataFuture = FirebaseFirestore.instance.collection('users').doc(widget.userId).get();
 
+    
+    // Record view signal
+    PersonalizedFeedService().recordInteraction(
+      type: 'view',
+      postId: widget.postId,
+      authorId: widget.userId,
+      source: widget.source,
+      collection: 'posts',
+    );
+    
     _refreshPost = _onRefresh();
 
     _checkIfSaved();
@@ -2812,9 +2889,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
         builder: (context, postSnapshot) {
 
-          if (postSnapshot.connectionState == ConnectionState.waiting) return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
+          if (postSnapshot.connectionState == ConnectionState.waiting && !postSnapshot.hasData) return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
 
-          if (!postSnapshot.hasData || !postSnapshot.data!.exists) return Center(child: Text('Post not found', style: TextStyle(color: AppColors.textHigh)));
+          if (!postSnapshot.hasData || !postSnapshot.data!.exists) {
+            // Only show 'not found' if we definitely have no data
+            return Center(child: Text('Post not found', style: TextStyle(color: AppColors.textHigh)));
+          }
 
           final post = postSnapshot.data!;
 
@@ -2830,11 +2910,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
           return FutureBuilder<DocumentSnapshot>(
 
-            future: FirebaseFirestore.instance.collection('users').doc(widget.userId).get(),
+            future: _userDataFuture,
 
             builder: (context, userSnapshot) {
-
-              if (userSnapshot.connectionState == ConnectionState.waiting) return SizedBox();
 
               if (!userSnapshot.hasData || !userSnapshot.data!.exists) return SizedBox();
 
@@ -2842,7 +2920,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
               return Scaffold(
 
-                backgroundColor: AppColors.backgroundDeep, // Universal Deep background
+                backgroundColor: Colors.transparent, // Universal Deep background
 
                 appBar: PreferredSize(
 
@@ -2850,7 +2928,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
                   child: AppBar(
 
-                    backgroundColor: AppColors.backgroundDeep,
+                    backgroundColor: Colors.transparent,
 
                     elevation: 0,
 
@@ -3066,7 +3144,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
                                           color: AppColors.elevation,
 
-                                          child: const Icon(Icons.error, color: AppColors.error),
+                                          child: const Icon(Feather.alert_circle, color: AppColors.error),
 
                                         ),
 
@@ -3098,7 +3176,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
                                     icon: Icon(
 
-                                      isLiked ? Icons.favorite : Icons.favorite_border,
+                                      isLiked ? Feather.heart : Feather.heart,
 
                                       color: isLiked ? AppColors.error : AppColors.primaryLavender, // Error is Red
 
@@ -3156,7 +3234,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
                                     icon: Icon(
 
-                                      _isSaved ? Icons.bookmark : Icons.bookmark_border,
+                                      _isSaved ? Feather.bookmark : Feather.bookmark,
 
                                       color: _isSaved ? AppColors.accentMustard : AppColors.primaryLavender,
 
@@ -3366,7 +3444,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
                             IconButton(
 
-                              icon: const Icon(Icons.send, color: AppColors.primaryLavender),
+                              icon: const Icon(Feather.send, color: AppColors.primaryLavender),
 
                               onPressed: () => _addComment(),
 
@@ -3504,7 +3582,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
                             SizedBox(width: 4),
 
-                            Icon(Icons.verified, color: Colors.blue, size: 16),
+                            Icon(Feather.check_circle, color: Colors.blue, size: 16),
 
                           ],
 
@@ -3598,7 +3676,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
                       child: Icon(
 
-                        isLiked ? Icons.favorite : Icons.favorite_border,
+                        isLiked ? Feather.heart : Feather.heart,
 
                         size: 24,
 
@@ -4225,7 +4303,7 @@ class _FemnVideoPlayerState extends State<FemnVideoPlayer> {
             bottom: 10,
             left: 10,
             child: Icon(
-              Icons.play_arrow, // Simple play icon
+              Feather.play, // Simple play icon
               color: Colors.white,
               size: 24,
               shadows: [Shadow(blurRadius: 4, color: Colors.black54, offset: Offset(0, 1))],
@@ -4266,7 +4344,7 @@ class _FemnVideoPlayerState extends State<FemnVideoPlayer> {
                     child: Column(
                       children: [
                         const Spacer(),
-                        IconButton(iconSize: 60, icon: Icon(_controller.value.isPlaying ? Icons.pause_circle_outline : Icons.play_circle_outline, color: Colors.white), onPressed: _togglePlay),
+                        IconButton(iconSize: 60, icon: Icon(_controller.value.isPlaying ? Feather.pause_circle : Feather.play_circle, color: Colors.white), onPressed: _togglePlay),
                         const Spacer(),
                         _buildBottomBar(context),
                       ],
@@ -4308,7 +4386,7 @@ class _FemnVideoPlayerState extends State<FemnVideoPlayer> {
           Text(_formatDuration(_controller.value.position), style: const TextStyle(color: Colors.white, fontSize: 12)),
           Expanded(child: Slider(value: _controller.value.position.inSeconds.toDouble(), max: _controller.value.duration.inSeconds.toDouble(), onChanged: (val) { _controller.seekTo(Duration(seconds: val.toInt())); _startHideTimer(); })),
           Text(_formatDuration(_controller.value.duration), style: const TextStyle(color: Colors.white, fontSize: 12)),
-          if (!widget.isFullScreen) IconButton(icon: const Icon(Icons.fullscreen, color: Colors.white, size: 20), onPressed: () => _enterFullScreen(context)),
+          if (!widget.isFullScreen) IconButton(icon: const Icon(Feather.maximize, color: Colors.white, size: 20), onPressed: () => _enterFullScreen(context)),
         ],
       ),
     );
@@ -4343,13 +4421,16 @@ class _FeedPostWrapperState extends State<FeedPostWrapper> with AutomaticKeepAli
   @override
   void initState() {
     super.initState();
-    _fetchUser();
+    _userData = widget.cachedUserData;
+    if (_userData == null) {
+      _fetchUser();
+    }
   }
 
   void _fetchUser() async {
     try {
       final postData = widget.postDoc.data() as Map<String, dynamic>;
-      final userId = postData['userId'];
+      final userId = postData['userId'] ?? postData['createdBy'];
       if (userId == null) return;
       final userSnap = await FirebaseFirestore.instance.collection('users').doc(userId).get();
       if (userSnap.exists && mounted) {
@@ -4380,6 +4461,24 @@ class _FeedPostWrapperState extends State<FeedPostWrapper> with AutomaticKeepAli
     }
 
     final postData = widget.postDoc.data() as Map<String, dynamic>;
+    final collection = widget.postDoc.reference.parent.id;
+
+    if (collection == 'petitions') {
+      return PetitionFeedCard(
+        petition: widget.postDoc,
+        userData: _userData!,
+      );
+    }
+
+    if (collection == 'polls') {
+      return PollCard(
+        pollSnapshot: widget.postDoc,
+        cardMarginVertical: 0,
+        cardMarginHorizontal: 0,
+        cardInternalPadding: 16,
+        borderRadiusValue: 20,
+      );
+    }
 
     double? metaW;
     double? metaH;
@@ -4388,16 +4487,16 @@ class _FeedPostWrapperState extends State<FeedPostWrapper> with AutomaticKeepAli
 
     return PostCard(
       postId: widget.postDoc.id,
-      userId: postData['userId'],
+      userId: postData['userId'] ?? postData['createdBy'],
       username: _userData!['username'] ?? 'Unknown',
       profileImage: _userData!['profileImage'] ?? '',
-      mediaUrl: postData['mediaUrl'] ?? '',
-      caption: postData['caption'] ?? '',
+      mediaUrl: postData['mediaUrl'] ?? postData['bannerImageUrl'] ?? '',
+      caption: postData['caption'] ?? postData['description'] ?? postData['question'] ?? '',
       likes: List<String>.from(postData['likes'] ?? []),
-      timestamp: postData['timestamp']?.toDate() ?? DateTime.now(),
+      timestamp: postData['timestamp']?.toDate() ?? postData['createdAt']?.toDate() ?? DateTime.now(),
       mediaType: postData['mediaType'] ?? 'image',
       thumbnailUrl: postData['thumbnailUrl'],
-      linkUrl: postData['linkUrl'], // Pass Link
+      linkUrl: postData['linkUrl'],
       activeNotifier: widget.activeNotifier,
       onVideoFinished: widget.onVideoFinished,
       metaWidth: metaW,
@@ -4405,6 +4504,180 @@ class _FeedPostWrapperState extends State<FeedPostWrapper> with AutomaticKeepAli
     );
   }
 }
+
+// --- Modern Card Widgets for Feed ---
+
+class TrendingPetitionCard extends StatelessWidget {
+  final DocumentSnapshot petition;
+  const TrendingPetitionCard({Key? key, required this.petition}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final data = petition.data() as Map<String, dynamic>;
+    final imageUrl = data['bannerImageUrl'] ?? '';
+    final title = data['title'] ?? 'Untitled';
+    final signatures = data['currentSignatures'] ?? 0;
+    final goal = data['goal'] ?? 1000;
+    final progress = (signatures / (goal > 0 ? goal : 1000)).clamp(0.0, 1.0);
+
+    return GestureDetector(
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (c) => EnhancedPetitionDetailScreen(petitionId: petition.id))),
+      child: Container(
+        width: 180,
+        margin: const EdgeInsets.only(right: 12),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: Offset(0, 4))],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 3,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                child: imageUrl.isNotEmpty 
+                  ? CachedNetworkImage(imageUrl: imageUrl, fit: BoxFit.cover, width: double.infinity)
+                  : Container(color: AppColors.elevation, child: const Icon(Feather.flag, color: AppColors.primaryLavender)),
+              ),
+            ),
+            // Live Progress Bar (The divider)
+            LinearProgressIndicator(
+              value: progress.toDouble(),
+              backgroundColor: AppColors.elevation,
+              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.secondaryTeal),
+              minHeight: 3,
+            ),
+            Expanded(
+              flex: 1,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+                child: Text(
+                  title,
+                  style: const TextStyle(color: AppColors.textHigh, fontWeight: FontWeight.bold, fontSize: 12, height: 1.2),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class PetitionFeedCard extends StatelessWidget {
+  final DocumentSnapshot petition;
+  final Map<String, dynamic> userData;
+
+  const PetitionFeedCard({Key? key, required this.petition, required this.userData}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final data = petition.data() as Map<String, dynamic>;
+    final imageUrl = data['bannerImageUrl'] ?? '';
+    final signatures = data['currentSignatures'] ?? 0;
+    final goal = data['goal'] ?? 1000;
+    final progress = (signatures / (goal > 0 ? goal : 1000)).clamp(0.0, 1.0);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        GestureDetector(
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (c) => EnhancedPetitionDetailScreen(petitionId: petition.id))),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Column(
+                children: [
+                  if (imageUrl.isNotEmpty)
+                    CachedNetworkImage(
+                      imageUrl: imageUrl, 
+                      fit: BoxFit.cover, 
+                      width: double.infinity, 
+                      height: 180, // Slightly taller to match post feel
+                      memCacheWidth: 400,
+                    )
+                  else
+                    Container(
+                      height: 150, 
+                      color: AppColors.elevation, 
+                      child: const Center(child: Icon(Feather.flag, color: AppColors.primaryLavender, size: 30))
+                    ),
+                  // Progress Bar - The distinguishing factor
+                  LinearProgressIndicator(
+                    value: progress.toDouble(),
+                    backgroundColor: AppColors.elevation,
+                    valueColor: const AlwaysStoppedAnimation<Color>(AppColors.secondaryTeal),
+                    minHeight: 6,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        // Bottom Row matching PostCard
+        Padding(
+          padding: const EdgeInsets.fromLTRB(4.0, 10.0, 0.0, 16.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (userData['profileImage'] != null && userData['profileImage'].toString().isNotEmpty)
+                CircleAvatar(
+                  radius: 12, 
+                  backgroundImage: CachedNetworkImageProvider(userData['profileImage']),
+                  backgroundColor: AppColors.elevation,
+                )
+              else
+                CircleAvatar(
+                  radius: 12,
+                  backgroundColor: AppColors.elevation,
+                  child: const Icon(Feather.user, size: 14, color: AppColors.textDisabled),
+                ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      userData['username'] ?? 'Anonymous', 
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.textHigh),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      data['title'] ?? 'Petition', 
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: AppColors.primaryLavender), 
+                      maxLines: 1, 
+                      overflow: TextOverflow.ellipsis
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      data['description'] ?? '', 
+                      style: const TextStyle(fontSize: 11, color: AppColors.textMedium, height: 1.3), 
+                      maxLines: 2, 
+                      overflow: TextOverflow.ellipsis
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// PollFeedCard removed and replaced with direct usage of PollCard from circle/polls.dart
 
 // Place this outside any class, or in a utils file
 double snapToAllowedRatio(double rawRatio) {
@@ -4462,56 +4735,6 @@ class FeedShimmerSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Generate some random heights to mimic your staggered grid
-    final List<double> randomHeights = [200, 280, 180, 240, 300, 190, 250, 220];
-
-    return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-      sliver: SliverMasonryGrid.count(
-        crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childCount: 8, // Show 8 skeleton items
-        itemBuilder: (context, index) {
-          return Shimmer.fromColors(
-            baseColor: AppColors.elevation,
-            highlightColor: AppColors.surface, // Lighter shade for the wave effect
-            child: Container(
-              height: randomHeights[index % randomHeights.length],
-              decoration: BoxDecoration(
-                color: AppColors.elevation,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Fake Image Area
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                  ),
-                  // Fake Text Lines
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(height: 10, width: 80, color: Colors.white),
-                        SizedBox(height: 6),
-                        Container(height: 8, width: double.infinity, color: Colors.white),
-                      ],
-                    ),
-                  )
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
+    return const SliverGridShimmerSkeleton();
   }
 }

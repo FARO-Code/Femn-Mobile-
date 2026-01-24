@@ -19,6 +19,7 @@ import 'package:femn/hub_screens/profile.dart';
 import 'package:femn/auth/auth.dart'; 
 import 'package:femn/customization/colors.dart'; 
 import '../services/streak_service.dart';
+import 'package:femn/customization/layout.dart';
 
 // --- 1. Security Service (Updated for UID) ---
 class SecurityService {
@@ -115,7 +116,7 @@ class _JournalScreenState extends State<JournalScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) return Scaffold(backgroundColor: AppColors.backgroundDeep, body: Center(child: CircularProgressIndicator(color: AppColors.primaryLavender)));
+    if (_isLoading) return Scaffold(backgroundColor: Colors.transparent, body: Center(child: CircularProgressIndicator(color: AppColors.primaryLavender)));
 
     if (_isLocked) {
       return PinScreen(
@@ -127,11 +128,11 @@ class _JournalScreenState extends State<JournalScreen> {
     final currentUserId = _auth.currentUser!.uid;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep,
+      backgroundColor: Colors.transparent,
       
       // --- App Bar ---
       appBar: AppBar(
-        backgroundColor: AppColors.backgroundDeep,
+        backgroundColor: Colors.transparent,
         foregroundColor: AppColors.textHigh,
         elevation: 0,
         automaticallyImplyLeading: false, 
@@ -381,7 +382,7 @@ class _JournalScreenState extends State<JournalScreen> {
 
         return MasonryGridView.count(
           padding: EdgeInsets.all(16),
-          crossAxisCount: 2,
+          crossAxisCount: ResponsiveLayout.getColumnCount(context),
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
           itemCount: docs.length,
@@ -463,14 +464,14 @@ class JournalSettingsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text("Journal Settings", style: TextStyle(color: AppColors.textHigh, fontWeight: FontWeight.bold)),
-        backgroundColor: AppColors.backgroundDeep,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Feather.arrow_left, color: AppColors.textHigh),
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      backgroundColor: AppColors.backgroundDeep,
+      backgroundColor: Colors.transparent,
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -516,9 +517,9 @@ class JournalDetailScreen extends StatelessWidget {
     final String weather = data['locationWeather'] ?? '';
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: AppColors.backgroundDeep,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(icon: Icon(Feather.arrow_left, color: AppColors.textHigh), onPressed: () => Navigator.pop(context)),
         title: Text(DateFormat('MMMM d, yyyy').format(date), style: TextStyle(color: AppColors.textHigh, fontWeight: FontWeight.bold)),
@@ -755,7 +756,7 @@ class _PinScreenState extends State<PinScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep,
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

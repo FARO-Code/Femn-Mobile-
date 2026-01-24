@@ -1,0 +1,10 @@
+﻿C:\Code\femn\lib\circle\groups.dart:4003:                      leading: Icon(Icons.search, color: AppColors.primaryLavender),
+C:\Code\femn\lib\circle\groups.dart:4479:                Icon(Icons.search, color: AppColors.primaryLavender),
+C:\Code\femn\lib\circle\groups.dart:4980:                      icon: Icons.search,
+C:\Code\femn\lib\circle\petitions.dart:1532:              child: message.userProfileImage == null ? Icon(Icons.person, size: 16) : null,
+C:\Code\femn\lib\circle\petitions.dart:1672:              child: message.userProfileImage == null ? Icon(Icons.person, size: 16) : null,
+C:\Code\femn\lib\circle\petitions.dart:2208:                    child: creatorData['profileImage'] == null ? Icon(Icons.person) : null,
+C:\Code\femn\lib\circle\petitions.dart:2218:                leading: CircleAvatar(child: Icon(Icons.person), backgroundColor: AppColors.elevation),
+C:\Code\femn\lib\circle\petitions.dart:2387:                      child: signature.profileImage == null ? Icon(Icons.person, color: AppColors.textMedium) : null,
+C:\Code\femn\lib\circle\petitions.dart:3737:            _buildActionItem('Export Signature Data (CSV)', Icons.download, () {
+C:\Code\femn\lib\wellness_widgets\widget_customization_service.dart:122:      icon: MaterialCommunityIcons.shield_check_outline,

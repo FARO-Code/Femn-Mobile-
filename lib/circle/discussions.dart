@@ -6,12 +6,14 @@ import 'package:femn/customization/colors.dart'; // <--- IMPORT YOUR COLORS FILE
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
-// import 'groups.dart'; // Keep this if you have a groups file, otherwise comment out
+import 'package:femn/customization/layout.dart';
+import 'groups.dart';
 
 class DiscussionsScreen extends StatefulWidget {
   @override
@@ -71,7 +73,7 @@ class _DiscussionsScreenState extends State<DiscussionsScreen> {
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
+          return const GridShimmerSkeleton();
         }
         
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -79,7 +81,7 @@ class _DiscussionsScreenState extends State<DiscussionsScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.forum, size: 50, color: AppColors.textDisabled),
+                Icon(Feather.message_square, size: 50, color: AppColors.textDisabled),
                 SizedBox(height: 16),
                 Text(
                   'No discussions yet',
@@ -120,7 +122,7 @@ class _DiscussionsScreenState extends State<DiscussionsScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.search_off, size: 50, color: AppColors.textDisabled),
+                Icon(Feather.search, size: 50, color: AppColors.textDisabled),
                 SizedBox(height: 16),
                 Text(
                   'No discussions found in ${_selectedCategory == "All" ? "any category" : _selectedCategory}',
@@ -141,7 +143,7 @@ class _DiscussionsScreenState extends State<DiscussionsScreen> {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: MasonryGridView.count(
-            crossAxisCount: 2,
+            crossAxisCount: ResponsiveLayout.getColumnCount(context),
             mainAxisSpacing: 8,
             crossAxisSpacing: 8,
             itemCount: discoverDiscussions.length,
@@ -159,7 +161,13 @@ class _DiscussionsScreenState extends State<DiscussionsScreen> {
               
               final bool isArchived = _isDiscussionArchived(discussionData);
               final int? daysLeft = isArchived ? null : _getDaysLeft(discussionData);
-              // final double averageRating = isArchived ? _getAverageRating(discussionData) : 0.0; // unused in grid
+              
+              final Map<String, dynamic> ratings = discussionData['ratings'] ?? {};
+              double averageRating = 0;
+              if (ratings.isNotEmpty) {
+                averageRating = ratings.values.map((v) => (v as num).toDouble()).reduce((a, b) => a + b) / ratings.length;
+              }
+              final int ratingCount = ratings.length;
 
               return Card(
                 margin: EdgeInsets.zero,
@@ -197,11 +205,11 @@ class _DiscussionsScreenState extends State<DiscussionsScreen> {
                                       placeholder: (context, url) =>
                                           Container(color: AppColors.elevation),
                                       errorWidget: (context, url, error) =>
-                                          Icon(Icons.error, color: AppColors.error),
+                                          Icon(Feather.alert_circle, color: AppColors.error),
                                     )
                                   : Container(
                                       color: AppColors.elevation,
-                                      child: Icon(Icons.forum, color: AppColors.textDisabled),
+                                      child: Icon(Feather.message_square, color: AppColors.textDisabled),
                                     ),
                             ),
                           ),
@@ -217,7 +225,7 @@ class _DiscussionsScreenState extends State<DiscussionsScreen> {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.people, color: Colors.white, size: 16),
+                                  Icon(Feather.users, color: Colors.white, size: 16),
                                   SizedBox(width: 4),
                                   Text(
                                     '$memberCount',
@@ -260,12 +268,21 @@ class _DiscussionsScreenState extends State<DiscussionsScreen> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            SizedBox(height: 4),
-                            Text(
-                              discussionDescription,
-                              style: TextStyle(fontSize: 13, color: AppColors.textMedium),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                Icon(Icons.star_rounded, size: 16, color: AppColors.accentMustard),
+                                SizedBox(width: 4),
+                                Text(
+                                  averageRating > 0 ? averageRating.toStringAsFixed(1) : '0.0',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textHigh),
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  "($ratingCount)",
+                                  style: TextStyle(fontSize: 12, color: AppColors.textMedium),
+                                ),
+                              ],
                             ),
                             SizedBox(height: 4),
                             if (hashtags.isNotEmpty)
@@ -315,14 +332,14 @@ class _DiscussionsScreenState extends State<DiscussionsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text('Discussions', style: TextStyle(color: AppColors.textHigh, fontWeight: FontWeight.bold)),
-        backgroundColor: AppColors.backgroundDeep,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
           IconButton(
-            icon: Icon(Icons.search, color: AppColors.primaryLavender),
+            icon: Icon(Feather.search, color: AppColors.primaryLavender),
             onPressed: () {
               // Implement search functionality
             },
@@ -392,6 +409,7 @@ class _DiscussionViewScreenState extends State<DiscussionViewScreen> {
   bool _isMember = false;
   bool _isArchived = false;
   bool _isJoining = false;
+  List<QueryDocumentSnapshot> _recentMessages = [];
 
   @override
   void initState() {
@@ -402,6 +420,23 @@ class _DiscussionViewScreenState extends State<DiscussionViewScreen> {
     _checkMembership();
     _checkIfArchived();
     _markMessagesAsRead();
+    _loadRecentMessages();
+  }
+
+  Future<void> _loadRecentMessages() async {
+    try {
+      final messagesSnapshot = await _discussionDocRef
+          .collection('messages')
+          .orderBy('timestamp', descending: true)
+          .limit(30)
+          .get();
+      
+      setState(() {
+        _recentMessages = messagesSnapshot.docs;
+      });
+    } catch (e) {
+      print("Error loading recent messages: $e");
+    }
   }
 
   // Inside _DiscussionViewScreenState class (in discussions.dart)
@@ -519,7 +554,7 @@ class _DiscussionViewScreenState extends State<DiscussionViewScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: StreamBuilder<DocumentSnapshot>(
           stream: _discussionDocRef.snapshots(),
@@ -529,7 +564,7 @@ class _DiscussionViewScreenState extends State<DiscussionViewScreen> {
             return Text(discussionData?['name'] ?? 'Discussion', style: TextStyle(color: AppColors.textHigh));
           },
         ),
-        backgroundColor: AppColors.backgroundDeep,
+        backgroundColor: Colors.transparent,
         iconTheme: IconThemeData(color: AppColors.primaryLavender),
         elevation: 0,
         actions: [
@@ -559,75 +594,216 @@ class _DiscussionViewScreenState extends State<DiscussionViewScreen> {
   }
 
   Widget _buildDiscussionPreview() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: EdgeInsets.all(16),
-          color: AppColors.surface,
-          width: double.infinity,
-          child: Column(
+    return StreamBuilder<DocumentSnapshot>(
+      stream: _discussionDocRef.snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
+        
+        final discussionData = snapshot.data!.data() as Map<String, dynamic>?;
+        if (discussionData == null) return Center(child: Text('Discussion not found'));
+        
+        final String description = discussionData['description'] ?? '';
+        final List<dynamic> hashtags = discussionData['hashtags'] ?? [];
+        final Map<String, dynamic> ratings = discussionData['ratings'] ?? {};
+        
+        double averageRating = 0;
+        if (ratings.isNotEmpty) {
+          averageRating = ratings.values.map((v) => (v as num).toDouble()).reduce((a, b) => a + b) / ratings.length;
+        }
+
+        return Column(
+          children: [
+            // Enhanced Preview Header
+                  Container(
+                    padding: EdgeInsets.all(20),
+                    margin: EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface.withOpacity(0.8),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: AppColors.primaryLavender.withOpacity(0.1)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 20,
+                          offset: Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryLavender.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text('PREVIEW MODE', 
+                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.primaryLavender, letterSpacing: 1.2)),
+                            ),
+                            Spacer(),
+                            if (averageRating > 0)
+                              Row(
+                                children: [
+                                  Icon(Icons.star_rounded, color: AppColors.accentMustard, size: 18),
+                                  SizedBox(width: 4),
+                                  Text(averageRating.toStringAsFixed(1), 
+                                    style: TextStyle(color: AppColors.textHigh, fontWeight: FontWeight.bold, fontSize: 14)),
+                                  Text(' (${ratings.length})', 
+                                    style: TextStyle(color: AppColors.textDisabled, fontSize: 12)),
+                                ],
+                              ),
+                          ],
+                        ),
+                        SizedBox(height: 16),
+                        if (description.isNotEmpty)
+                          Text(description, 
+                            style: TextStyle(color: AppColors.textHigh, fontSize: 15, height: 1.5, fontWeight: FontWeight.w500)),
+                        if (hashtags.isNotEmpty) ...[
+                          SizedBox(height: 16),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: hashtags.map((tag) => Container(
+                              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [AppColors.primaryLavender.withOpacity(0.15), AppColors.primaryLavender.withOpacity(0.05)],
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: AppColors.primaryLavender.withOpacity(0.1)),
+                              ),
+                              child: Text('#$tag', 
+                                style: TextStyle(color: AppColors.primaryLavender, fontSize: 12, fontWeight: FontWeight.bold)),
+                            )).toList(),
+                          ),
+                        ],
+                        SizedBox(height: 20),
+                        Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: AppColors.elevation.withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Center(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Feather.info, size: 14, color: AppColors.textDisabled),
+                                SizedBox(width: 8),
+                                Text('Join to participate in the conversation', 
+                                  style: TextStyle(color: AppColors.textDisabled, fontSize: 13, fontWeight: FontWeight.w500)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+            // Chat Preview Area
+            Expanded(
+              child: ListView.builder(
+                reverse: true, // Show most recent at bottom
+                padding: EdgeInsets.symmetric(vertical: 16),
+                itemCount: _recentMessages.length,
+                itemBuilder: (context, index) {
+                  final message = _recentMessages[index];
+                  final messageData = message.data() as Map<String, dynamic>;
+                  return _buildMessageItem(messageData);
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildMessageItem(Map<String, dynamic> messageData) {
+    final String senderId = messageData['senderId'] ?? '';
+    final String text = messageData['text'] ?? '';
+    final String type = messageData['type'] ?? 'text';
+    final Timestamp? timestamp = messageData['timestamp'];
+    final DateTime? messageTime = timestamp?.toDate();
+
+    return FutureBuilder<Map<String, dynamic>>(
+      future: UserProfileCache.getUserProfile(senderId),
+      builder: (context, snapshot) {
+        String senderName = 'User';
+        String senderImage = '';
+        if (snapshot.hasData) {
+          senderName = snapshot.data!['name'] ?? 'User';
+          senderImage = snapshot.data!['profileImage'] ?? '';
+        }
+
+        bool isMe = senderId == _currentUserId;
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          child: Row(
+            mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Previewing Discussion', 
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
-              SizedBox(height: 8),
-              Text('Join this discussion to start chatting', 
-                  style: TextStyle(color: AppColors.textMedium)),
-            ],
-          ),
-        ),
-        Expanded(
-          child: StreamBuilder<DocumentSnapshot>(
-            stream: _discussionDocRef.snapshots(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
-              
-              final discussionData = snapshot.data!.data() as Map<String, dynamic>?;
-              if (discussionData == null) return Container();
-              
-              return SingleChildScrollView(
-                padding: EdgeInsets.all(16),
+              if (!isMe)
+                CircleAvatar(
+                  radius: 14,
+                  backgroundColor: AppColors.elevation,
+                  backgroundImage: senderImage.isNotEmpty ? CachedNetworkImageProvider(senderImage) : null,
+                  child: senderImage.isEmpty ? Icon(Feather.user, size: 14, color: AppColors.textDisabled) : null,
+                ),
+              if (!isMe) SizedBox(width: 8),
+              Flexible(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                   children: [
-                    if (discussionData['imageUrl'] != null)
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: CachedNetworkImage(
-                          imageUrl: discussionData['imageUrl'],
-                          width: double.infinity,
-                          height: 200,
-                          fit: BoxFit.cover,
+                    if (!isMe)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4, bottom: 2),
+                        child: Text(senderName, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textMedium)),
+                      ),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isMe ? AppColors.primaryLavender : AppColors.elevation,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(16),
+                          topRight: Radius.circular(16),
+                          bottomLeft: Radius.circular(isMe ? 16 : 4),
+                          bottomRight: Radius.circular(isMe ? 4 : 16),
                         ),
                       ),
-                    SizedBox(height: 16),
-                    Text(
-                      discussionData['name'] ?? '',
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textHigh),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      discussionData['description'] ?? '',
-                      style: TextStyle(fontSize: 16, color: AppColors.textMedium),
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      'Category: ${discussionData['category'] ?? 'General'}',
-                      style: TextStyle(fontSize: 14, color: AppColors.textDisabled),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Age Rating: ${discussionData['ageRating'] ?? '13-17'}',
-                      style: TextStyle(fontSize: 14, color: AppColors.textDisabled),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (type == 'image')
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: CachedNetworkImage(
+                                imageUrl: messageData['imageUrl'],
+                                width: 200,
+                                fit: BoxFit.cover,
+                              ),
+                            )
+                          else
+                            Text(text, style: TextStyle(color: isMe ? Colors.white : AppColors.textHigh, fontSize: 14)),
+                          SizedBox(height: 2),
+                          Text(
+                            messageTime != null ? DateFormat.Hm().format(messageTime) : '',
+                            style: TextStyle(fontSize: 9, color: isMe ? Colors.white.withOpacity(0.7) : AppColors.textDisabled),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-              );
-            },
+              ),
+            ],
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 
@@ -677,7 +853,7 @@ class _DiscussionViewScreenState extends State<DiscussionViewScreen> {
               if (averageRating > 0)
                 Row(
                   children: [
-                    Icon(Icons.star, color: Colors.amber, size: 20),
+                    Icon(Feather.star, color: Colors.amber, size: 20),
                     SizedBox(width: 4),
                     Text(
                       averageRating.toStringAsFixed(1),
@@ -1030,7 +1206,7 @@ class _DiscussionChatScreenState extends State<DiscussionChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep,
+      backgroundColor: Colors.transparent,
       body: Column(
         children: [
           // Discussion info header
@@ -1044,6 +1220,13 @@ class _DiscussionChatScreenState extends State<DiscussionChatScreen> {
               final int memberCount = discussionData?['memberCount'] ?? 0;
               final int? daysLeft = discussionData != null ? getDaysLeft(discussionData) : null;
               final bool isArchived = discussionData != null ? isDiscussionArchived(discussionData) : false;
+
+              final Map<String, dynamic> ratings = discussionData?['ratings'] ?? {};
+              double averageRating = 0;
+              if (ratings.isNotEmpty) {
+                averageRating = ratings.values.map((v) => (v as num).toDouble()).reduce((a, b) => a + b) / ratings.length;
+              }
+              final int ratingCount = ratings.length;
 
               return Container(
                 padding: EdgeInsets.all(16),
@@ -1070,20 +1253,74 @@ class _DiscussionChatScreenState extends State<DiscussionChatScreen> {
                               color: AppColors.textHigh,
                             ),
                           ),
-                          Text(
-                            isArchived 
-                              ? 'Archived' 
-                              : daysLeft != null 
-                                ? '$daysLeft days left' 
-                                : '$memberCount members',
-                            style: TextStyle(
-                              color: isArchived ? AppColors.textDisabled : AppColors.secondaryTeal,
-                              fontSize: 14,
-                            ),
+                          Row(
+                            children: [
+                              Text(
+                                isArchived 
+                                  ? 'Archived' 
+                                  : daysLeft != null 
+                                    ? '$daysLeft days left' 
+                                    : '$memberCount members',
+                                style: TextStyle(
+                                  color: isArchived ? AppColors.textDisabled : AppColors.secondaryTeal,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              if (averageRating > 0) ...[
+                                SizedBox(width: 8),
+                                Icon(Icons.star_rounded, size: 14, color: AppColors.accentMustard),
+                                SizedBox(width: 4),
+                                Text(
+                                  averageRating.toStringAsFixed(1),
+                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textHigh),
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  "($ratingCount)",
+                                  style: TextStyle(fontSize: 11, color: AppColors.textDisabled),
+                                ),
+                              ],
+                            ],
                           ),
                         ],
                       ),
                     ),
+                    Spacer(),
+                    if (_isMember && !_isArchived)
+                      PopupMenuButton<String>(
+                        icon: Icon(Feather.more_vertical, color: AppColors.primaryLavender),
+                        onSelected: (value) async {
+                          if (value == 'rate') {
+                            final double? rating = await showDialog<double>(
+                              context: context,
+                              builder: (context) => _RatingDialog(),
+                            );
+                            if (rating != null) {
+                              _rateDiscussion(rating);
+                            }
+                          } else if (value == 'leave') {
+                            // Implement leave logic if needed
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          PopupMenuItem(
+                            value: 'rate',
+                            child: ListTile(
+                              leading: Icon(Feather.star, color: AppColors.primaryLavender),
+                              title: Text('Rate Discussion', style: TextStyle(color: AppColors.textHigh)),
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'leave',
+                            child: ListTile(
+                              leading: Icon(Feather.log_out, color: AppColors.error),
+                              title: Text('Leave Discussion', style: TextStyle(color: AppColors.error)),
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
+                        ],
+                      ),
                   ],
                 ),
               );
@@ -1130,7 +1367,7 @@ class _DiscussionChatScreenState extends State<DiscussionChatScreen> {
                               CircleAvatar(
                                 radius: 16,
                                 backgroundColor: AppColors.elevation,
-                                child: Icon(Icons.person, size: 16, color: AppColors.textMedium),
+                                child: Icon(Feather.user, size: 16, color: AppColors.textMedium),
                               ),
                             SizedBox(width: 8),
                             Flexible(
@@ -1217,11 +1454,11 @@ class _DiscussionChatScreenState extends State<DiscussionChatScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: Icon(Icons.image, color: AppColors.primaryLavender),
+                    icon: Icon(Feather.image, color: AppColors.primaryLavender),
                     onPressed: _pickImage,
                   ),
                   IconButton(
-                    icon: Icon(Icons.video_library, color: AppColors.primaryLavender),
+                    icon: Icon(Feather.video, color: AppColors.primaryLavender),
                     onPressed: _pickVideo,
                   ),
                   Expanded(
@@ -1245,7 +1482,7 @@ class _DiscussionChatScreenState extends State<DiscussionChatScreen> {
                     ),
                   ),
                   IconButton(
-                    icon: Icon(Icons.send, color: AppColors.primaryLavender),
+                    icon: Icon(Feather.send, color: AppColors.primaryLavender),
                     onPressed: () => _sendMessage(),
                   ),
                 ],
@@ -1318,7 +1555,7 @@ class _DiscussionChatScreenState extends State<DiscussionChatScreen> {
                 width: 200,
                 height: 200,
                 color: AppColors.elevation,
-                child: Icon(Icons.error, color: AppColors.error),
+                child: Icon(Feather.alert_circle, color: AppColors.error),
               ),
             ),
           ),
@@ -1353,7 +1590,7 @@ class _DiscussionChatScreenState extends State<DiscussionChatScreen> {
             child: Stack(
               children: [
                 Center(
-                  child: Icon(Icons.play_circle_filled, size: 50, color: Colors.white),
+                  child: Icon(Feather.play_circle, size: 50, color: Colors.white),
                 ),
                 Positioned(
                   bottom: 8,
@@ -1378,6 +1615,89 @@ class _DiscussionChatScreenState extends State<DiscussionChatScreen> {
               style: TextStyle(color: Colors.white),
             ),
           ),
+      ],
+    );
+  }
+
+  Future<void> _rateDiscussion(double rating) async {
+    try {
+      await _discussionDocRef.update({
+        'ratings.$_currentUserId': rating,
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Rating submitted successfully', style: TextStyle(color: AppColors.backgroundDeep)),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    } catch (e) {
+      print("Error rating discussion: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to submit rating. Please try again.')),
+      );
+    }
+  }
+}
+
+class _RatingDialog extends StatefulWidget {
+  @override
+  __RatingDialogState createState() => __RatingDialogState();
+}
+
+class __RatingDialogState extends State<_RatingDialog> {
+  double _currentRating = 5.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: AppColors.surface,
+      title: Text('Rate Discussion', style: TextStyle(color: AppColors.textHigh)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Feather.star, color: Colors.amber, size: 24),
+              SizedBox(width: 8),
+              Text(
+                _currentRating.round().toString(),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textHigh),
+              ),
+            ],
+          ),
+          Slider(
+            value: _currentRating,
+            min: 1.0,
+            max: 10.0,
+            divisions: 9,
+            activeColor: AppColors.primaryLavender,
+            inactiveColor: AppColors.elevation,
+            onChanged: (value) {
+              setState(() {
+                _currentRating = value;
+              });
+            },
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('1', style: TextStyle(fontSize: 12, color: AppColors.textDisabled)),
+              Text('10', style: TextStyle(fontSize: 12, color: AppColors.textDisabled)),
+            ],
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('Cancel', style: TextStyle(color: AppColors.textMedium)),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, _currentRating),
+          child: Text('Submit', style: TextStyle(color: AppColors.primaryLavender, fontWeight: FontWeight.bold)),
+        ),
       ],
     );
   }

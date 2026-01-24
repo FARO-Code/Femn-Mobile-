@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:femn/customization/colors.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_feather_icons/flutter_feather_icons.dart';
+import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 
 class CustomCameraScreen extends StatefulWidget {
   @override
@@ -94,7 +94,7 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
             top: 50,
             left: 20,
             child: IconButton(
-              icon: Icon(FeatherIcons.x, color: Colors.white, size: 30),
+              icon: Icon(Feather.x, color: Colors.white, size: 30),
               onPressed: () => Navigator.pop(context),
             ),
           ),
@@ -106,7 +106,7 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
             child: Column(
               children: [
                 IconButton(
-                  icon: Icon(FeatherIcons.refreshCw, color: Colors.white),
+                  icon: Icon(Feather.refresh_cw, color: Colors.white),
                   onPressed: _switchCamera,
                 ),
                 Text("Flip", style: TextStyle(color: Colors.white, fontSize: 12)),

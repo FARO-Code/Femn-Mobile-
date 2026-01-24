@@ -14,10 +14,12 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart'; // For SystemUiOverlayStyle
 import 'package:flutter/widgets.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:femn/customization/layout.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
+import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import '../feed/addpost.dart';
@@ -30,14 +32,15 @@ import 'polls.dart';
 import 'package:collection/collection.dart'; // For comparing lists (though not directly used in current code)
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
+import 'package:shimmer/shimmer.dart';
 
 // Remove old color constants and use AppColors instead
 const Map<String, IconData> _optionIcons = {
-  'Polls': Icons.poll,
-  'Discussions': Icons.forum,
-  'Groups': Icons.group,
-  'Mentorship': Icons.school,
-  'Petitions': Icons.how_to_vote,
+  'Polls': Feather.bar_chart_2,
+  'Discussions': Feather.message_square,
+  'Groups': Feather.users,
+  'Mentorship': Feather.book_open,
+  'Petitions': Feather.check_square,
 };
 
 // Import necessary packages if not already imported elsewhere in your file
@@ -170,7 +173,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
   File? _groupImage;
   late String _currentUserId;
   String _selectedCategory = 'All';
-  final List<String> _contentTypes = ['All', 'Groups', 'Polls', 'Discussions', 'Petitions'];
+  final List<String> _contentTypes = ['All', 'Groups', 'Polls', 'Discussions', 'Archived', 'Petitions'];
   int _selectedContentTypeIndex = 0; // 0 corresponds to 'Groups'
   String _searchQuery = '';
 
@@ -391,7 +394,7 @@ Widget _buildAllTab() {
     ]),
     builder: (context, snapshot) {
       if (snapshot.connectionState == ConnectionState.waiting) {
-        return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
+        return const GridShimmerSkeleton();
       }
 
       if (snapshot.hasError || !snapshot.hasData) {
@@ -460,7 +463,7 @@ Widget _buildAllTab() {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.explore, size: 50, color: AppColors.textDisabled),
+              Icon(Feather.compass, size: 50, color: AppColors.textDisabled),
               SizedBox(height: 16),
               Text(
                 'Nothing here yet',
@@ -499,7 +502,7 @@ Widget _buildAllTab() {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: externalPadding),
         child: MasonryGridView.count(
-          crossAxisCount: 2,
+          crossAxisCount: ResponsiveLayout.getColumnCount(context),
           mainAxisSpacing: cardSpacing,
           crossAxisSpacing: cardSpacing,
           itemCount: shuffledItems.length, // Use shuffled list length
@@ -516,6 +519,12 @@ Widget _buildAllTab() {
               final String groupImage = itemData['imageUrl'] ?? '';
               final int memberCount = itemData['memberCount'] ?? 0;
               final String groupDescription = itemData['description'] ?? '';
+              final Map<String, dynamic> ratings = itemData['ratings'] ?? {};
+              double averageRating = 0;
+              if (ratings.isNotEmpty) {
+                averageRating = ratings.values.map((v) => (v as num).toDouble()).reduce((a, b) => a + b) / ratings.length;
+              }
+              final int ratingCount = ratings.length;
 
               return Card(
                 margin: const EdgeInsets.symmetric(
@@ -554,17 +563,20 @@ Widget _buildAllTab() {
                                   imageUrl: groupImage,
                                   width: double.infinity,
                                   fit: BoxFit.cover,
-                                  placeholder: (context, url) =>
-                                      Container(color: AppColors.elevation),
+                                  placeholder: (context, url) => Shimmer.fromColors(
+                                    baseColor: AppColors.elevation,
+                                    highlightColor: AppColors.surface.withOpacity(0.5),
+                                    child: Container(color: Colors.white),
+                                  ),
                                   errorWidget: (context, url, error) =>
-                                      const Icon(Icons.error, color: AppColors.primaryLavender),
+                                      const Icon(Feather.alert_circle, color: AppColors.primaryLavender),
                                 )
                               : Container(
                                   width: double.infinity,
                                   color: AppColors.elevation,
                                   padding: const EdgeInsets.all(28),
                                   child: const Icon(
-                                    Icons.group,
+                                    Feather.users,
                                     color: AppColors.primaryLavender,
                                     size: 36,
                                   ),
@@ -588,18 +600,25 @@ Widget _buildAllTab() {
 
                         const SizedBox(height: 6),
 
-                        // Description
-                        Text(
-                          groupDescription,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: AppColors.textMedium,
-                          ),
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
+                        // Rating Row
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.star_rounded, size: 16, color: AppColors.accentMustard),
+                            SizedBox(width: 4),
+                            Text(
+                              averageRating > 0 ? averageRating.toStringAsFixed(1) : '0.0',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textHigh),
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              "($ratingCount)",
+                              style: TextStyle(fontSize: 12, color: AppColors.textMedium),
+                            ),
+                          ],
                         ),
 
+                        const SizedBox(height: 6),
                         const SizedBox(height: 12),
 
                         // Member count pill
@@ -620,7 +639,7 @@ Widget _buildAllTab() {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               const Icon(
-                                Icons.people_rounded,
+                                Feather.users,
                                 size: 16,
                                 color: AppColors.textOnSecondary,
                               ),
@@ -649,6 +668,12 @@ Widget _buildAllTab() {
               final String discussionImage = itemData['imageUrl'] ?? '';
               final String discussionDescription = itemData['description'] ?? '';
               final int memberCount = itemData['memberCount'] ?? 0;
+              final Map<String, dynamic> ratings = itemData['ratings'] ?? {};
+              double averageRating = 0;
+              if (ratings.isNotEmpty) {
+                averageRating = ratings.values.map((v) => (v as num).toDouble()).reduce((a, b) => a + b) / ratings.length;
+              }
+              final int ratingCount = ratings.length;
 
               final bool isArchived = _isDiscussionArchived(itemData);
               final int? daysLeft = isArchived ? null : _getDaysLeft(itemData);
@@ -703,14 +728,17 @@ Widget _buildAllTab() {
                                             : null,
                                         colorBlendMode:
                                             isArchived ? BlendMode.saturation : null,
-                                        placeholder: (context, url) =>
-                                            Container(color: AppColors.elevation),
+                                        placeholder: (context, url) => Shimmer.fromColors(
+                                          baseColor: AppColors.elevation,
+                                          highlightColor: AppColors.surface.withOpacity(0.5),
+                                          child: Container(color: Colors.white),
+                                        ),
                                         errorWidget: (context, url, error) =>
-                                            const Icon(Icons.error),
+                                            const Icon(Feather.alert_circle),
                                       )
                                     : Container(
                                         color: AppColors.elevation,
-                                        child: const Icon(Icons.forum, color: AppColors.textDisabled),
+                                        child: const Icon(Feather.message_square, color: AppColors.textDisabled),
                                       ),
                                 if (isArchived)
                                   Container(
@@ -747,16 +775,22 @@ Widget _buildAllTab() {
 
                         const SizedBox(height: 6),
 
-                        // 📝 Description (uniform color)
-                        Text(
-                          discussionDescription,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: AppColors.textMedium,
-                          ),
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
+                        // Rating Row
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.star_rounded, size: 16, color: AppColors.accentMustard),
+                            SizedBox(width: 4),
+                            Text(
+                              averageRating > 0 ? averageRating.toStringAsFixed(1) : '0.0',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textHigh),
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              "($ratingCount)",
+                              style: TextStyle(fontSize: 12, color: AppColors.textMedium),
+                            ),
+                          ],
                         ),
 
                         const SizedBox(height: 10),
@@ -812,7 +846,7 @@ Widget _buildAllTab() {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.people,
+                              Icon(Feather.users,
                                   size: 14,
                                   color: isArchived ? AppColors.textHigh : AppColors.textOnSecondary),
                               const SizedBox(width: 4),
@@ -881,16 +915,19 @@ Widget _buildAllTab() {
                                   height: 140,
                                   width: double.infinity,
                                   fit: BoxFit.cover,
-                                  placeholder: (context, url) =>
-                                      Container(color: AppColors.elevation),
+                                  placeholder: (context, url) => Shimmer.fromColors(
+                                    baseColor: AppColors.elevation,
+                                    highlightColor: AppColors.surface.withOpacity(0.5),
+                                    child: Container(color: Colors.white),
+                                  ),
                                   errorWidget: (context, url, error) =>
-                                      const Icon(Icons.error),
+                                      const Icon(Feather.alert_circle),
                                 )
                               : Container(
                                   height: 140,
                                   width: double.infinity,
                                   color: AppColors.elevation,
-                                  child: const Icon(Icons.image, color: AppColors.textDisabled),
+                                  child: const Icon(Feather.image, color: AppColors.textDisabled),
                                 ),
                         ),
                         const SizedBox(height: 12),
@@ -945,7 +982,7 @@ Widget _buildAllTab() {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.how_to_reg, size: 14, color: AppColors.textOnSecondary),
+                              const Icon(Feather.user_check, size: 14, color: AppColors.textOnSecondary),
                               const SizedBox(width: 4),
                               Text(
                                 '${petition.currentSignatures}/${petition.goal} signatures',
@@ -990,7 +1027,7 @@ Widget _buildAllTab() {
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
+          return const GridShimmerSkeleton();
         }
         
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -1000,7 +1037,7 @@ Widget _buildAllTab() {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.group, size: 40, color: AppColors.textDisabled),
+                  Icon(Feather.users, size: 40, color: AppColors.textDisabled),
                   SizedBox(height: 12),
                   Text('No public groups yet', style: TextStyle(fontSize: 14, color: AppColors.textHigh)),
                   SizedBox(height: 6),
@@ -1036,7 +1073,7 @@ Widget _buildAllTab() {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.search_off, size: 50, color: AppColors.textDisabled),
+                Icon(Feather.search, size: 50, color: AppColors.textDisabled),
                 SizedBox(height: 16),
                 Text(
                   'No groups found in ${_selectedCategory == "All" ? "any category" : _selectedCategory}',
@@ -1055,216 +1092,164 @@ Widget _buildAllTab() {
         }
         
         return Padding(
-  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-  child: MasonryGridView.count(
-    crossAxisCount: 2,
-    mainAxisSpacing: 8,
-    crossAxisSpacing: 8,
-    itemCount: discoverGroups.length,
-    itemBuilder: (context, index) {
-      final group = discoverGroups[index];
-      final groupData = group.data() as Map<String, dynamic>;
-      final String groupId = group.id;
-      final String groupName = groupData['name'] ?? 'Untitled';
-      final String groupImage = groupData['imageUrl'] ?? '';
-      final int memberCount = groupData['memberCount'] ?? 0;
-      final String category = groupData['category'] ?? 'General';
-      final String groupDescription = groupData['description'] ?? '';
-      final String ageRating = groupData['ageRating'] ?? '13-17';
-      final List<dynamic> hashtagsList = groupData['hashtags'] ?? [];
-      final List<String> hashtags = hashtagsList.cast<String>();
+          padding: const EdgeInsets.symmetric(horizontal: 20.0), // externalPadding
+          child: MasonryGridView.count(
+            crossAxisCount: ResponsiveLayout.getColumnCount(context),
+            mainAxisSpacing: 8.0, // cardSpacing
+            crossAxisSpacing: 8.0, // cardSpacing
+            itemCount: discoverGroups.length,
+            itemBuilder: (context, index) {
+              final group = discoverGroups[index];
+              final groupData = group.data() as Map<String, dynamic>;
+              final String groupId = group.id;
+              final String groupName = groupData['name'] ?? 'Untitled';
+              final String groupImage = groupData['imageUrl'] ?? '';
+              final int memberCount = groupData['memberCount'] ?? 0;
+              final String groupDescription = groupData['description'] ?? '';
+              final Map<String, dynamic> ratings = groupData['ratings'] ?? {};
+              double averageRating = 0;
+              if (ratings.isNotEmpty) {
+                averageRating = ratings.values.map((v) => (v as num).toDouble()).reduce((a, b) => a + b) / ratings.length;
+              }
+              final int ratingCount = ratings.length;
 
-      int? daysLeft;
-      if (category == 'Discussions' && groupData['expiresAt'] != null) {
-        final expiresAt = groupData['expiresAt'].toDate();
-        final now = DateTime.now();
-        daysLeft = expiresAt.difference(now).inDays;
-      }
-
-      return Container(
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 6,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => GroupViewScreen(
-                  groupId: groupId,
-                  onJoinSuccess: null,
+              return Card(
+                margin: const EdgeInsets.symmetric(
+                  vertical: 2.0, // cardMarginVertical
+                  horizontal: 2.0, // cardMarginHorizontal
                 ),
-              ),
-            );
-          },
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-                    child: AspectRatio(
-                      aspectRatio: 16 / 9,
-                      child: groupImage.isNotEmpty
-                          ? CachedNetworkImage(
-                              imageUrl: groupImage,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) =>
-                                  Container(color: AppColors.elevation),
-                              errorWidget: (context, url, error) =>
-                                  Container(
-                                    color: AppColors.elevation,
-                                    child: Icon(Icons.group, color: AppColors.textHigh),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(22), // matches _buildAllTab
+                ),
+                color: AppColors.surface,
+                elevation: 4,
+                shadowColor: Colors.black.withOpacity(0.08),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(22),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => GroupViewScreen(
+                          groupId: groupId,
+                          onJoinSuccess: null,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0), // cardInternalPadding
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // Group image
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(18),
+                          child: groupImage.isNotEmpty
+                              ? CachedNetworkImage(
+                                  imageUrl: groupImage,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) => Shimmer.fromColors(
+                                    baseColor: AppColors.elevation,
+                                    highlightColor: AppColors.surface.withOpacity(0.5),
+                                    child: Container(color: Colors.white),
                                   ),
-                            )
-                          : Container(
-                              color: AppColors.elevation,
-                              child: Icon(Icons.group, color: AppColors.textHigh),
-                            ),
-                    ),
-                  ),
-                  // Member count badge
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.black54,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.people, color: Colors.white, size: 16),
-                          SizedBox(width: 4),
-                          Text(
-                            '$memberCount',
-                            style: TextStyle(color: Colors.white, fontSize: 12),
+                                  errorWidget: (context, url, error) =>
+                                      const Icon(Feather.alert_circle, color: AppColors.primaryLavender),
+                                )
+                              : Container(
+                                  width: double.infinity,
+                                  color: AppColors.elevation,
+                                  padding: const EdgeInsets.all(28),
+                                  child: const Icon(
+                                    Feather.users,
+                                    color: AppColors.primaryLavender,
+                                    size: 36,
+                                  ),
+                                ),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // Group name
+                        Text(
+                          groupName,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: AppColors.primaryLavender,
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  // Days left badge
-                  if (daysLeft != null && daysLeft >= 0)
-                    Positioned(
-                      bottom: 8,
-                      left: 8,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryLavender.withOpacity(0.8),
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 4,
-                              offset: Offset(0, 2),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+
+                        const SizedBox(height: 6),
+
+                        // Rating Row
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.star_rounded, size: 16, color: AppColors.accentMustard),
+                            SizedBox(width: 4),
+                            Text(
+                              averageRating > 0 ? averageRating.toStringAsFixed(1) : '0.0',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textHigh),
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              "($ratingCount)",
+                              style: TextStyle(fontSize: 12, color: AppColors.textMedium),
                             ),
                           ],
                         ),
-                        child: Text(
-                          '$daysLeft days left',
-                          style: TextStyle(
-                            color: AppColors.textOnSecondary,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      groupName,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: AppColors.primaryLavender,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      groupDescription,
-                      style: TextStyle(fontSize: 13, color: AppColors.textMedium),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: 4),
-                    // Hashtags as pills
-                    if (hashtags.isNotEmpty)
-                      SizedBox(
-                        height: 24,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          children: hashtags.map((tag) {
-                            return Container(
-                              margin: EdgeInsets.only(right: 4),
-                              padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: AppColors.secondaryTeal,
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
-                                    blurRadius: 3,
-                                    offset: Offset(0, 2),
-                                  ),
-                                ],
+
+                        const SizedBox(height: 6),
+                        const SizedBox(height: 12),
+
+                        // Member count pill
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: AppColors.secondaryTeal,
+                            borderRadius: BorderRadius.circular(50),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.06),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
                               ),
-                              child: Text(
-                                '#$tag',
-                                style: TextStyle(
-                                  fontSize: 11,
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Feather.users,
+                                size: 16,
+                                color: AppColors.textOnSecondary,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                '$memberCount members',
+                                style: const TextStyle(
                                   color: AppColors.textOnSecondary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          category,
-                          style: TextStyle(fontSize: 11, color: AppColors.textDisabled),
-                        ),
-                        Text(
-                          ageRating,
-                          style: TextStyle(fontSize: 11, color: AppColors.textDisabled),
+                            ],
+                          ),
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
+              );
+            },
           ),
-        ),
-      );
-    },
-  ),
-);
+        );
 
       },
     );
@@ -1275,7 +1260,7 @@ Widget _buildAllTab() {
       stream: _firestore.collection('polls').snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
+          return const GridShimmerSkeleton();
         }
         
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -1283,7 +1268,7 @@ Widget _buildAllTab() {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.poll, size: 50, color: AppColors.textDisabled),
+                Icon(Feather.bar_chart_2, size: 50, color: AppColors.textDisabled),
                 SizedBox(height: 16),
                 Text(
                   'No polls yet',
@@ -1304,101 +1289,20 @@ Widget _buildAllTab() {
         final polls = snapshot.data!.docs;
         
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
           child: MasonryGridView.count(
-            crossAxisCount: 2,
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
+            crossAxisCount: ResponsiveLayout.getColumnCount(context),
+            mainAxisSpacing: 8.0,
+            crossAxisSpacing: 8.0,
             itemCount: polls.length,
             itemBuilder: (context, index) {
               final poll = polls[index];
-              final pollData = poll.data() as Map<String, dynamic>;
-              final String question = pollData['question'] ?? '';
-              final int totalVotes = pollData['totalVotes'] ?? 0;
-              final String ageRating = pollData['ageRating'] ?? '13-17';
-              final List<dynamic> hashtagsList = pollData['hashtags'] ?? [];
-              final List<String> hashtags = hashtagsList.cast<String>();
-              
-              // Calculate days left
-              int? daysLeft;
-              if (pollData['expiresAt'] != null) {
-                final expiresAt = pollData['expiresAt'].toDate();
-                final now = DateTime.now();
-                daysLeft = expiresAt.difference(now).inDays;
-              }
-
-              return Card(
-                margin: EdgeInsets.zero,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 1,
-                color: AppColors.surface,
-                child: InkWell(
-                  onTap: () {
-                    // Navigate to poll screen
-                    // You'll need to create a PollScreen for this
-                  },
-                  borderRadius: BorderRadius.circular(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Container(
-                        height: 120,
-                        color: AppColors.elevation,
-                        child: Center(
-                          child: Icon(Icons.poll, size: 40, color: AppColors.primaryLavender),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              question,
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textHigh),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              '$totalVotes votes',
-                              style: TextStyle(fontSize: 12, color: AppColors.textMedium),
-                            ),
-                            if (daysLeft != null && daysLeft >= 0)
-                              Text(
-                                '$daysLeft days left',
-                                style: TextStyle(fontSize: 11, color: AppColors.primaryLavender),
-                              ),
-                            SizedBox(height: 4),
-                            if (hashtags.isNotEmpty)
-                              SizedBox(
-                                height: 20,
-                                child: ListView(
-                                  scrollDirection: Axis.horizontal,
-                                  children: hashtags.map((tag) {
-                                    return Padding(
-                                      padding: const EdgeInsets.only(right: 4.0),
-                                      child: Text(
-                                        '#$tag',
-                                        style: TextStyle(fontSize: 10, color: AppColors.primaryLavender),
-                                      ),
-                                    );
-                                  }).toList(),
-                                ),
-                              ),
-                            SizedBox(height: 2),
-                            Text(
-                              ageRating,
-                              style: TextStyle(fontSize: 10, color: AppColors.textDisabled),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              return PollCard(
+                pollSnapshot: poll,
+                cardMarginVertical: 2.0,
+                cardMarginHorizontal: 2.0,
+                cardInternalPadding: 12.0,
+                borderRadiusValue: 24.0,
               );
             },
           ),
@@ -1416,7 +1320,7 @@ Widget _buildAllTab() {
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
+          return const GridShimmerSkeleton();
         }
         
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -1424,7 +1328,7 @@ Widget _buildAllTab() {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.forum, size: 50, color: AppColors.textDisabled),
+                Icon(Feather.message_square, size: 50, color: AppColors.textDisabled),
                 SizedBox(height: 16),
                 Text(
                   'No discussions yet',
@@ -1442,216 +1346,418 @@ Widget _buildAllTab() {
           );
         }
         
-        final discussions = snapshot.data!.docs;
+        final allDiscussions = snapshot.data!.docs;
+        final discussions = allDiscussions.where((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          return !_isDiscussionArchived(data);
+        }).toList();
+        
+        if (discussions.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Feather.message_square, size: 50, color: AppColors.textDisabled),
+                SizedBox(height: 16),
+                const Text(
+                  'No active discussions',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, color: AppColors.textHigh),
+                ),
+              ],
+            ),
+          );
+        }
         
         return Padding(
-  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-  child: MasonryGridView.count(
-    crossAxisCount: 2,
-    mainAxisSpacing: 8,
-    crossAxisSpacing: 8,
-    itemCount: discussions.length,
-    itemBuilder: (context, index) {
-      final discussion = discussions[index];
-      final discussionData = discussion.data() as Map<String, dynamic>;
-      final String discussionId = discussion.id;
-      final String discussionName = discussionData['name'] ?? 'Untitled Discussion';
-      final String discussionImage = discussionData['imageUrl'] ?? '';
-      final int memberCount = discussionData['memberCount'] ?? 0;
-      final String discussionDescription = discussionData['description'] ?? '';
-      final String ageRating = discussionData['ageRating'] ?? '13-17';
-      final List<dynamic> hashtagsList = discussionData['hashtags'] ?? [];
-      final List<String> hashtags = hashtagsList.cast<String>();
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          child: MasonryGridView.count(
+            crossAxisCount: ResponsiveLayout.getColumnCount(context),
+            mainAxisSpacing: 8.0,
+            crossAxisSpacing: 8.0,
+            itemCount: discussions.length,
+            itemBuilder: (context, index) {
+              final discussion = discussions[index];
+              final discussionData = discussion.data() as Map<String, dynamic>;
+              final String discussionId = discussion.id;
+              final String discussionName = discussionData['name'] ?? 'Untitled Discussion';
+              final String discussionImage = discussionData['imageUrl'] ?? '';
+              final int memberCount = discussionData['memberCount'] ?? 0;
+              final String discussionDescription = discussionData['description'] ?? '';
 
-      int? daysLeft;
-      if (discussionData['expiresAt'] != null) {
-        final expiresAt = discussionData['expiresAt'].toDate();
-        final now = DateTime.now();
-        daysLeft = expiresAt.difference(now).inDays;
-      }
+              final bool isArchived = _isDiscussionArchived(discussionData);
+              final int? daysLeft = isArchived ? null : _getDaysLeft(discussionData);
 
-      return Container(
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 6,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => GroupViewScreen(
-                  groupId: discussionId,
-                  onJoinSuccess: null,
+              return Card(
+                margin: const EdgeInsets.symmetric(
+                  vertical: 2.0,
+                  horizontal: 2.0,
                 ),
-              ),
-            );
-          },
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-                    child: AspectRatio(
-                      aspectRatio: 16 / 9,
-                      child: discussionImage.isNotEmpty
-                          ? CachedNetworkImage(
-                              imageUrl: discussionImage,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) =>
-                                  Container(color: AppColors.elevation),
-                              errorWidget: (context, url, error) =>
-                                  Container(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24.0),
+                ),
+                color: AppColors.surface,
+                elevation: 3,
+                shadowColor: AppColors.elevation,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(24.0),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => DiscussionViewScreen(
+                          discussionId: discussionId,
+                          onJoinSuccess: null,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // 🖼️ Image with shimmer
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(20.0),
+                          child: SizedBox(
+                            width: double.infinity,
+                            height: 140,
+                            child: discussionImage.isNotEmpty
+                                ? CachedNetworkImage(
+                                    imageUrl: discussionImage,
+                                    fit: BoxFit.cover,
+                                    placeholder: (context, url) => Shimmer.fromColors(
+                                      baseColor: AppColors.elevation,
+                                      highlightColor: AppColors.surface.withOpacity(0.5),
+                                      child: Container(color: Colors.white),
+                                    ),
+                                    errorWidget: (context, url, error) =>
+                                        const Icon(Feather.alert_circle),
+                                  )
+                                : Container(
                                     color: AppColors.elevation,
-                                    child: Icon(Icons.forum, color: AppColors.textHigh),
+                                    child: const Icon(Feather.message_square, color: AppColors.textDisabled),
                                   ),
-                            )
-                          : Container(
-                              color: AppColors.elevation,
-                              child: Icon(Icons.forum, color: AppColors.textHigh),
-                            ),
-                    ),
-                  ),
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.black54,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.people, color: Colors.white, size: 16),
-                          SizedBox(width: 4),
-                          Text(
-                            '$memberCount',
-                            style: TextStyle(color: Colors.white, fontSize: 12),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  if (daysLeft != null && daysLeft >= 0)
-                    Positioned(
-                      bottom: 8,
-                      left: 8,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryLavender.withOpacity(0.8),
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 4,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
                         ),
-                        child: Text(
-                          '$daysLeft days left',
-                          style: TextStyle(
-                            color: AppColors.textOnSecondary,
-                            fontSize: 10,
+
+                        const SizedBox(height: 12),
+
+                        // 🏷️ Title
+                        Text(
+                          discussionName,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
                             fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: AppColors.primaryLavender,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ),
-                ],
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      discussionName,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: AppColors.primaryLavender,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      discussionDescription,
-                      style: TextStyle(fontSize: 13, color: AppColors.textMedium),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: 4),
-                    if (hashtags.isNotEmpty)
-                      SizedBox(
-                        height: 24,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          children: hashtags.map((tag) {
-                            return Container(
-                              margin: EdgeInsets.only(right: 4),
-                              padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: AppColors.secondaryTeal,
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
-                                    blurRadius: 3,
-                                    offset: Offset(0, 2),
-                                  ),
-                                ],
+
+                        const SizedBox(height: 6),
+
+                        // 📝 Description
+                        Text(
+                          discussionDescription,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textMedium,
+                          ),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        // 🕓 Days left (if active)
+                        if (!isArchived && daysLeft != null)
+                          Container(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: AppColors.secondaryTeal,
+                              borderRadius: BorderRadius.circular(50),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primaryLavender.withOpacity(0.15),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                )
+                              ],
+                            ),
+                            child: Text(
+                              '$daysLeft days left',
+                              style: const TextStyle(
+                                color: AppColors.textOnSecondary,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
                               ),
-                              child: Text(
-                                '#$tag',
+                            ),
+                          ),
+
+                        const SizedBox(height: 8),
+
+                        // 👥 Member count pill
+                        Container(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: isArchived
+                                ? AppColors.textDisabled
+                                : AppColors.secondaryTeal,
+                            borderRadius: BorderRadius.circular(50),
+                            boxShadow: [
+                              BoxShadow(
+                                color: (isArchived
+                                        ? AppColors.textDisabled
+                                        : AppColors.primaryLavender)
+                                    .withOpacity(0.1),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              )
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Feather.users,
+                                  size: 14,
+                                  color: isArchived ? AppColors.textHigh : AppColors.textOnSecondary),
+                              const SizedBox(width: 4),
+                              Text(
+                                '$memberCount members',
                                 style: TextStyle(
-                                  fontSize: 11,
-                                  color: AppColors.textOnSecondary,
+                                  color: isArchived ? AppColors.textHigh : AppColors.textOnSecondary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Discussion',
-                          style: TextStyle(fontSize: 11, color: AppColors.textDisabled),
-                        ),
-                        Text(
-                          ageRating,
-                          style: TextStyle(fontSize: 11, color: AppColors.textDisabled),
+                            ],
+                          ),
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
+              );
+            },
           ),
-        ),
-      );
-    },
-  ),
-);
+        );
 
+      },
+    );
+  }
+
+  Widget _buildArchivedTab() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: _firestore
+          .collection('groups')
+          .where('category', isEqualTo: 'Discussions')
+          .where('isPrivate', isEqualTo: false)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const GridShimmerSkeleton();
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Feather.archive, size: 50, color: AppColors.textDisabled),
+                SizedBox(height: 16),
+                const Text(
+                  'No archived discussions',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, color: AppColors.textHigh),
+                ),
+              ],
+            ),
+          );
+        }
+
+        final allDiscussions = snapshot.data!.docs;
+        final archivedDiscussions = allDiscussions.where((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          return _isDiscussionArchived(data);
+        }).toList();
+
+        if (archivedDiscussions.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Feather.archive, size: 50, color: AppColors.textDisabled),
+                SizedBox(height: 16),
+                const Text(
+                  'No archived discussions',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, color: AppColors.textHigh),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          child: MasonryGridView.count(
+            crossAxisCount: ResponsiveLayout.getColumnCount(context),
+            mainAxisSpacing: 8.0,
+            crossAxisSpacing: 8.0,
+            itemCount: archivedDiscussions.length,
+            itemBuilder: (context, index) {
+              final discussion = archivedDiscussions[index];
+              final discussionData = discussion.data() as Map<String, dynamic>;
+              final String discussionId = discussion.id;
+              final String discussionName = discussionData['name'] ?? 'Untitled Discussion';
+              final String discussionImage = discussionData['imageUrl'] ?? '';
+              final int memberCount = discussionData['memberCount'] ?? 0;
+              final String discussionDescription = discussionData['description'] ?? '';
+
+              return Card(
+                margin: const EdgeInsets.symmetric(
+                  vertical: 2.0,
+                  horizontal: 2.0,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24.0),
+                ),
+                color: AppColors.surface,
+                elevation: 3,
+                shadowColor: AppColors.elevation,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(24.0),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => DiscussionViewScreen(
+                          discussionId: discussionId,
+                          onJoinSuccess: null,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // 🖼️ Image with shimmer and ARCHIVED overlay
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(20.0),
+                          child: SizedBox(
+                            width: double.infinity,
+                            height: 140,
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                discussionImage.isNotEmpty
+                                    ? CachedNetworkImage(
+                                        imageUrl: discussionImage,
+                                        fit: BoxFit.cover,
+                                        color: Colors.grey.withOpacity(0.5),
+                                        colorBlendMode: BlendMode.saturation,
+                                        placeholder: (context, url) => Shimmer.fromColors(
+                                          baseColor: AppColors.elevation,
+                                          highlightColor: AppColors.surface.withOpacity(0.5),
+                                          child: Container(color: Colors.white),
+                                        ),
+                                        errorWidget: (context, url, error) =>
+                                            const Icon(Feather.alert_circle),
+                                      )
+                                    : Container(
+                                        color: AppColors.elevation,
+                                        child: const Icon(Feather.message_square, color: AppColors.textDisabled),
+                                      ),
+                                Container(
+                                  color: Colors.black.withOpacity(0.4),
+                                  alignment: Alignment.center,
+                                  child: const Text(
+                                    'ARCHIVED',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 1.3,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // 🏷️ Title
+                        Text(
+                          discussionName,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: AppColors.textDisabled,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+
+                        const SizedBox(height: 6),
+
+                        // 📝 Description
+                        Text(
+                          discussionDescription,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textDisabled,
+                          ),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        // 👥 Member count pill (Disabled style)
+                        Container(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.elevation,
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Feather.users, size: 14, color: AppColors.textDisabled),
+                              const SizedBox(width: 4),
+                              Text(
+                                '$memberCount members',
+                                style: const TextStyle(
+                                  color: AppColors.textDisabled,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        );
       },
     );
   }
@@ -1661,7 +1767,7 @@ Widget _buildAllTab() {
       stream: _firestore.collection('petitions').snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
+          return const GridShimmerSkeleton();
         }
 
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -1669,7 +1775,7 @@ Widget _buildAllTab() {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.how_to_vote, size: 50, color: AppColors.textDisabled),
+                Icon(Feather.check_square, size: 50, color: AppColors.textDisabled),
                 SizedBox(height: 16),
                 Text(
                   'No petitions yet',
@@ -1690,92 +1796,154 @@ Widget _buildAllTab() {
         final petitions = snapshot.data!.docs;
 
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
           child: MasonryGridView.count(
-            crossAxisCount: 2,
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
+            crossAxisCount: ResponsiveLayout.getColumnCount(context),
+            mainAxisSpacing: 8.0,
+            crossAxisSpacing: 8.0,
             itemCount: petitions.length,
             itemBuilder: (context, index) {
               final petition = petitions[index];
               final petitionData = petition.data() as Map<String, dynamic>;
-              final String title = petitionData['title'] ?? '';
+              final String petitionId = petition.id;
+              final String title = petitionData['title'] ?? 'Untitled Petition';
+              final String imageUrl = petitionData['imageUrl'] ?? '';
               final String description = petitionData['description'] ?? '';
-              final int goal = petitionData['goal'] ?? 0;
-              final int currentSignatures = petitionData['currentSignatures'] ?? 0;
+              final int signaturesCount = petitionData['signaturesCount'] ?? petitionData['currentSignatures'] ?? 0;
+              final int goal = petitionData['goal'] ?? 1000;
+              final double progress = (signaturesCount / goal).clamp(0.0, 1.0);
 
               return Card(
-                margin: EdgeInsets.zero,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                margin: const EdgeInsets.symmetric(
+                  vertical: 2.0,
+                  horizontal: 2.0,
                 ),
-                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24.0),
+                ),
                 color: AppColors.surface,
+                elevation: 4,
+                shadowColor: Colors.black.withOpacity(0.06),
                 child: InkWell(
+                  borderRadius: BorderRadius.circular(24.0),
                   onTap: () {
-                    // Navigate to petition screen
-                  },
-                  borderRadius: BorderRadius.circular(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Banner image
-                      ClipRRect(
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-                        child: Container(
-                          height: 120,
-                          width: double.infinity,
-                          color: AppColors.elevation,
-                          child: Center(
-                            child: Icon(Icons.how_to_vote, size: 40, color: AppColors.primaryLavender),
-                          ),
-                        ),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EnhancedPetitionDetailScreen(petitionId: petitionId),
                       ),
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // 🖼️ Petition Image
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(18),
+                          child: imageUrl.isNotEmpty
+                              ? CachedNetworkImage(
+                                  imageUrl: imageUrl,
+                                  height: 120,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) => Shimmer.fromColors(
+                                    baseColor: AppColors.elevation,
+                                    highlightColor: AppColors.surface.withOpacity(0.5),
+                                    child: Container(color: Colors.white),
+                                  ),
+                                  errorWidget: (context, url, error) =>
+                                      const Icon(Feather.alert_circle),
+                                )
+                              : Container(
+                                  height: 120,
+                                  color: AppColors.elevation,
+                                  width: double.infinity,
+                                  child: const Icon(
+                                    Feather.file_text,
+                                    color: AppColors.primaryLavender,
+                                    size: 32,
+                                  ),
+                                ),
+                        ),
 
-                      // Content section
-                      Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        const SizedBox(height: 12),
+
+                        // 🏷️ Title
+                        Text(
+                          title,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: AppColors.primaryLavender,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+
+                        const SizedBox(height: 6),
+
+                        // 📝 Description
+                        Text(
+                          description,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textMedium,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // 📊 Progress Bar
+                        Stack(
                           children: [
-                            // Title
-                            Text(
-                              title,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                                color: AppColors.textHigh,
+                            Container(
+                              height: 6,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: AppColors.elevation,
+                                borderRadius: BorderRadius.circular(10),
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
-                            SizedBox(height: 6),
-
-                            // Description
-                            Text(
-                              description,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppColors.textMedium,
-                              ),
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            SizedBox(height: 10),
-
-                            // Progress text
-                            Text(
-                              '$currentSignatures/$goal signatures left',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primaryLavender,
+                            FractionallySizedBox(
+                              widthFactor: progress,
+                              child: Container(
+                                height: 6,
+                                decoration: BoxDecoration(
+                                  color: AppColors.secondaryTeal,
+                                  borderRadius: BorderRadius.circular(10),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.secondaryTeal.withOpacity(0.3),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 1),
+                                    )
+                                  ],
+                                ),
                               ),
                             ),
                           ],
                         ),
-                      ),
-                    ],
+
+                        const SizedBox(height: 8),
+
+                        // ✍️ Signature Count
+                        Text(
+                          '$signaturesCount / $goal signed',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.secondaryTeal,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );
@@ -1824,7 +1992,7 @@ Widget _buildAllTab() {
                     children: [
                       Text('Create Petition', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
                       IconButton(
-                        icon: Icon(Icons.close, color: AppColors.textHigh),
+                        icon: Icon(Feather.x, color: AppColors.textHigh),
                         onPressed: () => Navigator.pop(context),
                       ),
                     ],
@@ -1900,7 +2068,7 @@ Widget _buildAllTab() {
                       return Chip(
                         label: Text('#$tag', style: TextStyle(color: AppColors.textOnSecondary)),
                         backgroundColor: AppColors.secondaryTeal,
-                        deleteIcon: Icon(Icons.close, size: 18, color: AppColors.textOnSecondary),
+                        deleteIcon: Icon(Feather.x, size: 18, color: AppColors.textOnSecondary),
                         onDeleted: () {
                           setModalState(() {
                             _hashtags.remove(tag);
@@ -1922,7 +2090,7 @@ Widget _buildAllTab() {
                             filled: true,
                             fillColor: AppColors.elevation,
                             suffixIcon: IconButton(
-                              icon: Icon(Icons.add, color: AppColors.primaryLavender),
+                              icon: Icon(Feather.plus, color: AppColors.primaryLavender),
                               onPressed: () {
                                 String newTag = _hashtagController.text.trim().replaceAll('#', '');
                                 if (newTag.isNotEmpty && !_hashtags.contains(newTag)) {
@@ -2252,7 +2420,7 @@ Widget _buildAllTab() {
                       Text('New Discussion',
                           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
                       IconButton(
-                        icon: Icon(Icons.close, color: AppColors.textHigh),
+                        icon: Icon(Feather.x, color: AppColors.textHigh),
                         onPressed: () => Navigator.pop(context),
                       ),
                     ],
@@ -2268,7 +2436,7 @@ Widget _buildAllTab() {
                             ? FileImage(_groupImage!)
                             : null,
                         child: _groupImage == null
-                            ? Icon(Icons.camera_alt, size: 30, color: AppColors.textDisabled)
+                            ? Icon(Feather.camera, size: 30, color: AppColors.textDisabled)
                             : null,
                       ),
                     ),
@@ -2307,7 +2475,7 @@ Widget _buildAllTab() {
                       return Chip(
                         label: Text('#$tag', style: TextStyle(color: AppColors.textOnSecondary)),
                         backgroundColor: AppColors.secondaryTeal,
-                        deleteIcon: Icon(Icons.close, size: 18, color: AppColors.textOnSecondary),
+                        deleteIcon: Icon(Feather.x, size: 18, color: AppColors.textOnSecondary),
                         onDeleted: () {
                           setModalState(() {
                             _hashtags.remove(tag);
@@ -2330,7 +2498,7 @@ Widget _buildAllTab() {
                             filled: true,
                             fillColor: AppColors.elevation,
                             suffixIcon: IconButton(
-                              icon: Icon(Icons.add, color: AppColors.primaryLavender),
+                              icon: Icon(Feather.plus, color: AppColors.primaryLavender),
                               onPressed: () {
                                 String newTag = _hashtagController.text.trim().replaceAll('#', '');
                                 if (newTag.isNotEmpty && !_hashtags.contains(newTag)) {
@@ -2545,7 +2713,7 @@ Widget _buildAllTab() {
           ],
         ),
         // --- Keep the rest of your AppBar properties ---
-        backgroundColor: AppColors.backgroundDeep,
+        backgroundColor: Colors.transparent,
         foregroundColor: AppColors.textHigh,
         elevation: 0,
         actions: [
@@ -2566,7 +2734,7 @@ Widget _buildAllTab() {
             ),
             child: IconButton(
               icon: const Icon(
-                Icons.add,
+                Feather.plus,
                 color: AppColors.primaryLavender,
                 size: 22, // fits inside 42x42 nicely
               ),
@@ -2667,7 +2835,7 @@ Widget _buildAllTab() {
             await Future.delayed(Duration(seconds: 1));
           },
           color: AppColors.primaryLavender,
-          backgroundColor: AppColors.surface,
+          backgroundColor: Colors.transparent,
           child: Column(
             children: [
               // Content Type Selector - ADD THIS SECTION
@@ -2746,7 +2914,7 @@ Widget _buildAllTab() {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.group, size: 20, color: AppColors.textDisabled),
+                                Icon(Feather.users, size: 20, color: AppColors.textDisabled),
                                 const SizedBox(height: 16),
                                 Text(
                                   'Join your first group!',
@@ -2975,8 +3143,10 @@ Widget _buildAllTab() {
       case 'Polls':
         return _buildPollsTab();
       case 'Discussions':
-        return _buildDiscussionsTab(); // Or keep if you want a dedicated Discussions tab too
-      case 'Groups':
+      return _buildDiscussionsTab(); // Or keep if you want a dedicated Discussions tab too
+    case 'Archived':
+      return _buildArchivedTab();
+    case 'Groups':
         return _buildGroupsTab();
       case 'Petitions':
         return _buildPetitionsTab();
@@ -3157,7 +3327,7 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text(
           'Create New Group ✨',
@@ -3168,11 +3338,11 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
             color: AppColors.textHigh,
           ),
         ),
-        backgroundColor: AppColors.backgroundDeep,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppColors.textHigh),
+          icon: Icon(Feather.arrow_left, color: AppColors.textHigh),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -3202,7 +3372,7 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.group, color: AppColors.primaryLavender, size: 24),
+                        Icon(Feather.users, color: AppColors.primaryLavender, size: 24),
                         SizedBox(width: 10),
                         Text(
                           'Create Your Community',
@@ -3228,7 +3398,7 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
               SizedBox(height: 24),
 
               // Group Image
-              _buildSectionHeader('Group Image', Icons.camera_alt),
+              _buildSectionHeader('Group Image', Feather.camera),
               SizedBox(height: 8),
               Center(
                 child: GestureDetector(
@@ -3252,7 +3422,7 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.image_outlined, size: 40, color: AppColors.primaryLavender),
+                                Icon(Feather.image, size: 40, color: AppColors.primaryLavender),
                                 SizedBox(height: 6),
                                 Text(
                                   "Upload Group Image",
@@ -3268,7 +3438,7 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
               SizedBox(height: 20),
 
               // Group Title
-              _buildSectionHeader('Group Title', Icons.title),
+              _buildSectionHeader('Group Title', Feather.type),
               SizedBox(height: 8),
               Container(
                 decoration: BoxDecoration(
@@ -3297,7 +3467,7 @@ child: TextField(
     ),
     filled: true,
     fillColor: AppColors.elevation,
-    prefixIcon: Icon(Icons.edit, color: AppColors.primaryLavender),
+    prefixIcon: Icon(Feather.edit_2, color: AppColors.primaryLavender),
     contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
   ),
 ),
@@ -3305,7 +3475,7 @@ child: TextField(
               SizedBox(height: 20),
 
               // Description
-              _buildSectionHeader('Description', Icons.description),
+              _buildSectionHeader('Description', Feather.align_left),
               SizedBox(height: 8),
               Container(
                 decoration: BoxDecoration(
@@ -3343,7 +3513,7 @@ child: TextField(
               SizedBox(height: 20),
 
               // Age Rating
-              _buildSectionHeader('Age Rating', Icons.people),
+              _buildSectionHeader('Age Rating', Feather.users),
               SizedBox(height: 8),
               Container(
                 decoration: BoxDecoration(
@@ -3378,7 +3548,7 @@ child: TextField(
                     ),
                     filled: true,
                     fillColor: AppColors.elevation,
-                    prefixIcon: Icon(Icons.people_outline, color: AppColors.primaryLavender),
+                    prefixIcon: Icon(Feather.users, color: AppColors.primaryLavender),
                     contentPadding: EdgeInsets.symmetric(horizontal: 20),
                   ),
                   dropdownColor: AppColors.surface,
@@ -3388,7 +3558,7 @@ child: TextField(
               SizedBox(height: 20),
 
               // Hashtags
-              _buildSectionHeader('Hashtags', Icons.tag),
+              _buildSectionHeader('Hashtags', Feather.hash),
               SizedBox(height: 8),
               Container(
                 decoration: BoxDecoration(
@@ -3413,7 +3583,7 @@ child: TextField(
                     ),
                     filled: true,
                     fillColor: AppColors.elevation,
-                    prefixIcon: Icon(Icons.tag, color: AppColors.primaryLavender),
+                    prefixIcon: Icon(Feather.hash, color: AppColors.primaryLavender),
                     suffixIcon: IconButton(
                       icon: Container(
                         width: 32,
@@ -3422,7 +3592,7 @@ child: TextField(
                           color: AppColors.primaryLavender,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Icon(Icons.add, color: AppColors.textOnSecondary, size: 18),
+                        child: Icon(Feather.plus, color: AppColors.textOnSecondary, size: 18),
                       ),
                       onPressed: () {
                         String newTag = _hashtagController.text.trim().replaceAll('#', '');
@@ -3481,7 +3651,7 @@ child: TextField(
                                   _hashtags.remove(tag);
                                 });
                               },
-                              child: Icon(Icons.close, size: 16, color: AppColors.primaryLavender),
+                              child: Icon(Feather.x, size: 16, color: AppColors.primaryLavender),
                             ),
                           ],
                         ),
@@ -3526,7 +3696,7 @@ child: TextField(
                       color: AppColors.primaryLavender.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(Icons.lock, size: 18, color: AppColors.primaryLavender),
+                    child: Icon(Feather.lock, size: 18, color: AppColors.primaryLavender),
                   ),
                   activeColor: AppColors.primaryLavender,
                 ),
@@ -3568,7 +3738,7 @@ child: TextField(
                       : Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.group_add, size: 20),
+                            Icon(Feather.user_plus, size: 20),
                             SizedBox(width: 8),
                             Text(
                               'Create Group',
@@ -3713,73 +3883,88 @@ class _GroupViewScreenState extends State<GroupViewScreen> {
   Widget _buildMessagePreview(Map<String, dynamic> messageData, bool isMe) {
     final String text = messageData['text'] ?? '';
     final String type = messageData['type'] ?? 'text';
-    final String? imageUrl = messageData['imageUrl'];
-    final Timestamp? timestamp = messageData['timestamp'];
     final String senderId = messageData['senderId'];
+    final Timestamp? timestamp = messageData['timestamp'];
     final DateTime? messageTime = timestamp?.toDate();
-    
-    String previewText = '';
-    if (type == 'image') {
-      previewText = '📷 Image';
-    } else if (type == 'audio') {
-      previewText = '🎤 Voice message';
-    } else {
-      previewText = text;
-    }
 
     return FutureBuilder<Map<String, dynamic>>(
       future: UserProfileCache.getUserProfile(senderId),
       builder: (context, userSnapshot) {
         String userName = 'User';
         String userProfileImage = '';
-        
         if (userSnapshot.hasData) {
           final userData = userSnapshot.data!;
           userName = userData['name'] ?? 'User';
           userProfileImage = userData['profileImage'] ?? '';
         }
 
-        return Container(
-          padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        bool isActuallyMe = senderId == _currentUserId;
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           child: Row(
+            mainAxisAlignment: isActuallyMe ? MainAxisAlignment.end : MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 16,
-                backgroundColor: AppColors.elevation,
-                backgroundImage: userProfileImage.isNotEmpty
-                    ? CachedNetworkImageProvider(userProfileImage)
-                    : AssetImage('assets/default_avatar.png') as ImageProvider,
-                child: userProfileImage.isEmpty ? Icon(Icons.person, size: 16, color: AppColors.textDisabled) : null,
-              ),
-              SizedBox(width: 8),
-              Expanded(
+              if (!isActuallyMe)
+                CircleAvatar(
+                  radius: 14,
+                  backgroundColor: AppColors.elevation,
+                  backgroundImage: userProfileImage.isNotEmpty ? CachedNetworkImageProvider(userProfileImage) : null,
+                  child: userProfileImage.isEmpty ? Icon(Feather.user, size: 14, color: AppColors.textDisabled) : null,
+                ),
+              if (!isActuallyMe) SizedBox(width: 8),
+              Flexible(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: isActuallyMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      userName,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: AppColors.textHigh,
+                    if (!isActuallyMe)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4, bottom: 2),
+                        child: Text(userName, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textMedium)),
                       ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      previewText,
-                      style: TextStyle(fontSize: 14, color: AppColors.textMedium),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (messageTime != null)
-                      Text(
-                        DateFormat.Hm().format(messageTime),
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: AppColors.textDisabled,
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isActuallyMe ? AppColors.primaryLavender : AppColors.elevation,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(16),
+                          topRight: Radius.circular(16),
+                          bottomLeft: Radius.circular(isActuallyMe ? 16 : 4),
+                          bottomRight: Radius.circular(isActuallyMe ? 4 : 16),
                         ),
                       ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (type == 'image')
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: CachedNetworkImage(
+                                imageUrl: messageData['imageUrl'],
+                                width: 200,
+                                fit: BoxFit.cover,
+                              ),
+                            )
+                          else if (type == 'audio')
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Feather.mic, size: 16, color: isActuallyMe ? Colors.white : AppColors.primaryLavender),
+                                SizedBox(width: 8),
+                                Text('Voice message', style: TextStyle(color: isActuallyMe ? Colors.white : AppColors.textHigh, fontSize: 13)),
+                              ],
+                            )
+                          else
+                            Text(text, style: TextStyle(color: isActuallyMe ? Colors.white : AppColors.textHigh, fontSize: 14)),
+                          SizedBox(height: 2),
+                          Text(
+                            messageTime != null ? DateFormat.Hm().format(messageTime) : '',
+                            style: TextStyle(fontSize: 9, color: isActuallyMe ? Colors.white.withOpacity(0.7) : AppColors.textDisabled),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -3804,7 +3989,7 @@ class _GroupViewScreenState extends State<GroupViewScreen> {
               return Text(groupData?['name'] ?? 'Group', style: TextStyle(color: AppColors.textHigh));
             },
           ),
-          backgroundColor: AppColors.backgroundDeep,
+          backgroundColor: Colors.transparent,
           foregroundColor: AppColors.textHigh,
           elevation: 0,
           actions: [
@@ -3839,7 +4024,7 @@ class _GroupViewScreenState extends State<GroupViewScreen> {
               ),
             // NEW: Three-dot menu replacement for info button
             PopupMenuButton<String>(
-              icon: Icon(Icons.more_vert, color: AppColors.textHigh),
+              icon: Icon(Feather.more_vertical, color: AppColors.textHigh),
               onSelected: (value) {
                 // Handle menu selection
                 if (value == 'info') {
@@ -3855,21 +4040,21 @@ class _GroupViewScreenState extends State<GroupViewScreen> {
                   PopupMenuItem<String>(
                     value: 'info',
                     child: ListTile(
-                      leading: Icon(Icons.info_outline, color: AppColors.primaryLavender),
+                      leading: Icon(Feather.info, color: AppColors.primaryLavender),
                       title: Text('Group Info', style: TextStyle(color: AppColors.textHigh)),
                     ),
                   ),
                   PopupMenuItem<String>(
                     value: 'media',
                     child: ListTile(
-                      leading: Icon(Icons.photo_library, color: AppColors.primaryLavender),
+                      leading: Icon(Feather.image, color: AppColors.primaryLavender),
                       title: Text('Group Media', style: TextStyle(color: AppColors.textHigh)),
                     ),
                   ),
                   PopupMenuItem<String>(
                     value: 'search',
                     child: ListTile(
-                      leading: Icon(Icons.search, color: AppColors.primaryLavender),
+                      leading: Icon(Feather.search, color: AppColors.primaryLavender),
                       title: Text('Search', style: TextStyle(color: AppColors.textHigh)),
                     ),
                   ),
@@ -3880,36 +4065,136 @@ class _GroupViewScreenState extends State<GroupViewScreen> {
         ),
         body: _isMember 
             ? GroupChatScreen(groupId: widget.groupId)
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Group preview header
-                  Container(
-                    padding: EdgeInsets.all(16),
-                    color: AppColors.surface,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Previewing Group', 
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
-                        SizedBox(height: 8),
-                        Text('Join this group to start chatting', 
-                            style: TextStyle(color: AppColors.textMedium)),
-                      ],
-                    ),
-                  ),
-                  // Recent messages preview
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: _recentMessages.length,
-                      itemBuilder: (context, index) {
-                        final message = _recentMessages[index];
-                        final messageData = message.data() as Map<String, dynamic>;
-                        return _buildMessagePreview(messageData, false);
-                      },
-                    ),
-                  ),
-                ],
+            : StreamBuilder<DocumentSnapshot>(
+                stream: _groupDocRef.snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
+                  
+                  final groupData = snapshot.data!.data() as Map<String, dynamic>?;
+                  if (groupData == null) return Center(child: Text('Group not found'));
+
+                  final String description = groupData['description'] ?? '';
+                  final List<dynamic> hashtags = groupData['hashtags'] ?? [];
+                  final Map<String, dynamic> ratings = groupData['ratings'] ?? {};
+                  
+                  double averageRating = 0;
+                  if (ratings.isNotEmpty) {
+                    averageRating = ratings.values.map((v) => (v as num).toDouble()).reduce((a, b) => a + b) / ratings.length;
+                  }
+
+                  return Column(
+                    children: [
+                      // Enhanced Preview Header
+                      Container(
+                        padding: EdgeInsets.all(20),
+                        margin: EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface.withOpacity(0.8),
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(color: AppColors.primaryLavender.withOpacity(0.1)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 20,
+                              offset: Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primaryLavender.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text('PREVIEW MODE', 
+                                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.primaryLavender, letterSpacing: 1.2)),
+                                ),
+                                Spacer(),
+                                if (averageRating > 0)
+                                  Row(
+                                    children: [
+                                      Icon(Icons.star_rounded, color: AppColors.accentMustard, size: 18),
+                                      SizedBox(width: 4),
+                                      Text(averageRating.toStringAsFixed(1), 
+                                        style: TextStyle(color: AppColors.textHigh, fontWeight: FontWeight.bold, fontSize: 14)),
+                                      Text(' (${ratings.length})', 
+                                        style: TextStyle(color: AppColors.textDisabled, fontSize: 12)),
+                                    ],
+                                  ),
+                              ],
+                            ),
+                            SizedBox(height: 16),
+                            if (description.isNotEmpty)
+                              Text(description, 
+                                style: TextStyle(color: AppColors.textHigh, fontSize: 15, height: 1.5, fontWeight: FontWeight.w500)),
+                            if (hashtags.isNotEmpty) ...[
+                              SizedBox(height: 16),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: hashtags.map((tag) => Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [AppColors.primaryLavender.withOpacity(0.15), AppColors.primaryLavender.withOpacity(0.05)],
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: AppColors.primaryLavender.withOpacity(0.1)),
+                                  ),
+                                  child: Text('#$tag', 
+                                    style: TextStyle(color: AppColors.primaryLavender, fontSize: 12, fontWeight: FontWeight.bold)),
+                                )).toList(),
+                              ),
+                            ],
+                            SizedBox(height: 20),
+                            Container(
+                              width: double.infinity,
+                              padding: EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: AppColors.elevation.withOpacity(0.5),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Center(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Feather.info, size: 14, color: AppColors.textDisabled),
+                                    SizedBox(width: 8),
+                                    Text('Join to participate in the conversation', 
+                                      style: TextStyle(color: AppColors.textDisabled, fontSize: 13, fontWeight: FontWeight.w500)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Chat Preview Area
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            // Optional: Add a subtle background pattern or color to match the chat
+                          ),
+                          child: ListView.builder(
+                            reverse: true, // Show most recent at bottom
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            itemCount: _recentMessages.length,
+                            itemBuilder: (context, index) {
+                              final message = _recentMessages[index];
+                              final messageData = message.data() as Map<String, dynamic>;
+                              return _buildMessagePreview(messageData, false);
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
       ),
     );
@@ -3953,10 +4238,10 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text('Group Info', style: TextStyle(color: AppColors.textHigh)),
-        backgroundColor: AppColors.backgroundDeep,
+        backgroundColor: Colors.transparent,
         foregroundColor: AppColors.textHigh,
         elevation: 0,
       ),
@@ -3973,6 +4258,14 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
           final String description = groupData['description'] ?? '';
           final List<dynamic> members = groupData['members'] ?? [];
           final List<dynamic> admins = groupData['admins'] ?? [];
+          final List<dynamic> hashtags = groupData['hashtags'] ?? [];
+          final Map<String, dynamic> ratings = groupData['ratings'] ?? {};
+          
+          double averageRating = 0;
+          if (ratings.isNotEmpty) {
+            averageRating = ratings.values.map((v) => (v as num).toDouble()).reduce((a, b) => a + b) / ratings.length;
+          }
+          final double myRating = (ratings[_currentUserId] ?? 0).toDouble();
 
           return ListView(
             padding: EdgeInsets.all(16),
@@ -4005,7 +4298,66 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                         style: TextStyle(color: AppColors.textMedium),
                       ),
                     ],
+                    if (hashtags.isNotEmpty) ...[
+                      SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        children: hashtags.map((tag) => Text('#$tag', style: TextStyle(color: AppColors.primaryLavender, fontSize: 12))).toList(),
+                      ),
+                    ],
                   ],
+                ),
+              ),
+              
+              SizedBox(height: 24),
+
+              // Rating Section
+              _buildSectionHeader('Rating'),
+              Card(
+                color: AppColors.surface,
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Feather.star, color: Colors.amber, size: 24),
+                          SizedBox(width: 8),
+                          Text(
+                            averageRating > 0 ? averageRating.toStringAsFixed(1) : 'No ratings yet',
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textHigh),
+                          ),
+                          if (ratings.isNotEmpty) ...[
+                            SizedBox(width: 8),
+                            Text('(${ratings.length})', style: TextStyle(color: AppColors.textDisabled)),
+                          ],
+                        ],
+                      ),
+                      SizedBox(height: 16),
+                      Text('Your Rating', style: TextStyle(color: AppColors.textMedium, fontSize: 14)),
+                      Slider(
+                        value: myRating > 0 ? myRating : 5.0,
+                        min: 1.0,
+                        max: 10.0,
+                        divisions: 9,
+                        activeColor: AppColors.primaryLavender,
+                        inactiveColor: AppColors.elevation,
+                        label: (myRating > 0 ? myRating : 5.0).round().toString(),
+                        onChanged: (value) {
+                          _updateRating(value);
+                        },
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('1', style: TextStyle(fontSize: 12, color: AppColors.textDisabled)),
+                          Text('5', style: TextStyle(fontSize: 12, color: AppColors.textDisabled)),
+                          Text('10', style: TextStyle(fontSize: 12, color: AppColors.textDisabled)),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
               
@@ -4058,7 +4410,7 @@ Widget _buildSectionHeader(String title) {
                 color: AppColors.primaryLavender.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: Icon(Icons.person_add, color: AppColors.primaryLavender),
+              child: Icon(Feather.user_plus, color: AppColors.primaryLavender),
             ),
             title: Text('Add Participants', style: TextStyle(color: AppColors.textHigh)),
             onTap: _addParticipants,
@@ -4156,12 +4508,12 @@ Widget _buildSectionHeader(String title) {
             } else if (data['type'] == 'file') {
               return Container(
                 color: AppColors.elevation,
-                child: Icon(Icons.insert_drive_file, color: AppColors.primaryLavender),
+                child: Icon(Feather.file, color: AppColors.primaryLavender),
               );
             } else {
               return Container(
                 color: AppColors.elevation,
-                child: Icon(Icons.link, color: AppColors.primaryLavender),
+                child: Icon(Feather.link, color: AppColors.primaryLavender),
               );
             }
           },
@@ -4280,6 +4632,12 @@ Widget _buildSectionHeader(String title) {
       'linkRestrictions': value,
     });
   }
+
+  void _updateRating(double rating) {
+    _firestore.collection('groups').doc(widget.groupId).update({
+      'ratings.$_currentUserId': rating,
+    });
+  }
 }
 
 // NEW: Search Dialog Widget
@@ -4345,7 +4703,7 @@ class _SearchDialogState extends State<SearchDialog> {
           children: [
             Row(
               children: [
-                Icon(Icons.search, color: AppColors.primaryLavender),
+                Icon(Feather.search, color: AppColors.primaryLavender),
                 SizedBox(width: 12),
                 Expanded(
                   child: TextField(
@@ -4360,7 +4718,7 @@ class _SearchDialogState extends State<SearchDialog> {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.close, color: AppColors.textHigh),
+                  icon: Icon(Feather.x, color: AppColors.textHigh),
                   onPressed: () => Navigator.pop(context),
                 ),
               ],
@@ -4813,7 +5171,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.more_vert, color: AppColors.primaryLavender, size: 24),
+                    Icon(Feather.more_vertical, color: AppColors.primaryLavender, size: 24),
                     SizedBox(width: 12),
                     Text(
                       'Group Options',
@@ -4825,7 +5183,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     ),
                     Spacer(),
                     IconButton(
-                      icon: Icon(Icons.close, color: AppColors.primaryLavender),
+                      icon: Icon(Feather.x, color: AppColors.primaryLavender),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
@@ -4839,39 +5197,39 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     // Group Info Section
                     _buildMenuSection(
                       title: 'Group Info',
-                      icon: Icons.info_outline,
+                      icon: Feather.info,
                       onTap: _showGroupInfoScreen,
                     ),
                     
                     // Search Section
                     _buildMenuSection(
                       title: 'Search',
-                      icon: Icons.search,
+                      icon: Feather.search,
                       onTap: _showSearchScreen,
                     ),
                     
                     // Wallpaper Section
                     _buildMenuSection(
                       title: 'Wallpaper',
-                      icon: Icons.wallpaper,
+                      icon: Feather.image,
                       onTap: _showWallpaperOptions,
                     ),
                     
                     // More Options Section
                     _buildExpandableSection(
                       title: 'More Options',
-                      icon: Icons.expand_more,
+                      icon: Feather.chevron_down,
                       children: [
                         if (!_isAdmin) // Only show report for non-admins
                           _buildMenuOption(
                             title: 'Report Group',
-                            icon: Icons.report,
+                            icon: Feather.alert_triangle,
                             color: AppColors.accentMustard,
                             onTap: _reportGroup,
                           ),
                         _buildMenuOption(
                           title: 'Exit Group',
-                          icon: Icons.exit_to_app,
+                          icon: Feather.log_out,
                           color: AppColors.error,
                           onTap: _leaveGroup,
                         ),
@@ -4907,7 +5265,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           child: Icon(icon, color: AppColors.primaryLavender, size: 20),
         ),
         title: Text(title, style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.textHigh)),
-        trailing: Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.textDisabled),
+        trailing: Icon(Feather.chevron_right, size: 16, color: AppColors.textDisabled),
         onTap: onTap,
       ),
     );
@@ -4993,7 +5351,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep,
+      backgroundColor: Colors.transparent,
       body: Column(
         children: [
           // Group info header - REPLACED with three-dot menu
@@ -5045,7 +5403,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     // REPLACED: Info button with three-dot menu
                     // NEW: Enhanced three-dot menu
                     IconButton(
-                      icon: Icon(Icons.more_vert, color: AppColors.primaryLavender),
+                      icon: Icon(Feather.more_vertical, color: AppColors.primaryLavender),
                       onPressed: _showThreeDotMenu,
                     ),
                   ],
@@ -5173,7 +5531,7 @@ Expanded(
                                         child: CircleAvatar(
                                           radius: 16,
                                           backgroundColor: AppColors.elevation,
-                                          child: const Icon(Icons.person, size: 16, color: AppColors.textDisabled),
+                                          child: const Icon(Feather.user, size: 16, color: AppColors.textDisabled),
                                         ),
                                       );
                                     }
@@ -5192,7 +5550,7 @@ Expanded(
                                             ? CachedNetworkImageProvider(profileImageUrl)
                                             : null,
                                         child: profileImageUrl.isEmpty
-                                            ? const Icon(Icons.person, size: 16, color: AppColors.textDisabled)
+                                            ? const Icon(Feather.user, size: 16, color: AppColors.textDisabled)
                                             : null,
                                       ),
                                     );
@@ -5293,7 +5651,7 @@ Expanded(
                 onPressed: _scrollToBottom,
                 mini: true,
                 backgroundColor: AppColors.primaryLavender,
-                child: Icon(Icons.arrow_downward,
+                child: Icon(Feather.arrow_down,
                     color: AppColors.textOnSecondary, size: 20),
               ),
             ),
@@ -5344,7 +5702,7 @@ Expanded(
                               ),
                           ),
                           IconButton(
-                            icon: Icon(Icons.close, size: 18, color: AppColors.textHigh),
+                            icon: Icon(Feather.x, size: 18, color: AppColors.textHigh),
                             onPressed: _cancelReply,
                           ),
                         ],
@@ -5354,7 +5712,7 @@ Expanded(
                   Row(
                     children: [
                       IconButton(
-                        icon: Icon(Icons.image, color: AppColors.primaryLavender),
+                        icon: Icon(Feather.image, color: AppColors.primaryLavender),
                         onPressed: _pickImage,
                       ),
                       Expanded(
@@ -5386,8 +5744,8 @@ Expanded(
                       IconButton(
                         icon: Icon(
                           _messageController.text.isNotEmpty
-                              ? Icons.send
-                              : Icons.add,
+                              ? Feather.send
+                              : Feather.plus,
                           color: AppColors.primaryLavender,
                         ),
                         onPressed: () {
@@ -5422,7 +5780,7 @@ Expanded(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: Icon(Icons.image, color: AppColors.primaryLavender),
+                leading: Icon(Feather.image, color: AppColors.primaryLavender),
                 title: Text('Send Image', style: TextStyle(color: AppColors.textHigh)),
                 onTap: () {
                   Navigator.pop(context);
@@ -5430,7 +5788,7 @@ Expanded(
                 },
               ),
               ListTile(
-                leading: Icon(Icons.insert_drive_file, color: AppColors.primaryLavender),
+                leading: Icon(Feather.file, color: AppColors.primaryLavender),
                 title: Text('Send File', style: TextStyle(color: AppColors.textHigh)),
                 onTap: () {
                   Navigator.pop(context);
@@ -5531,7 +5889,7 @@ Expanded(
                 width: 200,
                 height: 200,
                 color: AppColors.elevation,
-                child: Icon(Icons.error, color: AppColors.error),
+                child: Icon(Feather.alert_circle, color: AppColors.error),
               ),
             ),
           ),
@@ -5560,7 +5918,7 @@ Expanded(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: Icon(Icons.reply, color: AppColors.primaryLavender),
+                leading: Icon(Feather.corner_up_left, color: AppColors.primaryLavender),
                 title: Text('Reply', style: TextStyle(color: AppColors.textHigh)),
                 onTap: () {
                   Navigator.pop(context);
@@ -5568,7 +5926,7 @@ Expanded(
                 },
               ),
               ListTile(
-                leading: Icon(Icons.content_copy, color: AppColors.primaryLavender),
+                leading: Icon(Feather.copy, color: AppColors.primaryLavender),
                 title: Text('Copy', style: TextStyle(color: AppColors.textHigh)),
                 onTap: () {
                   Navigator.pop(context);
@@ -5582,7 +5940,7 @@ Expanded(
               ),
               if (messageData['imageUrl'] != null)
                 ListTile(
-                  leading: Icon(Icons.download, color: AppColors.primaryLavender),
+                  leading: Icon(Feather.download, color: AppColors.primaryLavender),
                   title: Text('Save to gallery', style: TextStyle(color: AppColors.textHigh)),
                   onTap: () {
                     Navigator.pop(context);
@@ -5827,10 +6185,10 @@ class GroupMediaScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text('Group Media', style: TextStyle(color: AppColors.textHigh)),
-        backgroundColor: AppColors.backgroundDeep,
+        backgroundColor: Colors.transparent,
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
@@ -5874,7 +6232,7 @@ class GroupMediaScreen extends StatelessWidget {
                     color: AppColors.elevation,
                     child: Center(child: CircularProgressIndicator(color: AppColors.primaryLavender)),
                   ),
-                  errorWidget: (context, url, error) => Icon(Icons.error, color: AppColors.error),
+                  errorWidget: (context, url, error) => Icon(Feather.alert_circle, color: AppColors.error),
                 ),
               );
             },
@@ -5909,11 +6267,11 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Edit Image', style: TextStyle(color: AppColors.textHigh)),
-        backgroundColor: AppColors.backgroundDeep,
+        backgroundColor: Colors.transparent,
         foregroundColor: AppColors.textHigh,
         actions: [
           IconButton(
-            icon: Icon(Icons.check, color: AppColors.primaryLavender),
+            icon: Icon(Feather.check, color: AppColors.primaryLavender),
             onPressed: () {
               Navigator.pop(context, {
                 'image': _editedImage!,
@@ -5923,7 +6281,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
           ),
         ],
       ),
-      backgroundColor: AppColors.backgroundDeep,
+      backgroundColor: Colors.transparent,
       body: Column(
         children: [
           Expanded(
@@ -6024,7 +6382,7 @@ void main() {
       ),
       scaffoldBackgroundColor: AppColors.backgroundDeep,
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.backgroundDeep,
+        backgroundColor: Colors.transparent,
         foregroundColor: AppColors.textHigh,
         elevation: 0,
       ),

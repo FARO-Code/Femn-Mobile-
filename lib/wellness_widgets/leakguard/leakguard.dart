@@ -624,7 +624,7 @@ class _SocialLockdownButtonState extends State<SocialLockdownButton> {
               },
               child: _isCalmed
                   ? Icon(
-                      Icons.favorite, // Filled heart
+                      Feather.heart, // Filled heart
                       key: ValueKey('filled'),
                       color: AppColors.primaryLavender,
                       size: 26,

@@ -407,7 +407,7 @@ class _PeriodTrackerScreenState extends State<PeriodTrackerScreen> with SingleTi
     // 2. Loading State
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: AppColors.backgroundDeep, 
+        backgroundColor: Colors.transparent, 
         body: Center(child: CircularProgressIndicator(color: AppColors.primaryLavender))
       );
     }
@@ -424,9 +424,9 @@ class _PeriodTrackerScreenState extends State<PeriodTrackerScreen> with SingleTi
 
     // 4. Main App Content
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: AppColors.backgroundDeep,
+        backgroundColor: Colors.transparent,
         foregroundColor: AppColors.textHigh,
         elevation: 0,
         automaticallyImplyLeading: false,
@@ -509,7 +509,7 @@ class _PeriodTrackerScreenState extends State<PeriodTrackerScreen> with SingleTi
       body: Column(
         children: [
           Container(
-            color: AppColors.backgroundDeep,
+            color: Colors.transparent,
             child: TabBar(
               controller: _tabController,
               labelColor: AppColors.primaryLavender,

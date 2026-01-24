@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'package:intl/intl.dart';
 import 'package:femn/hub_screens/post.dart'; // <--- Ensure this file exists
+import 'package:femn/widgets/femn_background.dart';
 
 // ==========================================
 // 1. DATA & VALIDATORS (New Additions)
@@ -117,15 +118,10 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep, 
-      body: Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/femn_bg.png'), 
-            fit: BoxFit.cover,
-            colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.7), BlendMode.darken), 
-          ),
-        ),
+      backgroundColor: Colors.transparent, 
+      body: FemnBackground(
+        imagePath: 'assets/femn_bg.png',
+        opacity: 0.7,
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -179,15 +175,9 @@ class AuthScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep,
-      body: Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/femn_state.png'),
-            fit: BoxFit.cover,
-            colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.8), BlendMode.darken),
-          ),
-        ),
+      backgroundColor: Colors.transparent,
+      body: FemnBackground(
+        opacity: 0.8,
         child: SafeArea(
           child: Center(
             child: Padding(
@@ -364,6 +354,7 @@ class AuthService {
         'embers': 0,
         'createdAt': DateTime.now(),
         'isVerified': false,
+        'isActive': true,
       });
       return null;
     } on FirebaseAuthException catch (e) {
@@ -419,6 +410,7 @@ class AuthService {
         'embers': 0,
         'createdAt': DateTime.now(),
         'isVerified': false,
+        'isActive': true,
       });
       return null;
     } on FirebaseAuthException catch (e) {
@@ -434,33 +426,69 @@ class AuthService {
     required String username,
     required List<String> specialization,
     required String experienceLevel,
-    required String bio,
-    required String availableHours,
+    required DateTime dateOfBirth,
+    required List<AvailabilitySlot> availability,
     String profileImage = '',
-    List<String> certifications = const [],
+    List<File>? certificationFiles,
     List<String> languages = const [],
-    String genderPreference = 'Open to all',
+    List<String> livedExperiences = const [],
     String region = '',
+    String ethnicity = '',
+    String gender = '',
+    bool isLgbtqPlus = false,
+    String religion = '',
   }) async {
     try {
+      // 1. Create User
       UserCredential cred = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-      await _firestore.collection('users').doc(cred.user!.uid).set({
-        'uid': cred.user!.uid,
+
+      final String uid = cred.user!.uid;
+
+      // 2. Upload Certifications (Now authorized as user is created)
+      List<String> certificationUrls = [];
+      if (certificationFiles != null && certificationFiles.isNotEmpty) {
+        for (var i = 0; i < certificationFiles.length; i++) {
+          final ref = FirebaseStorage.instance
+              .ref()
+              .child('therapist_certifications')
+              .child(uid)
+              .child('${DateTime.now().millisecondsSinceEpoch}_$i.jpg');
+          await ref.putFile(certificationFiles[i]);
+          certificationUrls.add(await ref.getDownloadURL());
+        }
+      }
+
+      // Calculate Age Range
+      final age = DateTime.now().year - dateOfBirth.year;
+      String ageRange = 'Adult';
+      if (age < 18) ageRange = 'Adolescent';
+      else if (age <= 25) ageRange = 'Young Adult';
+      else if (age <= 60) ageRange = 'Adult';
+      else ageRange = 'Elderly';
+
+      // 3. Save User Document
+      await _firestore.collection('users').doc(uid).set({
+        'uid': uid,
         'email': email,
         'username': username,
         'fullName': fullName,
         'specialization': specialization,
         'experienceLevel': experienceLevel,
-        'bio': bio,
-        'availableHours': availableHours,
+        'dateOfBirth': dateOfBirth,
+        'availability': availability.map((s) => s.toMap()).toList(),
         'profileImage': profileImage,
-        'certifications': certifications,
+        'certifications': certificationUrls,
         'languages': languages,
-        'genderPreference': genderPreference,
+        'livedExperiences': livedExperiences,
         'region': region,
+        'ethnicity': ethnicity,
+        'gender': gender,
+        'isLgbtqPlus': isLgbtqPlus,
+        'religion': religion,
+        'ageRange': ageRange,
         'accountType': 'therapist',
         'followers': [],
         'following': [],
@@ -468,10 +496,19 @@ class AuthService {
         'embers': 0,
         'createdAt': DateTime.now(),
         'isVerified': false,
+        'isActive': true,
+        'totalRatings': 0,
+        'averageRating': 0.0,
+        'reports': 0,
+        'activeClients': 0,
+        'totalClients': 0,
+        'strikes': 0,
       });
       return null;
     } on FirebaseAuthException catch (e) {
       return e.message;
+    } catch (e) {
+      return e.toString();
     }
   }
 
@@ -494,15 +531,8 @@ class AccountTypeScreen extends StatelessWidget {
 @override
 Widget build(BuildContext context) {
   return Scaffold(
-    backgroundColor: AppColors.backgroundDeep,
-    body: Container(
-      decoration: BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage('assets/femn_state.png'),
-          fit: BoxFit.cover,
-          colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.9), BlendMode.darken),
-        ),
-      ),
+    backgroundColor: Colors.transparent,
+    body: FemnBackground(
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -512,7 +542,7 @@ Widget build(BuildContext context) {
               Align(
                 alignment: Alignment.topLeft,
                 child: IconButton(
-                  icon: Icon(Icons.arrow_back, color: AppColors.textHigh),
+                  icon: Icon(Feather.arrow_left, color: AppColors.textHigh),
                   onPressed: () => Navigator.pop(context),
                 ),
               ),
@@ -559,7 +589,7 @@ Widget build(BuildContext context) {
                   children: [
                     _buildAccountTypeCard(
                       context,
-                      icon: Icons.person,
+                      icon: Feather.user,
                       title: "Personal Account",
                       subtitle: "For individuals looking to connect and share",
                       type: AccountType.personal,
@@ -568,7 +598,7 @@ Widget build(BuildContext context) {
                     SizedBox(height: 20),
                     _buildAccountTypeCard(
                       context,
-                      icon: Icons.business,
+                      icon: Feather.briefcase,
                       title: "Organization Account",
                       subtitle: "For NGOs, companies, and community groups",
                       type: AccountType.organization,
@@ -577,7 +607,7 @@ Widget build(BuildContext context) {
                     SizedBox(height: 20),
                     _buildAccountTypeCard(
                       context,
-                      icon: Icons.medical_services,
+                      icon: Feather.activity,
                       title: "Therapist Account",
                       subtitle: "For mental health professionals and volunteers",
                       type: AccountType.therapist,
@@ -656,7 +686,7 @@ Widget _buildAccountTypeCard(
                 ],
               ),
             ),
-            Icon(Icons.arrow_forward_ios, color: AppColors.textDisabled, size: 16),
+            Icon(Feather.chevron_right, color: AppColors.textDisabled, size: 16),
           ],
         ),
       ),
@@ -681,6 +711,55 @@ class _SignupScreenState extends State<SignupScreen> {
   final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+  int _currentStep = 0;
+
+  int _getTotalSteps() {
+    switch (widget.accountType) {
+      case AccountType.personal: return 3;
+      case AccountType.organization: return 3;
+      case AccountType.therapist: return 7;
+    }
+  }
+
+  void _nextStep() {
+    if (_formKey.currentState!.validate()) {
+      if (_currentStep < _getTotalSteps() - 1) {
+        setState(() => _currentStep++);
+      } else {
+        _signup();
+      }
+    }
+  }
+
+  void _previousStep() {
+    if (_currentStep > 0) {
+      setState(() => _currentStep--);
+    } else {
+      Navigator.pop(context);
+    }
+  }
+
+  String _getStepTitle() {
+    switch (widget.accountType) {
+      case AccountType.personal:
+        if (_currentStep == 0) return "Basic Info";
+        if (_currentStep == 1) return "Security";
+        return "Your Interests";
+      case AccountType.organization:
+        if (_currentStep == 0) return "Account Details";
+        if (_currentStep == 1) return "Profile Info";
+        return "Areas of Focus";
+      case AccountType.therapist:
+        if (_currentStep == 0) return "Professional Identity";
+        if (_currentStep == 1) return "Account & Age";
+        if (_currentStep == 2) return "Demographics";
+        if (_currentStep == 3) return "Availability";
+        if (_currentStep == 4) return "Professional Focus";
+        if (_currentStep == 5) return "Lived Experience";
+        return "Languages Spoken";
+    }
+  }
 
   // Personal Account Fields
   final _usernameController = TextEditingController();
@@ -702,13 +781,16 @@ class _SignupScreenState extends State<SignupScreen> {
   // Therapist Account Fields
   final _therapistFullNameController = TextEditingController();
   final _therapistUsernameController = TextEditingController();
-  final _therapistBioController = TextEditingController();
-  final _availableHoursController = TextEditingController();
   List<String> _selectedSpecializations = [];
+  List<String> _selectedLivedExperiences = [];
   String? _selectedExperienceLevel;
-  String? _selectedGenderPreference;
   String? _selectedRegion;
   List<String> _selectedLanguages = [];
+  String? _selectedEthnicity;
+  String? _selectedGender;
+  bool _isLgbtqPlus = false;
+  String? _selectedReligion;
+  List<Map<String, dynamic>> _availabilityGroups = [];
   List<File> _certificationFiles = [];
 
   // Options
@@ -725,9 +807,60 @@ class _SignupScreenState extends State<SignupScreen> {
   final List<String> _countries = CountryData.allCountries;
 
   final List<String> _specializations = [
-    'Anxiety', 'Trauma', 'Relationships', 'Depression', 'Self-esteem',
-    'Stress Management', 'Grief', 'Addiction', 'Family Therapy'
+    'Anxiety', 'Depression', 'Trauma', 'Relationships', 'Self-esteem',
+    'Stress Management', 'Grief', 'Addiction', 'Family Therapy',
+    'LGBTQ+', 'Autistic / AuDHD', 'Dyslexic', 'Non-verbal', 'Mixed-Race',
+    'Refugee / Asylee experience', 'Caste-oppression informed', 'Colorism-informed',
+    'Anti-colonial / Decolonial framework', 'Racial trauma', 'Indigenous',
+    'Ex-religious / Religious trauma', 'Fat Positive / Health at Every Size (HAES)',
+    'Body Neutrality focused', 'Physically Disabled / Wheelchair user',
+    'Deaf / Hard of Hearing (ASL proficient)', 'Blind / Low Vision informed',
+    'Eating Disorder recovery', 'Post-partum / Maternal mental health',
+    'Infertility / Miscarriage support', 'Menopause / Hormonal health',
+    'Cancer survivor / Oncology-informed', 'Terminal illness / End-of-life care',
+    'Veteran / Military family', 'First Responder (Police, Fire, EMT)',
+    'Medical Professional (Doctors, Nurses)', 'Tech industry / Burnout specialist',
+    'Artist / Creative professional', 'Academic / Higher Ed focus',
+    'Sex Work positive', 'Social Activist / Organizer', 'Foster Care system alum',
+    'Adoption / Adoptee', 'Elder / Geriatric focus', 'Domestic Violence survivor',
+    'Sexual Assault survivor', 'Childhood Emotional Neglect (CEN)',
+    'Narcissistic Abuse recovery', 'Incarceration / Justice-involved',
+    'Homelessness / Housing instability', 'Poverty / Class-straddling mobility',
+    'Relinquishment trauma', 'Cult recovery', 'Intergenerational / Ancestral trauma',
+    'Feminist / Liberation-focused'
   ];
+
+  final List<String> _livedExperiences = [
+    'LGBTQ+', 'Autistic / AuDHD', 'Dyslexic', 'Non-verbal', 'Mixed-Race',
+    'Refugee / Asylee experience', 'Caste-oppression informed', 'Colorism-informed',
+    'Anti-colonial / Decolonial framework', 'Racial trauma', 'Indigenous',
+    'Ex-religious / Religious trauma', 'Fat Positive / Health at Every Size (HAES)',
+    'Body Neutrality focused', 'Physically Disabled / Wheelchair user',
+    'Deaf / Hard of Hearing (ASL proficient)', 'Blind / Low Vision informed',
+    'Eating Disorder recovery', 'Post-partum / Maternal mental health',
+    'Infertility / Miscarriage support', 'Menopause / Hormonal health',
+    'Cancer survivor / Oncology-informed', 'Terminal illness / End-of-life care',
+    'Veteran / Military family', 'First Responder (Police, Fire, EMT)',
+    'Medical Professional (Doctors, Nurses)', 'Tech industry / Burnout specialist',
+    'Artist / Creative professional', 'Academic / Higher Ed focus',
+    'Sex Work positive', 'Social Activist / Organizer', 'Foster Care system alum',
+    'Adoption / Adoptee', 'Elder / Geriatric focus', 'Domestic Violence survivor',
+    'Sexual Assault survivor', 'Childhood Emotional Neglect (CEN)',
+    'Narcissistic Abuse recovery', 'Incarceration / Justice-involved',
+    'Homelessness / Housing instability', 'Poverty / Class-straddling mobility',
+    'Relinquishment trauma', 'Cult recovery', 'Intergenerational / Ancestral trauma',
+    'Feminist / Liberation-focused'
+  ];
+
+  final Set<String> _sensitiveSpecializations = {
+    'Trauma', 'Addiction', 'Eating Disorder recovery', 'Post-partum / Maternal mental health',
+    'Infertility / Miscarriage support', 'Cancer survivor / Oncology-informed',
+    'Terminal illness / End-of-life care', 'Domestic Violence survivor',
+    'Sexual Assault survivor', 'Childhood Emotional Neglect (CEN)',
+    'Narcissistic Abuse recovery', 'Incarceration / Justice-involved',
+    'Racial trauma', 'Intergenerational / Ancestral trauma', 'Cult recovery',
+    'Relinquishment trauma', 'Medical Professional (Doctors, Nurses)'
+  };
   final List<String> _experienceLevels = [
     'Certified Therapist', 'Psych Student', 'Peer Listener', 'Volunteer'
   ];
@@ -740,7 +873,28 @@ class _SignupScreenState extends State<SignupScreen> {
   ];
   final List<String> _languages = [
     'English', 'French', 'Spanish', 'Arabic', 'Swahili',
-    'Portuguese', 'Hindi', 'Yoruba', 'Zulu'
+    'Portuguese', 'Hindi', 'Yoruba', 'Zulu', 'Mandarin', 'Japanese', 'Bengali',
+    'German', 'Italian', 'Russian', 'Korean', 'Turkish', 'Vietnamese', 'Thai', 
+    'Polish', 'Dutch', 'Amharic', 'Oromo', 'Hausa', 'Igbo', 'Shona', 'Twi',
+    'Wolof', 'Somali', 'Berber', 'Urdu', 'Punjabi', 'Telugu', 'Marathi', 'Tamil',
+    'Gujarati', 'Malayalam', 'Kannada', 'Persian', 'Pashto', 'Kurdish', 'Hebrew',
+    'Indonesian', 'Malay', 'Tagalog', 'Burmese', 'Khmer', 'Lao', 'Greek', 'Czech',
+    'Hungarian', 'Swedish', 'Finnish', 'Danish', 'Norwegian', 'Ukrainian', 'Romanian',
+    'Catalan', 'Basque', 'Galician', 'Quechua', 'Guarani', 'Aymara', 'Nahuatl', 'Maya',
+    'ASL (American Sign Language)', 'BSL (British Sign Language)', 'ISL (International Sign Language)'
+  ];
+  final List<String> _ethnicities = [
+    'Asian', 'Black', 'Blasian', 'White', 'Hispanic', 'Middle Eastern', 'Indigenous', 'Other'
+  ];
+  final List<String> _genders = [
+    'Male', 'Female', 'Non-binary', 'Transgender', 'Other'
+  ];
+  final List<String> _religions = [
+    'Christianity', 'Islam', 'Hinduism', 'Buddhism', 'Sikhism', 'Judaism', 
+    'Agnostic', 'Atheist', 'Spiritual', 'Traditional', 'Other'
+  ];
+  final List<String> _ageRanges = [
+    'Adolescent', 'Young Adult', 'Adult', 'Elderly'
   ];
   final List<String> _areasOfFocus = [
     'Gender Equality', 'Education', 'Health', 'Advocacy',
@@ -773,6 +927,67 @@ class _SignupScreenState extends State<SignupScreen> {
     setState(() {
       _socialLinks[index] = value;
     });
+  }
+
+
+  void _addAvailabilityGroup() {
+    setState(() {
+      _availabilityGroups.add({
+        'days': <String>[],
+        'start': TimeOfDay(hour: 9, minute: 0),
+        'end': TimeOfDay(hour: 17, minute: 0),
+      });
+    });
+  }
+
+  void _removeAvailabilityGroup(int index) {
+    setState(() {
+      _availabilityGroups.removeAt(index);
+    });
+  }
+
+  void _toggleDayInGroup(int groupIndex, String day) {
+    setState(() {
+      final days = _availabilityGroups[groupIndex]['days'] as List<String>;
+      if (days.contains(day)) {
+        days.remove(day);
+      } else {
+        days.add(day);
+      }
+    });
+  }
+
+  Future<void> _selectTimeRange(int groupIndex, bool isStart) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: isStart ? _availabilityGroups[groupIndex]['start'] : _availabilityGroups[groupIndex]['end'],
+    );
+    if (picked != null) {
+      setState(() {
+        if (isStart) {
+          _availabilityGroups[groupIndex]['start'] = picked;
+        } else {
+          _availabilityGroups[groupIndex]['end'] = picked;
+        }
+      });
+    }
+  }
+
+  List<AvailabilitySlot> _flattenAvailability() {
+    List<AvailabilitySlot> flattened = [];
+    for (var group in _availabilityGroups) {
+      final days = group['days'] as List<dynamic>;
+      final start = group['start'] as TimeOfDay;
+      final end = group['end'] as TimeOfDay;
+      for (var day in days) {
+        flattened.add(AvailabilitySlot(
+          day: day.toString(),
+          startTime: start,
+          endTime: end,
+        ));
+      }
+    }
+    return flattened;
   }
 
   void _showError(String message) {
@@ -840,24 +1055,34 @@ class _SignupScreenState extends State<SignupScreen> {
             );
             break;
           case AccountType.therapist:
-            if (_selectedSpecializations.isEmpty || _selectedExperienceLevel == null) {
-              _showError("Please fill all required fields");
+            final flattened = _flattenAvailability();
+            
+            // Age Check
+            if (_dateOfBirth == null) {
+              _showError("Please select your date of birth");
+              setState(() => _isLoading = false);
+              return;
+            }
+            final age = DateTime.now().year - _dateOfBirth!.year;
+            if (age < 18) {
+              _showError("You must be at least 18 years old to be a therapist.");
+              setState(() => _isLoading = false);
+              return;
+            }
+
+            if (_selectedSpecializations.isEmpty || _selectedExperienceLevel == null || flattened.isEmpty) {
+              _showError("Please fill all required fields, including availability days");
+              setState(() => _isLoading = false);
+              return;
+            }
+
+            // Certification Requirement check
+            if ((_selectedExperienceLevel == 'Certified Therapist' || _selectedExperienceLevel == 'Psych Student') && _certificationFiles.isEmpty) {
+              _showError("Professionals and Students must upload certifications.");
               setState(() => _isLoading = false);
               return;
             }
             
-            List<String> certificationUrls = [];
-            if (_certificationFiles.isNotEmpty) {
-              for (var file in _certificationFiles) {
-                final ref = FirebaseStorage.instance
-                    .ref()
-                    .child('therapist_certifications')
-                    .child('${DateTime.now().millisecondsSinceEpoch}_${_certificationFiles.indexOf(file)}.jpg');
-                await ref.putFile(file);
-                certificationUrls.add(await ref.getDownloadURL());
-              }
-            }
-
             error = await AuthService().signUpTherapist(
               email: _emailController.text.trim(),
               password: _passwordController.text.trim(),
@@ -865,14 +1090,18 @@ class _SignupScreenState extends State<SignupScreen> {
               // Force lowercase username
               username: _therapistUsernameController.text.trim().toLowerCase(),
               specialization: _selectedSpecializations,
+              livedExperiences: _selectedLivedExperiences,
               experienceLevel: _selectedExperienceLevel!,
-              bio: _therapistBioController.text.trim(),
-              availableHours: _availableHoursController.text.trim(),
+              dateOfBirth: _dateOfBirth!,
+              availability: flattened,
               profileImage: profileUrl,
-              certifications: certificationUrls,
+              certificationFiles: _certificationFiles,
               languages: _selectedLanguages,
-              genderPreference: _selectedGenderPreference ?? 'Open to all',
               region: _selectedRegion ?? '',
+              ethnicity: _selectedEthnicity ?? '',
+              gender: _selectedGender ?? '',
+              isLgbtqPlus: _selectedSpecializations.contains('LGBTQ+') || _selectedLivedExperiences.contains('LGBTQ+'),
+              religion: _selectedReligion ?? '',
             );
             break;
         }
@@ -895,192 +1124,268 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Widget _buildPersonalForm() {
-    return Column(
-      children: [
-        // Username with NEW VALIDATOR
-        _buildTextField(
-          controller: _usernameController,
-          hintText: "Username",
-          icon: Feather.at_sign, // Icon updated
-          validator: (v) => UsernameValidator.validate(v), // STRICT VALIDATION
-        ),
-
-        // Full Name
-        _buildTextField(
-          controller: _fullNameController,
-          hintText: "Full Name",
-          icon: Feather.user,
-          validator: (v) => v!.isEmpty ? "Enter your full name" : null,
-        ),
-
-        // Date of Birth
-        _buildDateOfBirthField(),
-
-        // Interests
-        _buildInterestsField(),
-      ],
-    );
+    if (_currentStep == 0) {
+      return Column(
+        children: [
+          _buildTextField(
+            controller: _fullNameController,
+            hintText: "Full Name",
+            icon: Feather.user,
+            validator: (v) => v!.isEmpty ? "Enter your full name" : null,
+          ),
+          _buildTextField(
+            controller: _usernameController,
+            hintText: "Username",
+            icon: Feather.at_sign,
+            validator: (v) => UsernameValidator.validate(v),
+          ),
+          _buildTextField(
+            controller: _emailController,
+            hintText: "Email *",
+            icon: Feather.mail,
+            validator: (v) => v!.isEmpty ? "Enter your email" : null,
+          ),
+        ],
+      );
+    } else if (_currentStep == 1) {
+      return Column(
+        children: [
+          _buildDateOfBirthField(),
+          _buildTextField(
+            controller: _passwordController,
+            hintText: "Password *",
+            icon: Feather.lock,
+            validator: (v) => v!.length < 6 ? "Password must be 6+ chars" : null,
+            obscureText: _obscurePassword,
+            onToggleObscure: () => setState(() => _obscurePassword = !_obscurePassword),
+          ),
+          _buildTextField(
+            controller: _confirmPasswordController,
+            hintText: "Confirm Password *",
+            icon: Feather.lock,
+            validator: (v) => v != _passwordController.text ? "Passwords do not match" : null,
+            obscureText: _obscureConfirmPassword,
+            onToggleObscure: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+          ),
+        ],
+      );
+    } else {
+      return _buildInterestsField();
+    }
   }
 
   Widget _buildOrganizationForm() {
-    return Column(
-      children: [
-        // Organization Name
-        _buildTextField(
-          controller: _organizationNameController,
-          hintText: "Organization Name",
-          icon: Feather.briefcase,
-          validator: (v) => v!.isEmpty ? "Enter organization name" : null,
-        ),
-
-        // Category Dropdown (Updated UX)
-        _buildDropdown(
-          value: _selectedCategory,
-          hint: "Select Category *",
-          items: _organizationCategories,
-          icon: Feather.grid,
-          onChanged: (value) => setState(() => _selectedCategory = value),
-          validator: (value) => value == null ? "Select a category" : null,
-        ),
-
-        // Country Dropdown (Updated UX & List)
-        _buildDropdown(
-          value: _selectedCountry,
-          hint: "Select Country *",
-          items: _countries,
-          icon: Feather.globe,
-          onChanged: (value) => setState(() => _selectedCountry = value),
-          validator: (value) => value == null ? "Select a country" : null,
-        ),
-
-        // Mission Statement
-        _buildTextField(
-          controller: _missionStatementController,
-          hintText: "Mission Statement *",
-          icon: Feather.file_text,
-          maxLines: 3,
-          validator: (v) => v!.isEmpty ? "Enter mission statement" : null,
-        ),
-
-        // Website
-        _buildTextField(
-          controller: _websiteController,
-          hintText: "Website (optional)",
-          icon: Feather.globe,
-        ),
-
-        // Phone
-        _buildTextField(
-          controller: _phoneController,
-          hintText: "Phone (optional)",
-          icon: Feather.phone,
-        ),
-
-        // Address
-        _buildTextField(
-          controller: _addressController,
-          hintText: "Address (optional)",
-          icon: Feather.map_pin,
-        ),
-
-        // Areas of Focus
-        _buildMultiSelectChips(
-          title: "Areas of Focus (optional)",
-          options: _areasOfFocus,
-          selected: _selectedAreasOfFocus,
-          onChanged: (selected) => setState(() => _selectedAreasOfFocus = selected),
-        ),
-
-        // Social Links
-        _buildSocialLinksField(),
-      ],
-    );
+    if (_currentStep == 0) {
+      return Column(
+        children: [
+          _buildTextField(
+            controller: _organizationNameController,
+            hintText: "Organization Name",
+            icon: Feather.briefcase,
+            validator: (v) => v!.isEmpty ? "Enter organization name" : null,
+          ),
+          _buildTextField(
+            controller: _emailController,
+            hintText: "Email *",
+            icon: Feather.mail,
+            validator: (v) => v!.isEmpty ? "Enter email" : null,
+          ),
+          _buildTextField(
+            controller: _passwordController,
+            hintText: "Password *",
+            icon: Feather.lock,
+            validator: (v) => v!.length < 6 ? "Password must be 6+ chars" : null,
+            obscureText: _obscurePassword,
+            onToggleObscure: () => setState(() => _obscurePassword = !_obscurePassword),
+          ),
+          _buildTextField(
+            controller: _confirmPasswordController,
+            hintText: "Confirm Password *",
+            icon: Feather.lock,
+            validator: (v) => v != _passwordController.text ? "Passwords do not match" : null,
+            obscureText: _obscureConfirmPassword,
+            onToggleObscure: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+          ),
+        ],
+      );
+    } else if (_currentStep == 1) {
+      return Column(
+        children: [
+          _buildTextField(
+            controller: _missionStatementController,
+            hintText: "Mission Statement *",
+            icon: Feather.file_text,
+            maxLines: 3,
+            validator: (v) => v!.isEmpty ? "Enter mission statement" : null,
+          ),
+          _buildDropdown(
+            value: _selectedCategory,
+            hint: "Select Category *",
+            items: _organizationCategories,
+            icon: Feather.grid,
+            onChanged: (value) => setState(() => _selectedCategory = value),
+            validator: (value) => value == null ? "Select a category" : null,
+          ),
+          _buildTextField(
+            controller: _websiteController,
+            hintText: "Website (optional)",
+            icon: Feather.globe,
+          ),
+          _buildTextField(
+            controller: _phoneController,
+            hintText: "Phone (optional)",
+            icon: Feather.phone,
+          ),
+          _buildSocialLinksField(),
+          _buildTextField(
+            controller: _addressController,
+            hintText: "Address (optional)",
+            icon: Feather.map_pin,
+          ),
+          _buildDropdown(
+            value: _selectedCountry,
+            hint: "Select Country *",
+            items: _countries,
+            icon: Feather.globe,
+            onChanged: (value) => setState(() => _selectedCountry = value),
+            validator: (value) => value == null ? "Select a country" : null,
+          ),
+        ],
+      );
+    } else {
+      return _buildMultiSelectChips(
+        title: "Areas of Focus (optional)",
+        options: _areasOfFocus,
+        selected: _selectedAreasOfFocus,
+        onChanged: (selected) => setState(() => _selectedAreasOfFocus = selected),
+      );
+    }
   }
 
   Widget _buildTherapistForm() {
-    return Column(
-      children: [
-        // Full Name
-        _buildTextField(
-          controller: _therapistFullNameController,
-          hintText: "Full Name *",
-          icon: Feather.user,
-          validator: (v) => v!.isEmpty ? "Enter your full name" : null,
-        ),
-
-        // Username with NEW VALIDATOR
-        _buildTextField(
-          controller: _therapistUsernameController,
-          hintText: "Username *",
-          icon: Feather.at_sign,
-          validator: (v) => UsernameValidator.validate(v), // STRICT VALIDATION
-        ),
-
-        // Specialization
-        _buildMultiSelectChips(
-          title: "Specialization *",
-          options: _specializations,
-          selected: _selectedSpecializations,
-          onChanged: (selected) => setState(() => _selectedSpecializations = selected),
-        ),
-
-        // Experience Level Dropdown (Updated UX)
-        _buildDropdown(
-          value: _selectedExperienceLevel,
-          hint: "Experience Level *",
-          items: _experienceLevels,
-          icon: Feather.activity,
-          onChanged: (value) => setState(() => _selectedExperienceLevel = value),
-          validator: (value) => value == null ? "Select experience level" : null,
-        ),
-
-        // Bio
-        _buildTextField(
-          controller: _therapistBioController,
-          hintText: "Professional Bio *",
-          icon: Feather.file_text,
-          maxLines: 3,
-          validator: (v) => v!.isEmpty ? "Enter your bio" : null,
-        ),
-
-        // Available Hours
-        _buildTextField(
-          controller: _availableHoursController,
-          hintText: "Available Hours *",
-          icon: Feather.clock,
-          validator: (v) => v!.isEmpty ? "Enter available hours" : null,
-        ),
-
-        // Region Dropdown (Updated UX)
-        _buildDropdown(
-          value: _selectedRegion,
-          hint: "Region (optional)",
-          items: _regions,
-          icon: Feather.map,
-          onChanged: (value) => setState(() => _selectedRegion = value),
-        ),
-
-        // Languages
-        _buildMultiSelectChips(
-          title: "Languages Spoken (optional)",
-          options: _languages,
-          selected: _selectedLanguages,
-          onChanged: (selected) => setState(() => _selectedLanguages = selected),
-        ),
-
-        // Gender Preference Dropdown (Updated UX)
-        _buildDropdown(
-          value: _selectedGenderPreference,
-          hint: "Gender Preference (optional)",
-          items: _genderPreferences,
-          icon: Feather.users,
-          onChanged: (value) => setState(() => _selectedGenderPreference = value),
-        ),
-
-        // Certifications
-        _buildCertificationsField(),
-      ],
-    );
+    if (_currentStep == 0) {
+      return Column(
+        children: [
+          _buildTextField(
+            controller: _therapistFullNameController,
+            hintText: "Full Name *",
+            icon: Feather.user,
+            validator: (v) => v!.isEmpty ? "Enter your full name" : null,
+          ),
+          _buildTextField(
+            controller: _therapistUsernameController,
+            hintText: "Username *",
+            icon: Feather.at_sign,
+            validator: (v) => UsernameValidator.validate(v),
+          ),
+          _buildTextField(
+            controller: _emailController,
+            hintText: "Email *",
+            icon: Feather.mail,
+            validator: (v) => v!.isEmpty ? "Enter your email" : null,
+          ),
+          _buildDropdown(
+            value: _selectedExperienceLevel,
+            hint: "Experience Level *",
+            items: _experienceLevels,
+            icon: Feather.activity,
+            onChanged: (value) => setState(() {
+              _selectedExperienceLevel = value;
+              if (value != 'Certified Therapist') {
+                _selectedSpecializations.removeWhere((s) => _sensitiveSpecializations.contains(s));
+              }
+            }),
+            validator: (value) => value == null ? "Select experience level" : null,
+          ),
+        ],
+      );
+    } else if (_currentStep == 1) {
+      return Column(
+        children: [
+          _buildDateOfBirthField(),
+          _buildTextField(
+            controller: _passwordController,
+            hintText: "Password *",
+            icon: Feather.lock,
+            validator: (v) => v!.length < 6 ? "Password must be 6+ chars" : null,
+            obscureText: _obscurePassword,
+            onToggleObscure: () => setState(() => _obscurePassword = !_obscurePassword),
+          ),
+          _buildTextField(
+            controller: _confirmPasswordController,
+            hintText: "Confirm Password *",
+            icon: Feather.lock,
+            validator: (v) => v != _passwordController.text ? "Passwords do not match" : null,
+            obscureText: _obscureConfirmPassword,
+            onToggleObscure: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+          ),
+          if (_selectedExperienceLevel == 'Certified Therapist' || _selectedExperienceLevel == 'Psych Student')
+            _buildCertificationsField(),
+        ],
+      );
+    } else if (_currentStep == 2) {
+      return Column(
+        children: [
+          _buildDropdown(
+            value: _selectedEthnicity,
+            hint: "Race & Ethnicity *",
+            items: _ethnicities,
+            icon: Feather.user,
+            onChanged: (value) => setState(() => _selectedEthnicity = value),
+            validator: (value) => value == null ? "Select ethnicity" : null,
+          ),
+          _buildDropdown(
+            value: _selectedGender,
+            hint: "Gender *",
+            items: _genders,
+            icon: Feather.user,
+            onChanged: (value) => setState(() => _selectedGender = value),
+            validator: (value) => value == null ? "Select gender" : null,
+          ),
+          _buildDropdown(
+            value: _selectedRegion,
+            hint: "Region (optional)",
+            items: _regions,
+            icon: Feather.map,
+            onChanged: (value) => setState(() => _selectedRegion = value),
+          ),
+          _buildDropdown(
+            value: _selectedReligion,
+            hint: "Religion *",
+            items: _religions,
+            icon: Feather.shield,
+            onChanged: (value) => setState(() => _selectedReligion = value),
+            validator: (value) => value == null ? "Select religion" : null,
+          ),
+        ],
+      );
+    } else if (_currentStep == 3) {
+      return _buildAvailabilityField();
+    } else if (_currentStep == 4) {
+      final List<String> availableSpecializations = _selectedExperienceLevel == 'Certified Therapist' 
+        ? _specializations 
+        : _specializations.where((s) => !_sensitiveSpecializations.contains(s)).toList();
+      return _buildMultiSelectChips(
+        title: "Specialization (I specialize in helping...) *",
+        options: availableSpecializations,
+        selected: _selectedSpecializations,
+        onChanged: (selected) => setState(() => _selectedSpecializations = selected),
+      );
+    } else if (_currentStep == 5) {
+      return _buildMultiSelectChips(
+        title: "I am / Have experienced...",
+        options: _livedExperiences,
+        selected: _selectedLivedExperiences,
+        onChanged: (selected) => setState(() => _selectedLivedExperiences = selected),
+      );
+    } else {
+      return _buildMultiSelectChips(
+        title: "Languages Spoken (optional)",
+        options: _languages,
+        selected: _selectedLanguages,
+        onChanged: (selected) => setState(() => _selectedLanguages = selected),
+      );
+    }
   }
   
   Widget _buildTextField({
@@ -1089,6 +1394,8 @@ class _SignupScreenState extends State<SignupScreen> {
     required IconData icon,
     int maxLines = 1,
     String? Function(String?)? validator,
+    bool obscureText = false,
+    VoidCallback? onToggleObscure,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -1109,12 +1416,22 @@ class _SignupScreenState extends State<SignupScreen> {
           cursorColor: AppColors.primaryLavender,
           style: TextStyle(color: AppColors.textHigh), 
           maxLines: maxLines,
+          obscureText: obscureText,
           decoration: InputDecoration(
             filled: true,
             fillColor: AppColors.elevation,
             hintText: hintText,
             hintStyle: TextStyle(color: AppColors.textDisabled),
             prefixIcon: Icon(icon, color: AppColors.primaryLavender),
+            suffixIcon: (hintText.toLowerCase().contains('password') && onToggleObscure != null)
+                ? IconButton(
+                    icon: Icon(
+                      obscureText ? Feather.eye_off : Feather.eye,
+                      color: AppColors.primaryLavender,
+                    ),
+                    onPressed: onToggleObscure,
+                  )
+                : null,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(24),
               borderSide: BorderSide.none,
@@ -1392,6 +1709,201 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
+  Widget _buildAvailabilityField() {
+    final List<String> weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    final List<String> shortDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: AppColors.elevation,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 6,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        padding: EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Work Availability *",
+                      style: TextStyle(
+                        color: AppColors.primaryLavender,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                    Text(
+                      "Set your available time slots",
+                      style: TextStyle(color: AppColors.textDisabled, fontSize: 12),
+                    ),
+                  ],
+                ),
+                IconButton(
+                  icon: Icon(Feather.plus_circle, color: AppColors.secondaryTeal, size: 28),
+                  onPressed: _addAvailabilityGroup,
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (_availabilityGroups.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(vertical: 20),
+                decoration: BoxDecoration(
+                  color: AppColors.backgroundDeep.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.textDisabled.withOpacity(0.1)),
+                ),
+                child: Column(
+                  children: [
+                    Icon(Feather.clock, color: AppColors.textDisabled, size: 32),
+                    SizedBox(height: 8),
+                    Text(
+                      "No availability slots added yet",
+                      style: TextStyle(color: AppColors.textDisabled, fontStyle: FontStyle.italic),
+                    ),
+                  ],
+                ),
+              ),
+            ..._availabilityGroups.asMap().entries.map((entry) {
+              final index = entry.key;
+              final group = entry.value;
+              final List<String> selectedDays = List<String>.from(group['days']);
+
+              return Container(
+                margin: EdgeInsets.only(bottom: 16),
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.primaryLavender.withOpacity(0.1)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("Select Days", style: TextStyle(color: AppColors.textMedium, fontWeight: FontWeight.bold, fontSize: 13)),
+                        GestureDetector(
+                          onTap: () => _removeAvailabilityGroup(index),
+                          child: Icon(Feather.x, color: AppColors.error, size: 18),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: List.generate(7, (dayIdx) {
+                          final day = weekDays[dayIdx];
+                          final isSelected = selectedDays.contains(day);
+                          return GestureDetector(
+                            onTap: () => _toggleDayInGroup(index, day),
+                            child: AnimatedContainer(
+                              duration: Duration(milliseconds: 200),
+                              margin: EdgeInsets.only(right: 4),
+                              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: isSelected ? AppColors.secondaryTeal : AppColors.elevation,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isSelected ? AppColors.secondaryTeal : AppColors.textDisabled.withOpacity(0.1),
+                                ),
+                              ),
+                              child: Text(
+                                shortDays[dayIdx],
+                                style: TextStyle(
+                                  color: isSelected ? Colors.white : AppColors.textMedium,
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => _selectTimeRange(index, true),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                              decoration: BoxDecoration(
+                                color: AppColors.elevation,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text("START TIME", style: TextStyle(color: AppColors.textDisabled, fontSize: 9, fontWeight: FontWeight.bold)),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    (group['start'] as TimeOfDay).format(context),
+                                    style: TextStyle(color: AppColors.primaryLavender, fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: Icon(Feather.arrow_right, color: AppColors.textDisabled, size: 16),
+                        ),
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => _selectTimeRange(index, false),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                              decoration: BoxDecoration(
+                                color: AppColors.elevation,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text("END TIME", style: TextStyle(color: AppColors.textDisabled, fontSize: 9, fontWeight: FontWeight.bold)),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    (group['end'] as TimeOfDay).format(context),
+                                    style: TextStyle(color: AppColors.primaryLavender, fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSocialLinksField() {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -1544,15 +2056,8 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep,
-      body: Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/femn_state.png'),
-            fit: BoxFit.cover,
-            colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.9), BlendMode.darken),
-          ),
-        ),
+      backgroundColor: Colors.transparent,
+      body: FemnBackground(
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
@@ -1563,7 +2068,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   Align(
                     alignment: Alignment.topLeft,
                     child: IconButton(
-                      icon: Icon(Icons.arrow_back, color: AppColors.textHigh),
+                      icon: Icon(Feather.arrow_left, color: AppColors.textHigh),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ),
@@ -1599,10 +2104,20 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                   SizedBox(height: 10),
                   Text(
-                    "Create your ${_getAccountTypeTitle().toLowerCase()}",
+                    _getStepTitle(),
                     style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      color: AppColors.textMedium,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textHigh,
+                    ),
+                  ),
+                  SizedBox(height: 5),
+                  Text(
+                    "Step ${_currentStep + 1} of ${_getTotalSteps()}",
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: AppColors.primaryLavender,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                   SizedBox(height: 30),
@@ -1610,55 +2125,51 @@ class _SignupScreenState extends State<SignupScreen> {
                     key: _formKey,
                     child: Column(
                       children: [
-                        // Common fields
-                        _buildTextField(
-                          controller: _emailController,
-                          hintText: "Email *",
-                          icon: Feather.mail,
-                          validator: (v) => v!.isEmpty ? "Enter your email" : null,
-                        ),
-                        _buildTextField(
-                          controller: _passwordController,
-                          hintText: "Password *",
-                          icon: Feather.lock,
-                          validator: (v) => v!.length < 6 ? "Password must be 6+ chars" : null,
-                        ),
-                        _buildTextField(
-                          controller: _confirmPasswordController,
-                          hintText: "Confirm Password *",
-                          icon: Feather.lock,
-                          validator: (v) => v != _passwordController.text ? "Passwords do not match" : null,
-                        ),
-
-                        // Account type specific form
-                        SizedBox(height: 20),
+                        // Step-specific content
                         _buildAccountTypeSpecificForm(),
 
-                        SizedBox(height: 20),
+                        SizedBox(height: 30),
 
-                        // Submit button
+                        // Action buttons
                         _isLoading
                             ? CircularProgressIndicator(color: AppColors.primaryLavender)
-                            : SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton(
-                                  onPressed: _signup,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.primaryLavender,
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(24)),
-                                    padding: EdgeInsets.symmetric(vertical: 16),
-                                    elevation: 4,
-                                    shadowColor: Colors.black.withOpacity(0.2),
+                            : Row(
+                                children: [
+                                  if (_currentStep > 0) ...[
+                                    Expanded(
+                                      child: OutlinedButton(
+                                        onPressed: _previousStep,
+                                        style: OutlinedButton.styleFrom(
+                                          side: BorderSide(color: AppColors.primaryLavender),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                                          padding: EdgeInsets.symmetric(vertical: 16),
+                                        ),
+                                        child: Text("Back", style: TextStyle(color: AppColors.primaryLavender, fontWeight: FontWeight.bold)),
+                                      ),
+                                    ),
+                                    SizedBox(width: 16),
+                                  ],
+                                  Expanded(
+                                    flex: 2,
+                                    child: ElevatedButton(
+                                      onPressed: _nextStep,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColors.primaryLavender,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                                        padding: EdgeInsets.symmetric(vertical: 16),
+                                        elevation: 4,
+                                        shadowColor: Colors.black.withOpacity(0.2),
+                                      ),
+                                      child: Text(
+                                        _currentStep == _getTotalSteps() - 1 ? "Sign Up" : "Next",
+                                        style: TextStyle(
+                                            color: AppColors.backgroundDeep,
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
                                   ),
-                                  child: Text(
-                                    "Sign Up",
-                                    style: TextStyle(
-                                        color: AppColors.backgroundDeep,
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                ),
+                                ],
                               ),
                       ],
                     ),
@@ -1716,7 +2227,49 @@ class _LoginScreenState extends State<LoginScreen> {
       if (error != null) {
         _showError(error);
       } else {
-Navigator.pushReplacement(
+        // Check for deactivation
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          try {
+            final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+            if (doc.exists && doc.data()?['isActive'] == false) {
+              bool? reactivate = await showDialog<bool>(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => AlertDialog(
+                  backgroundColor: AppColors.surface,
+                  title: Text("Reactivate Account?", style: TextStyle(color: AppColors.textHigh, fontWeight: FontWeight.bold)),
+                  content: Text(
+                    "Your account is currently deactivated. Would you like to reactivate it and log in?",
+                    style: TextStyle(color: AppColors.textMedium),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: Text("Cancel", style: TextStyle(color: AppColors.textDisabled)),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: Text("Reactivate", style: TextStyle(color: AppColors.primaryLavender, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+              );
+
+              if (reactivate == true) {
+                await FirebaseFirestore.instance.collection('users').doc(user.uid).update({'isActive': true});
+              } else {
+                await AuthService().signOut();
+                setState(() => _isLoading = false);
+                return;
+              }
+            }
+          } catch (e) {
+            print("Error checking active status: $e");
+          }
+        }
+
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => FeedScreen()), 
         );
@@ -1925,10 +2478,10 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text("Femn", style: TextStyle(color: AppColors.textHigh, fontWeight: FontWeight.bold)),
-        backgroundColor: AppColors.backgroundDeep,
+        backgroundColor: Colors.transparent,
         foregroundColor: AppColors.textHigh,
         elevation: 0,
         iconTheme: IconThemeData(color: AppColors.primaryLavender),
@@ -1940,7 +2493,7 @@ class HomeScreen extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              AppColors.backgroundDeep,
+              Colors.transparent,
               AppColors.elevation,
             ],
           ),
@@ -2019,6 +2572,49 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ========== AVAILABILITY SLOT MODEL ==========
+class AvailabilitySlot {
+  final String day;
+  final TimeOfDay startTime;
+  final TimeOfDay endTime;
+
+  AvailabilitySlot({
+    required this.day,
+    required this.startTime,
+    required this.endTime,
+  });
+
+  AvailabilitySlot copyWith({
+    String? day,
+    TimeOfDay? startTime,
+    TimeOfDay? endTime,
+  }) {
+    return AvailabilitySlot(
+      day: day ?? this.day,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'day': day,
+      'startHour': startTime.hour,
+      'startMinute': startTime.minute,
+      'endHour': endTime.hour,
+      'endMinute': endTime.minute,
+    };
+  }
+
+  static AvailabilitySlot fromMap(Map<String, dynamic> map) {
+    return AvailabilitySlot(
+      day: map['day'] ?? 'Monday',
+      startTime: TimeOfDay(hour: map['startHour'] ?? 9, minute: map['startMinute'] ?? 0),
+      endTime: TimeOfDay(hour: map['endHour'] ?? 17, minute: map['endMinute'] ?? 0),
     );
   }
 }

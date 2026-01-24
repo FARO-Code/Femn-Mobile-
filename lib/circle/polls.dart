@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 import 'package:femn/customization/colors.dart'; // <--- IMPORT COLORS
@@ -228,7 +229,7 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
                           borderRadius: BorderRadius.circular(4),
                           child: Image.file(optionInput.image!, 
                               fit: BoxFit.cover))
-                      : Icon(Icons.add_a_photo, 
+                      : Icon(Feather.camera, 
                           size: 20, color: AppColors.textMedium),
                 ),
               ),
@@ -254,7 +255,7 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-    backgroundColor: AppColors.backgroundDeep, // Deep background
+    backgroundColor: Colors.transparent, // Deep background
     appBar: AppBar(
       title: Text(
         'Create New Poll',
@@ -264,12 +265,12 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
           color: AppColors.textHigh,
         ),
       ),
-      backgroundColor: AppColors.backgroundDeep,
+      backgroundColor: Colors.transparent,
       foregroundColor: AppColors.textHigh,
       elevation: 0,
       centerTitle: true,
       leading: IconButton(
-        icon: Icon(Icons.arrow_back, color: AppColors.primaryLavender),
+        icon: Icon(Feather.arrow_left, color: AppColors.primaryLavender),
         // Navigate to GroupsScreen instead of popping
         onPressed: () {
           Navigator.pushReplacement(
@@ -286,7 +287,7 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              AppColors.backgroundDeep,
+              Colors.transparent,
               Color(0xFF1A1620), // Slightly lighter dark
             ],
           ),
@@ -317,7 +318,7 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.poll, color: AppColors.primaryLavender, size: 24),
+                          Icon(Feather.bar_chart_2, color: AppColors.primaryLavender, size: 24),
                           SizedBox(width: 10),
                           Text(
                             'Create Your Poll',
@@ -343,7 +344,7 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
                 SizedBox(height: 24),
 
                 // Poll Question
-                _buildSectionHeader('Poll Question', Icons.question_answer),
+                _buildSectionHeader('Poll Question', Feather.help_circle),
                 SizedBox(height: 8),
                 Container(
                   decoration: BoxDecoration(
@@ -369,7 +370,7 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
                       ),
                       filled: true,
                       fillColor: AppColors.elevation,
-                      prefixIcon: Icon(Icons.edit, color: AppColors.primaryLavender),
+                      prefixIcon: Icon(Feather.edit_2, color: AppColors.primaryLavender),
                       contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                     ),
                     maxLines: 2,
@@ -378,7 +379,7 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
                 SizedBox(height: 20),
 
                 // Poll Options
-                _buildSectionHeader('Poll Options', Icons.list),
+                _buildSectionHeader('Poll Options', Feather.list),
                 SizedBox(height: 8),
                 Text(
                   'Add at least 2 options for people to vote on',
@@ -418,7 +419,7 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.add, color: AppColors.primaryLavender, size: 20),
+                        Icon(Feather.plus, color: AppColors.primaryLavender, size: 20),
                         SizedBox(width: 8),
                         Text(
                           'Add Another Option',
@@ -431,7 +432,7 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
                 SizedBox(height: 20),
 
                 // Duration Selection
-                _buildSectionHeader('Poll Duration', Icons.timer),
+                _buildSectionHeader('Poll Duration', Feather.clock),
                 SizedBox(height: 8),
                 Container(
                   decoration: BoxDecoration(
@@ -472,7 +473,7 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
                       ),
                       filled: true,
                       fillColor: AppColors.elevation,
-                      prefixIcon: Icon(Icons.schedule, color: AppColors.primaryLavender),
+                      prefixIcon: Icon(Feather.clock, color: AppColors.primaryLavender),
                       contentPadding: EdgeInsets.symmetric(horizontal: 20),
                     ),
                   ),
@@ -480,7 +481,7 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
                 SizedBox(height: 20),
 
                 // Age Rating
-                _buildSectionHeader('Age Rating', Icons.people),
+                _buildSectionHeader('Age Rating', Feather.users),
                 SizedBox(height: 8),
                 Container(
                   decoration: BoxDecoration(
@@ -521,7 +522,7 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
                       ),
                       filled: true,
                       fillColor: AppColors.elevation,
-                      prefixIcon: Icon(Icons.people_outline, color: AppColors.primaryLavender),
+                      prefixIcon: Icon(Feather.users, color: AppColors.primaryLavender),
                       contentPadding: EdgeInsets.symmetric(horizontal: 20),
                     ),
                   ),
@@ -529,7 +530,7 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
                 SizedBox(height: 20),
 
                 // Hashtags
-                _buildSectionHeader('Hashtags', Icons.tag),
+                _buildSectionHeader('Hashtags', Feather.hash),
                 SizedBox(height: 8),
                 Container(
                   decoration: BoxDecoration(
@@ -555,7 +556,7 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
                       ),
                       filled: true,
                       fillColor: AppColors.elevation,
-                      prefixIcon: Icon(Icons.tag, color: AppColors.primaryLavender),
+                      prefixIcon: Icon(Feather.hash, color: AppColors.primaryLavender),
                       suffixIcon: IconButton(
                         icon: Container(
                           width: 32,
@@ -564,7 +565,7 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
                             color: AppColors.primaryLavender,
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Icon(Icons.add, color: AppColors.backgroundDeep, size: 18),
+                          child: Icon(Feather.plus, color: AppColors.backgroundDeep, size: 18),
                         ),
                         onPressed: () {
                           String newTag = _hashtagController.text.trim().replaceAll('#', '');
@@ -621,7 +622,7 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
                                     _hashtags.remove(tag);
                                   });
                                 },
-                                child: Icon(Icons.close, size: 16, color: AppColors.secondaryTeal),
+                                child: Icon(Feather.x, size: 16, color: AppColors.secondaryTeal),
                               ),
                             ],
                           ),
@@ -666,7 +667,7 @@ class _PollCreationScreenState extends State<PollCreationScreen> {
                         : Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.poll, size: 20),
+                              Icon(Feather.bar_chart_2, size: 20),
                               SizedBox(width: 8),
                               Text(
                                 'Create Poll',
@@ -704,6 +705,7 @@ class PollCard extends StatefulWidget {
   final double cardMarginHorizontal;
   final double cardInternalPadding;
   final double borderRadiusValue;
+  final bool isCompact;
 
   const PollCard({
     Key? key,
@@ -712,6 +714,7 @@ class PollCard extends StatefulWidget {
     required this.cardMarginHorizontal,
     required this.cardInternalPadding,
     required this.borderRadiusValue,
+    this.isCompact = false,
   }) : super(key: key);
 
   @override
@@ -828,7 +831,7 @@ class _PollCardState extends State<PollCard> {
                         imageUrl,
                         fit: BoxFit.cover,
                         errorBuilder: (c, e, s) =>
-                            const Icon(Icons.error, size: 16),
+                            const Icon(Feather.alert_circle, size: 16),
                       ),
                     )
                   : null,
@@ -873,7 +876,7 @@ class _PollCardState extends State<PollCard> {
                       imageUrl,
                       fit: BoxFit.cover,
                       errorBuilder: (c, e, s) =>
-                          const Icon(Icons.error, size: 16),
+                          const Icon(Feather.alert_circle, size: 16),
                     ),
                   )
                 : null,
@@ -920,7 +923,9 @@ class _PollCardState extends State<PollCard> {
 
     // Limit options to 6 for display
     List<dynamic> displayOptions =
-        optionsData.length > 6 ? optionsData.take(6).toList() : optionsData;
+        optionsData.length > (widget.isCompact ? 3 : 6) 
+            ? optionsData.take(widget.isCompact ? 3 : 6).toList() 
+            : optionsData;
 
     return Container(
       margin: EdgeInsets.symmetric(
@@ -945,13 +950,13 @@ class _PollCardState extends State<PollCard> {
           // Question Title
           Text(
             question,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.bold,
-              fontSize: 18,
+              fontSize: widget.isCompact ? 14 : 18,
               color: AppColors.textHigh, // Off-white heading
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: widget.isCompact ? 8 : 16),
 
           // Options
           ...displayOptions.asMap().entries.map((entry) {
@@ -987,7 +992,7 @@ class _PollCardState extends State<PollCard> {
                   children: [
                     // Background pill
                     Container(
-                      height: 44,
+                      height: widget.isCompact ? 32 : 44,
                       decoration: BoxDecoration(
                         color: AppColors.elevation, // Dark container for option
                         borderRadius: BorderRadius.circular(30),
@@ -1002,7 +1007,7 @@ class _PollCardState extends State<PollCard> {
                           return FractionallySizedBox(
                             widthFactor: value > 0 ? value : 0.001, // Avoid 0 width issues
                             child: Container(
-                              height: 44,
+                              height: widget.isCompact ? 32 : 44,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(30),
                                 color: isUserVote 
@@ -1015,7 +1020,7 @@ class _PollCardState extends State<PollCard> {
                       ),
                     // Option Text + Percent Badge
                     Container(
-                      height: 44,
+                      height: widget.isCompact ? 32 : 44,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       alignment: Alignment.centerLeft,
                       child: Row(
@@ -1027,7 +1032,7 @@ class _PollCardState extends State<PollCard> {
                               style: TextStyle(
                                 fontWeight: isUserVote ? FontWeight.bold : FontWeight.w500,
                                 color: isUserVote ? Colors.white : AppColors.textHigh, // White text on Teal, High on Elevation
-                                fontSize: 14,
+                                fontSize: widget.isCompact ? 12 : 14,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -1042,8 +1047,10 @@ class _PollCardState extends State<PollCard> {
                               ),
                               child: Text(
                                 '${(percentage * 100).round()}%',
-                                style: const TextStyle(
-                                    fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+                                style: TextStyle(
+                                    fontSize: widget.isCompact ? 10 : 12, 
+                                    fontWeight: FontWeight.bold, 
+                                    color: Colors.white),
                               ),
                             ),
                         ],

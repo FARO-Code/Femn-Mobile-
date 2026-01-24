@@ -16,15 +16,28 @@ import 'customization/fonts.dart';
 import 'package:app_links/app_links.dart'; // <--- ADD THIS IMPORT
 import 'dart:async';
 import 'package:femn/services/deep_link_service.dart';
+import 'package:femn/services/notification_service.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'firebase_options.dart';
+import 'package:femn/widgets/femn_background.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // 2. Update this line to include the options
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Activate App Check with debug providers
+  await FirebaseAppCheck.instance.activate(
+    androidProvider: AndroidProvider.debug,
+    appleProvider: AppleProvider.debug,
+  );
+
+  // Check for punishments if logged in
+  if (FirebaseAuth.instance.currentUser != null) {
+    NotificationService.checkAndSchedulePunishment();
+  }
 
   runApp(
     ChangeNotifierProvider(
@@ -43,7 +56,7 @@ class MyApp extends StatelessWidget {
         // --- 1. Global Color Settings ---
         brightness: Brightness.dark,
         primaryColor: AppColors.primaryLavender,
-        scaffoldBackgroundColor: AppColors.backgroundDeep, // Deep Dark Background
+        scaffoldBackgroundColor: Colors.transparent, // Deep Dark Background
         
         colorScheme: ColorScheme.dark(
           primary: AppColors.primaryLavender,
@@ -74,7 +87,7 @@ class MyApp extends StatelessWidget {
 
         // --- 3. Component Themes ---
         appBarTheme: AppBarTheme(
-          backgroundColor: AppColors.backgroundDeep,
+          backgroundColor: Colors.transparent,
           elevation: 0,
           iconTheme: IconThemeData(color: AppColors.primaryLavender),
           titleTextStyle: TextStyle(
@@ -131,7 +144,9 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      
+      builder: (context, child) {
+        return FemnBackground(child: child!);
+      },
       home: Consumer<AuthProvider>(
         builder: (context, authProvider, child) {
           return StreamBuilder<User?>(
@@ -142,7 +157,7 @@ class MyApp extends StatelessWidget {
                 return user == null ? LoginScreen() : HomeScreen();
               }
               return Scaffold(
-                backgroundColor: AppColors.backgroundDeep,
+                backgroundColor: Colors.transparent,
                 body: Center(child: CircularProgressIndicator(color: AppColors.primaryLavender))
               );
             },
@@ -233,7 +248,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundDeep, // Ensure main bg is dark
+      backgroundColor: Colors.transparent, // Allow background to show
       body: _screens[_currentIndex],
       extendBody: true, // Allows content to go behind the floating nav bar
       bottomNavigationBar: Padding(

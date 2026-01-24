@@ -12,7 +12,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import 'package:femn/services/embers_service.dart';
-import 'package:flutter_feather_icons/flutter_feather_icons.dart';
+import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 import 'package:path_provider/path_provider.dart';
@@ -278,7 +278,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
               itemBuilder: (context, index) {
                 return ListTile(
                   dense: true,
-                  leading: Icon(Icons.check_circle_outline, color: AppColors.primaryLavender, size: 16),
+                  leading: Icon(Feather.check_circle, color: AppColors.primaryLavender, size: 16),
                   title: Text(_allowedDomains[index], style: TextStyle(color: AppColors.textMedium)),
                 );
               },
@@ -430,7 +430,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(FeatherIcons.uploadCloud, color: AppColors.backgroundDeep, size: 32),
+                            Icon(Feather.upload_cloud, color: AppColors.backgroundDeep, size: 32),
                             SizedBox(height: 8),
                             Text(
                               "Upload",
@@ -461,7 +461,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(FeatherIcons.camera, color: AppColors.primaryLavender, size: 32),
+                            Icon(Feather.camera, color: AppColors.primaryLavender, size: 32),
                             SizedBox(height: 8),
                             Text(
                               "Capture",
@@ -610,14 +610,14 @@ class _AddPostScreenState extends State<AddPostScreen> {
                     decoration: InputDecoration(
                       hintText: 'Add a link (e.g. gofundme.com/...)',
                       hintStyle: TextStyle(color: AppColors.textDisabled),
-                      prefixIcon: Icon(FeatherIcons.link, color: AppColors.textDisabled, size: 18),
+                      prefixIcon: Icon(Feather.link, color: AppColors.textDisabled, size: 18),
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     ),
                   ),
                 ),
                 IconButton(
-                  icon: Icon(FeatherIcons.info, color: AppColors.primaryLavender, size: 18),
+                  icon: Icon(Feather.info, color: AppColors.primaryLavender, size: 18),
                   tooltip: 'Allowed Websites',
                   onPressed: _showWhitelistDialog,
                 )
@@ -648,7 +648,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
         backgroundColor: AppColors.backgroundDeep,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(FeatherIcons.arrowLeft, color: AppColors.primaryLavender),
+          icon: Icon(Feather.arrow_left, color: AppColors.primaryLavender),
           onPressed: () {
             if (_mediaFile != null) {
               setState(() {
@@ -677,7 +677,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
             Padding(
               padding: const EdgeInsets.only(right: 8.0),
               child: IconButton(
-                icon: Icon(FeatherIcons.check, color: AppColors.primaryLavender),
+                icon: Icon(Feather.check, color: AppColors.primaryLavender),
                 onPressed: _isUploading ? null : _uploadPost,
               ),
             ),

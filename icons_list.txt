@@ -1,0 +1,1803 @@
+﻿
+app.dart:767:            
+icon: Icons.email,
+app.dart:774:            
+icon: Icons.lock,
+app.dart:809:            
+icon: Icons.person,
+app.dart:815:            
+icon: Icons.email,
+app.dart:822:            
+icon: Icons.lock,
+app.dart:917:            
+icon: Icon(Icons.home),
+app.dart:921:            
+icon: Icon(Icons.search),
+app.dart:925:            
+icon: Icon(Icons.add),
+app.dart:929:            
+icon: 
+Icon(Icons.notifications),
+app.dart:933:            
+icon: Icon(Icons.person),
+app.dart:1006:            
+icon: const Icon(Icons.tune, 
+color: 
+AppColors.primaryLavender),
+app.dart:1106:               
+   const 
+Icon(Icons.push_pin, size: 
+14, color: 
+AppColors.accentMustard), // 
+Mustard for saves
+app.dart:1114:               
+     icon: const 
+Icon(Icons.more_vert, size: 
+16, color: 
+AppColors.textMedium),
+app.dart:1147:              
+icon: Icon(Icons.arrow_back, 
+color: 
+AppColors.primaryLavender),
+app.dart:1159:               
+ icon: const 
+Icon(Icons.save_alt, color: 
+AppColors.primaryLavender),
+app.dart:1165:               
+ icon: const 
+Icon(Icons.share, color: 
+AppColors.primaryLavender),
+app.dart:1206:               
+       const 
+Icon(Icons.push_pin, size: 
+16, color: 
+AppColors.accentMustard),
+app.dart:1210:               
+       const 
+Icon(Icons.favorite, size: 
+16, color: AppColors.error), 
+// Soft red for likes
+app.dart:1226:              
+icon: const 
+Icon(Icons.favorite_border, 
+color: 
+AppColors.primaryLavender),
+app.dart:1232:              
+icon: const 
+Icon(Icons.comment, color: 
+AppColors.primaryLavender),
+app.dart:1287:               
+             leading: const 
+Icon(Icons.add, color: 
+AppColors.primaryLavender),
+app.dart:1296:               
+           leading: const 
+Icon(Icons.bookmark, color: 
+AppColors.textMedium),
+app.dart:1429:               
+ leading: const 
+Icon(Icons.link, color: 
+AppColors.textMedium),
+app.dart:1440:               
+ leading: const 
+Icon(Icons.share, color: 
+AppColors.textMedium),
+app.dart:1534:            
+icon: const 
+Icon(Icons.check, color: 
+AppColors.primaryLavender),
+app.dart:1556:               
+             Icon(Icons.add_p
+hoto_alternate, size: 48, 
+color: 
+AppColors.textDisabled),
+app.dart:1640:            
+prefixIcon: 
+Icon(Icons.search, color: 
+AppColors.textMedium),
+app.dart:1693:            
+icon: const 
+Icon(Icons.settings, color: 
+AppColors.textHigh),
+main.dart:10:import 'package:
+flutter_vector_icons/flutter_
+vector_icons.dart';
+auth\auth.dart:9:import 'pack
+age:flutter_vector_icons/flut
+ter_vector_icons.dart';
+auth\auth.dart:542:          
+        icon: 
+Icon(Icons.arrow_back, 
+color: AppColors.textHigh),
+auth\auth.dart:589:          
+            icon: 
+Icons.person,
+auth\auth.dart:598:          
+            icon: 
+Icons.business,
+auth\auth.dart:607:          
+            icon: 
+Icons.medical_services,
+auth\auth.dart:686:          
+  Icon(Icons.arrow_forward_io
+s, color: 
+AppColors.textDisabled, 
+size: 16),
+auth\auth.dart:1833:         
+             icon: 
+Icon(Icons.arrow_back, 
+color: AppColors.textHigh),
+circle\campaign.dart:51:     
+     child: Icon(Icons.add, 
+color: 
+AppColors.backgroundDeep),
+circle\campaign.dart:75:     
+           leading: 
+Icon(Icons.poll, color: 
+AppColors.primaryLavender),
+circle\campaign.dart:83:     
+           leading: 
+Icon(Icons.assignment, 
+color: 
+AppColors.secondaryTeal),
+circle\campaign.dart:91:     
+           leading: 
+Icon(Icons.event, color: 
+AppColors.accentMustard),
+circle\campaign.dart:127:    
+      return 
+_buildEmptyState('No polls 
+yet 👀', Icons.poll);
+circle\campaign.dart:189:    
+                  
+errorWidget: (context, url, 
+error) => Icon(Icons.error, 
+color: AppColors.error),
+circle\campaign.dart:257:    
+                
+Icon(Icons.check_circle, 
+color: 
+AppColors.secondaryTeal, 
+size: 16),
+circle\campaign.dart:289:    
+      return 
+_buildEmptyState('No 
+petitions yet 👀', 
+Icons.assignment);
+circle\campaign.dart:307:    
+                
+Icon(Icons.trending_up, 
+color: 
+AppColors.accentMustard, 
+size: 20),
+circle\campaign.dart:386:    
+                errorWidget: 
+(context, url, error) => 
+Icon(Icons.error, color: 
+AppColors.error),
+circle\campaign.dart:427:    
+                
+Icon(Icons.check_circle, 
+color: AppColors.success, 
+size: 16),
+circle\campaign.dart:464:    
+      return 
+_buildEmptyState('No events 
+yet 👀', Icons.event);
+circle\campaign.dart:533:    
+                  
+errorWidget: (context, url, 
+error) => Icon(Icons.error, 
+color: AppColors.error),
+circle\campaign.dart:544:    
+              
+Icon(Icons.calendar_today, 
+size: 16, color: 
+AppColors.primaryLavender),
+circle\campaign.dart:555:    
+              
+Icon(Icons.location_on, 
+size: 16, color: 
+AppColors.primaryLavender),
+circle\campaign.dart:582:    
+                
+Icon(Icons.check_circle, 
+color: AppColors.success, 
+size: 16),
+circle\campaign.dart:681:    
+        icon: 
+Icon(Icons.check, color: 
+AppColors.primaryLavender),
+circle\campaign.dart:711:    
+                             
+ Icon(Icons.add_photo_alterna
+te, size: 40, color: 
+AppColors.textDisabled),
+circle\campaign.dart:829:    
+        icon: 
+Icon(Icons.check, color: 
+AppColors.primaryLavender),
+circle\campaign.dart:859:    
+                             
+ Icon(Icons.add_photo_alterna
+te, size: 40, color: 
+AppColors.textDisabled),
+circle\campaign.dart:1030:   
+         icon: 
+Icon(Icons.check, color: 
+AppColors.primaryLavender),
+circle\campaign.dart:1060:   
+                             
+  Icon(Icons.add_photo_altern
+ate, size: 40, color: 
+AppColors.textDisabled),
+circle\campaign.dart:1085:   
+                     
+trailing: 
+Icon(Icons.calendar_today, 
+color: 
+AppColors.primaryLavender),
+circle\campaign.dart:1438:   
+                       
+Icon(Icons.check_circle, 
+color: AppColors.success),
+circle\campaign.dart:1564:   
+                 
+Icon(Icons.calendar_today, 
+color: 
+AppColors.primaryLavender),
+circle\campaign.dart:1577:   
+                 
+Icon(Icons.location_on, 
+color: 
+AppColors.primaryLavender),
+circle\campaign.dart:1599:   
+                 
+Icon(Icons.people, color: 
+AppColors.secondaryTeal),
+circle\discussions.dart:82:  
+              
+Icon(Icons.forum, size: 50, 
+color: 
+AppColors.textDisabled),
+circle\discussions.dart:123: 
+               
+Icon(Icons.search_off, size: 
+50, color: 
+AppColors.textDisabled),
+circle\discussions.dart:200: 
+                             
+            
+Icon(Icons.error, color: 
+AppColors.error),
+circle\discussions.dart:204: 
+                             
+        child: 
+Icon(Icons.forum, color: 
+AppColors.textDisabled),
+circle\discussions.dart:220: 
+                             
+    Icon(Icons.people, 
+color: Colors.white, size: 
+16),
+circle\discussions.dart:325: 
+           icon: 
+Icon(Icons.search, color: 
+AppColors.primaryLavender),
+circle\discussions.dart:680: 
+                   
+Icon(Icons.star, color: 
+Colors.amber, size: 20),
+circle\discussions.dart:1133:
+                             
+   child: Icon(Icons.person, 
+size: 16, color: 
+AppColors.textMedium),
+circle\discussions.dart:1220:
+                    icon: 
+Icon(Icons.image, color: 
+AppColors.primaryLavender),
+circle\discussions.dart:1224:
+                    icon: 
+Icon(Icons.video_library, 
+color: 
+AppColors.primaryLavender),
+circle\discussions.dart:1248:
+                    icon: 
+Icon(Icons.send, color: 
+AppColors.primaryLavender),
+circle\discussions.dart:1321:
+                child: 
+Icon(Icons.error, color: 
+AppColors.error),
+circle\discussions.dart:1356:
+                  child: Icon
+(Icons.play_circle_filled, 
+size: 50, color: 
+Colors.white),
+circle\groups.dart:32:import 
+'package:flutter_vector_icons
+/flutter_vector_icons.dart';
+circle\groups.dart:37:  
+'Polls': Icons.poll,
+circle\groups.dart:38:  
+'Discussions': Icons.forum,
+circle\groups.dart:39:  
+'Groups': Icons.group,
+circle\groups.dart:40:  
+'Mentorship': Icons.school,
+circle\groups.dart:41:  
+'Petitions': 
+Icons.how_to_vote,
+circle\groups.dart:464:      
+        Icon(Icons.explore, 
+size: 50, color: 
+AppColors.textDisabled),
+circle\groups.dart:564:      
+                             
+   const Icon(Icons.error, 
+color: 
+AppColors.primaryLavender),
+circle\groups.dart:571:      
+                             
+ Icons.group,
+circle\groups.dart:627:      
+                          
+Icons.people_rounded,
+circle\groups.dart:716:      
+                             
+         const 
+Icon(Icons.error),
+circle\groups.dart:720:      
+                             
+     child: const 
+Icon(Icons.forum, color: 
+AppColors.textDisabled),
+circle\groups.dart:822:      
+                        
+Icon(Icons.people,
+circle\groups.dart:897:      
+                             
+   const Icon(Icons.error),
+circle\groups.dart:903:      
+                            
+child: const 
+Icon(Icons.image, color: 
+AppColors.textDisabled),
+circle\groups.dart:958:      
+                        
+const Icon(Icons.how_to_reg, 
+size: 14, color: 
+AppColors.textOnSecondary),
+circle\groups.dart:1013:     
+             
+Icon(Icons.group, size: 40, 
+color: 
+AppColors.textDisabled),
+circle\groups.dart:1049:     
+           
+Icon(Icons.search_off, size: 
+50, color: 
+AppColors.textDisabled),
+circle\groups.dart:1126:     
+                             
+    const Icon(Icons.error, 
+color: 
+AppColors.primaryLavender),
+circle\groups.dart:1133:     
+                             
+  Icons.group,
+circle\groups.dart:1189:     
+                           
+Icons.people_rounded,
+circle\groups.dart:1231:     
+           Icon(Icons.poll, 
+size: 50, color: 
+AppColors.textDisabled),
+circle\groups.dart:1291:     
+           Icon(Icons.forum, 
+size: 50, color: 
+AppColors.textDisabled),
+circle\groups.dart:1320:     
+           Icon(Icons.forum, 
+size: 50, color: 
+AppColors.textDisabled),
+circle\groups.dart:1397:     
+                             
+      const 
+Icon(Icons.error),
+circle\groups.dart:1401:     
+                             
+  child: const 
+Icon(Icons.forum, color: 
+AppColors.textDisabled),
+circle\groups.dart:1488:     
+                         
+Icon(Icons.people,
+circle\groups.dart:1533:     
+           
+Icon(Icons.archive_outlined, 
+size: 50, color: 
+AppColors.textDisabled),
+circle\groups.dart:1556:     
+           
+Icon(Icons.archive_outlined, 
+size: 50, color: 
+AppColors.textDisabled),
+circle\groups.dart:1635:     
+                             
+          const 
+Icon(Icons.error),
+circle\groups.dart:1639:     
+                             
+      child: const 
+Icon(Icons.forum, color: 
+AppColors.textDisabled),
+circle\groups.dart:1700:     
+                         
+const Icon(Icons.people, 
+size: 14, color: 
+AppColors.textDisabled),
+circle\groups.dart:1738:     
+           
+Icon(Icons.how_to_vote, 
+size: 50, color: 
+AppColors.textDisabled),
+circle\groups.dart:1818:     
+                             
+    const Icon(Icons.error),
+circle\groups.dart:1825:     
+                             
+  Icons.article_outlined,
+circle\groups.dart:1955:     
+                   icon: 
+Icon(Icons.close, color: 
+AppColors.textHigh),
+circle\groups.dart:2031:     
+                   
+deleteIcon: 
+Icon(Icons.close, size: 18, 
+color: 
+AppColors.textOnSecondary),
+circle\groups.dart:2053:     
+                         
+icon: Icon(Icons.add, color: 
+AppColors.primaryLavender),
+circle\groups.dart:2383:     
+                   icon: 
+Icon(Icons.close, color: 
+AppColors.textHigh),
+circle\groups.dart:2399:     
+                       ? 
+Icon(Icons.camera_alt, size: 
+30, color: 
+AppColors.textDisabled)
+circle\groups.dart:2438:     
+                   
+deleteIcon: 
+Icon(Icons.close, size: 18, 
+color: 
+AppColors.textOnSecondary),
+circle\groups.dart:2461:     
+                         
+icon: Icon(Icons.add, color: 
+AppColors.primaryLavender),
+circle\groups.dart:2697:     
+           Icons.add,
+circle\groups.dart:2877:     
+                           
+Icon(Icons.group, size: 20, 
+color: 
+AppColors.textDisabled),
+circle\groups.dart:3305:     
+     icon: 
+Icon(Icons.arrow_back, 
+color: AppColors.textHigh),
+circle\groups.dart:3335:     
+                   
+Icon(Icons.group, color: 
+AppColors.primaryLavender, 
+size: 24),
+circle\groups.dart:3361:     
+         
+_buildSectionHeader('Group 
+Image', Icons.camera_alt),
+circle\groups.dart:3385:     
+                           
+Icon(Icons.image_outlined, 
+size: 40, color: 
+AppColors.primaryLavender),
+circle\groups.dart:3401:     
+         
+_buildSectionHeader('Group 
+Title', Icons.title),
+circle\groups.dart:3430:    
+prefixIcon: Icon(Icons.edit, 
+color: 
+AppColors.primaryLavender),
+circle\groups.dart:3438:     
+         _buildSectionHeader(
+'Description', 
+Icons.description),
+circle\groups.dart:3476:     
+         
+_buildSectionHeader('Age 
+Rating', Icons.people),
+circle\groups.dart:3511:     
+               prefixIcon: 
+Icon(Icons.people_outline, 
+color: 
+AppColors.primaryLavender),
+circle\groups.dart:3521:     
+         _buildSectionHeader(
+'Hashtags', Icons.tag),
+circle\groups.dart:3546:     
+               prefixIcon: 
+Icon(Icons.tag, color: 
+AppColors.primaryLavender),
+circle\groups.dart:3555:     
+                   child: 
+Icon(Icons.add, color: 
+AppColors.textOnSecondary, 
+size: 18),
+circle\groups.dart:3614:     
+                         
+child: Icon(Icons.close, 
+size: 16, color: 
+AppColors.primaryLavender),
+circle\groups.dart:3659:     
+               child: 
+Icon(Icons.lock, size: 18, 
+color: 
+AppColors.primaryLavender),
+circle\groups.dart:3701:     
+                       
+Icon(Icons.group_add, size: 
+20),
+circle\groups.dart:3883:     
+           child: 
+userProfileImage.isEmpty ? 
+Icon(Icons.person, size: 16, 
+color: 
+AppColors.textDisabled) : 
+null,
+circle\groups.dart:3972:     
+         icon: 
+Icon(Icons.more_vert, color: 
+AppColors.textHigh),
+circle\groups.dart:3988:     
+                 leading: 
+Icon(Icons.info_outline, 
+color: 
+AppColors.primaryLavender),
+circle\groups.dart:3995:     
+                 leading: 
+Icon(Icons.photo_library, 
+color: 
+AppColors.primaryLavender),
+circle\groups.dart:4002:     
+                 leading: 
+Icon(Icons.search, color: 
+AppColors.primaryLavender),
+circle\groups.dart:4191:     
+         child: 
+Icon(Icons.person_add, 
+color: 
+AppColors.primaryLavender),
+circle\groups.dart:4289:     
+           child: Icon(Icons.
+insert_drive_file, color: 
+AppColors.primaryLavender),
+circle\groups.dart:4294:     
+           child: 
+Icon(Icons.link, color: 
+AppColors.primaryLavender),
+circle\groups.dart:4478:     
+           
+Icon(Icons.search, color: 
+AppColors.primaryLavender),
+circle\groups.dart:4493:     
+             icon: 
+Icon(Icons.close, color: 
+AppColors.textHigh),
+circle\groups.dart:4946:     
+               
+Icon(Icons.more_vert, color: 
+AppColors.primaryLavender, 
+size: 24),
+circle\groups.dart:4958:     
+                 icon: 
+Icon(Icons.close, color: 
+AppColors.primaryLavender),
+circle\groups.dart:4972:     
+                 icon: 
+Icons.info_outline,
+circle\groups.dart:4979:     
+                 icon: 
+Icons.search,
+circle\groups.dart:4986:     
+                 icon: 
+Icons.wallpaper,
+circle\groups.dart:4993:     
+                 icon: 
+Icons.expand_more,
+circle\groups.dart:4998:     
+                       icon: 
+Icons.report,
+circle\groups.dart:5004:     
+                     icon: 
+Icons.exit_to_app,
+circle\groups.dart:5040:     
+   trailing: Icon(Icons.arrow
+_forward_ios, size: 16, 
+color: 
+AppColors.textDisabled),
+circle\groups.dart:5178:     
+                 icon: 
+Icon(Icons.more_vert, color: 
+AppColors.primaryLavender),
+circle\groups.dart:5306:     
+                             
+        child: const 
+Icon(Icons.person, size: 16, 
+color: 
+AppColors.textDisabled),
+circle\groups.dart:5325:     
+                             
+          ? const 
+Icon(Icons.person, size: 16, 
+color: 
+AppColors.textDisabled)
+circle\groups.dart:5426:     
+           child: 
+Icon(Icons.arrow_downward,
+circle\groups.dart:5477:     
+                       icon: 
+Icon(Icons.close, size: 18, 
+color: AppColors.textHigh),
+circle\groups.dart:5487:     
+                   icon: 
+Icon(Icons.image, color: 
+AppColors.primaryLavender),
+circle\groups.dart:5519:     
+                         ? 
+Icons.send
+circle\groups.dart:5520:     
+                         : 
+Icons.add,
+circle\groups.dart:5555:     
+           leading: 
+Icon(Icons.image, color: 
+AppColors.primaryLavender),
+circle\groups.dart:5563:     
+           leading: Icon(Icon
+s.insert_drive_file, color: 
+AppColors.primaryLavender),
+circle\groups.dart:5664:     
+           child: 
+Icon(Icons.error, color: 
+AppColors.error),
+circle\groups.dart:5693:     
+           leading: 
+Icon(Icons.reply, color: 
+AppColors.primaryLavender),
+circle\groups.dart:5701:     
+           leading: 
+Icon(Icons.content_copy, 
+color: 
+AppColors.primaryLavender),
+circle\groups.dart:5715:     
+             leading: 
+Icon(Icons.download, color: 
+AppColors.primaryLavender),
+circle\groups.dart:6007:     
+             errorWidget: 
+(context, url, error) => 
+Icon(Icons.error, color: 
+AppColors.error),
+circle\groups.dart:6046:     
+       icon: 
+Icon(Icons.check, color: 
+AppColors.primaryLavender),
+circle\petitions.dart:13:impo
+rt 'package:flutter_vector_ic
+ons/flutter_vector_icons.dart
+';
+circle\petitions.dart:606:   
+                     
+Icon(Icons.flag, color: 
+AppColors.primaryLavender, 
+size: 24),
+circle\petitions.dart:631:   
+           _buildSectionHeade
+r('Petition Title', 
+Icons.title, isMandatory: 
+true),
+circle\petitions.dart:650:   
+                 prefixIcon: 
+Icon(Icons.edit, color: 
+AppColors.primaryLavender),
+circle\petitions.dart:657:   
+           
+_buildSectionHeader('Short 
+Description', 
+Icons.description, 
+isMandatory: true),
+circle\petitions.dart:684:   
+           
+_buildSectionHeader('Full 
+Story', Icons.article, 
+isMandatory: true),
+circle\petitions.dart:711:   
+           _buildSectionHeade
+r('Signature Goal', 
+Icons.people_alt, 
+isMandatory: true),
+circle\petitions.dart:730:   
+                 prefixIcon: 
+Icon(Icons.flag, color: 
+AppColors.primaryLavender),
+circle\petitions.dart:738:   
+           _buildSectionHeade
+r('Category', 
+Icons.category),
+circle\petitions.dart:767:   
+                 prefixIcon: 
+Icon(Icons.category, color: 
+AppColors.primaryLavender),
+circle\petitions.dart:777:   
+           _buildSectionHeade
+r('Deadline', 
+Icons.calendar_today),
+circle\petitions.dart:792:   
+                 child: 
+Icon(Icons.calendar_today, 
+color: 
+AppColors.primaryLavender),
+circle\petitions.dart:823:   
+           
+_buildSectionHeader('Banner 
+Image', Icons.image, 
+isMandatory: true),
+circle\petitions.dart:848:   
+                 child: 
+Icon(Icons.photo_library, 
+color: 
+AppColors.primaryLavender),
+circle\petitions.dart:874:   
+           _buildSectionHeade
+r('Hashtags', Icons.tag),
+circle\petitions.dart:893:   
+                 prefixIcon: 
+Icon(Icons.tag, color: 
+AppColors.primaryLavender),
+circle\petitions.dart:902:   
+                     child: 
+Icon(Icons.add, color: 
+AppColors.backgroundDeep, 
+size: 18),
+circle\petitions.dart:958:   
+                           
+child: Icon(Icons.close, 
+size: 16, color: 
+AppColors.secondaryTeal),
+circle\petitions.dart:968:   
+           
+_buildSectionHeader('Age 
+Rating', Icons.people),
+circle\petitions.dart:997:   
+                 prefixIcon: 
+Icon(Icons.people_outline, 
+color: 
+AppColors.primaryLavender),
+circle\petitions.dart:1008:  
+            
+_buildSectionHeader('Support 
+Links (Max 2)', Icons.link),
+circle\petitions.dart:1034:  
+                    
+prefixIcon: Icon(Icons.link, 
+color: 
+AppColors.primaryLavender),
+circle\petitions.dart:1042:  
+            _buildSectionHead
+er('Collaborators', 
+Icons.person_add),
+circle\petitions.dart:1067:  
+                  
+prefixIcon: 
+Icon(Icons.group_add, color: 
+AppColors.primaryLavender),
+circle\petitions.dart:1079:  
+                    
+deleteIcon: 
+Icon(Icons.close, size: 14, 
+color: AppColors.error),
+circle\petitions.dart:1427:  
+              leading: 
+Icon(Icons.delete, color: 
+AppColors.error),
+circle\petitions.dart:1437:  
+                leading: Icon
+(Icons.admin_panel_settings, 
+color: 
+AppColors.primaryLavender),
+circle\petitions.dart:1532:  
+            child: 
+message.userProfileImage == 
+null ? Icon(Icons.person, 
+size: 16) : null,
+circle\petitions.dart:1555:  
+                        
+child: Icon(Icons.verified, 
+size: 12, color: 
+AppColors.primaryLavender),
+circle\petitions.dart:1560:  
+                        
+child: Icon(Icons.flag, 
+size: 12, color: 
+AppColors.accentMustard),
+circle\petitions.dart:1672:  
+            child: 
+message.userProfileImage == 
+null ? Icon(Icons.person, 
+size: 16) : null,
+circle\petitions.dart:1693:  
+                leading: 
+Icon(Icons.reply, color: 
+AppColors.primaryLavender),
+circle\petitions.dart:1702:  
+                leading: 
+Icon(Icons.delete, color: 
+AppColors.error),
+circle\petitions.dart:1711:  
+                leading: Icon
+(Icons.admin_panel_settings, 
+color: 
+AppColors.accentMustard),
+circle\petitions.dart:1719:  
+              leading: 
+Icon(Icons.cancel, color: 
+AppColors.textMedium),
+circle\petitions.dart:1799:  
+          icon: 
+Icon(Icons.close, size: 18, 
+color: AppColors.textMedium),
+circle\petitions.dart:1822:  
+            Icon(Icons.lock, 
+size: 64, color: 
+AppColors.textDisabled),
+circle\petitions.dart:1859:  
+            icon: Icon(Icons.
+admin_panel_settings, color: 
+AppColors.primaryLavender),
+circle\petitions.dart:1880:  
+                          
+Icon(Icons.forum, size: 64, 
+color: 
+AppColors.textDisabled),
+circle\petitions.dart:1949:  
+                      : 
+Icon(Icons.send, color: 
+AppColors.backgroundDeep),
+circle\petitions.dart:2088:  
+              leading: 
+Icon(Icons.link, color: 
+AppColors.primaryLavender),
+circle\petitions.dart:2096:  
+              leading: 
+Icon(Icons.share, color: 
+AppColors.primaryLavender),
+circle\petitions.dart:2104:  
+              leading: 
+Icon(FontAwesome.whatsapp, 
+color: Colors.green),
+circle\petitions.dart:2112:  
+              leading: 
+Icon(Icons.camera_alt, 
+color: 
+AppColors.primaryLavender),
+circle\petitions.dart:2190:  
+                child: 
+Icon(Icons.error, color: 
+AppColors.error),
+circle\petitions.dart:2208:  
+                  child: 
+creatorData['profileImage'] 
+== null ? Icon(Icons.person) 
+: null,
+circle\petitions.dart:2218:  
+              leading: 
+CircleAvatar(child: 
+Icon(Icons.person), 
+backgroundColor: 
+AppColors.elevation),
+circle\petitions.dart:2237:  
+            IconData icon = 
+Icons.link;
+circle\petitions.dart:2238:  
+            if (link.contains
+('gofundme.com')) icon = 
+Icons.volunteer_activism;
+circle\petitions.dart:2239:  
+            if (link.contains
+('tiktok.com')) icon = 
+FontAwesome.music; // 
+Closest for TikTok
+circle\petitions.dart:2240:  
+            if (link.contains
+('instagram.com')) icon = 
+FontAwesome.instagram;
+circle\petitions.dart:2323:  
+              child: 
+Icon(Icons.campaign, color: 
+AppColors.primaryLavender, 
+size: 16),
+circle\petitions.dart:2350:  
+          
+Icon(Icons.comment, size: 
+64, color: 
+AppColors.textDisabled),
+circle\petitions.dart:2387:  
+                    child: 
+signature.profileImage == 
+null ? Icon(Icons.person, 
+color: AppColors.textMedium) 
+: null,
+circle\petitions.dart:2505:  
+                    icon: 
+Icon(Icons.forum, color: 
+AppColors.primaryLavender, 
+size: 20),
+circle\petitions.dart:2568:  
+          icon: 
+Icon(Icons.share, color: 
+AppColors.primaryLavender),
+circle\petitions.dart:2573:  
+            icon: 
+Icon(Icons.edit, color: 
+AppColors.primaryLavender),
+circle\petitions.dart:2585:  
+            icon: 
+Icon(Icons.dashboard, color: 
+AppColors.primaryLavender),
+circle\petitions.dart:2596:  
+            icon: 
+Icon(Icons.analytics, color: 
+AppColors.primaryLavender),
+circle\petitions.dart:2894:  
+            badgeWidget: 
+Icon(Icons.school, color: 
+Colors.white, size: 16),
+circle\petitions.dart:2903:  
+            badgeWidget: 
+Icon(Icons.work, color: 
+Colors.white, size: 16),
+circle\petitions.dart:2912:  
+            badgeWidget: 
+Icon(Icons.home, color: 
+Colors.white, size: 16),
+circle\petitions.dart:3004:  
+              
+_buildStatCard('Signatures', 
+_petition!.currentSignatures.
+toString(), Icons.people),
+circle\petitions.dart:3006:  
+              
+_buildStatCard('Views', 
+_petition!.views.toString(), 
+Icons.visibility),
+circle\petitions.dart:3008:  
+              
+_buildStatCard('Shares', _pet
+ition!.shares.toString(), 
+Icons.share),
+circle\petitions.dart:3105:  
+                
+Icon(Icons.how_to_vote, 
+size: 50, color: 
+AppColors.textDisabled),
+circle\petitions.dart:3141:  
+      child: Icon(Icons.add, 
+color: 
+AppColors.backgroundDeep),
+circle\petitions.dart:3175:  
+                    
+errorWidget: (context, url, 
+error) => Icon(Icons.error, 
+color: AppColors.error),
+circle\petitions.dart:3180:  
+                    child: 
+Icon(Icons.how_to_vote, 
+color: 
+AppColors.textDisabled),
+circle\petitions.dart:3463:  
+        Icon(Icons.assignment
+_turned_in_outlined, size: 
+80, color: 
+AppColors.elevation),
+circle\petitions.dart:3513:  
+                    
+errorWidget: (_, __, ___) => 
+Container(color: 
+AppColors.elevation, child: 
+Icon(Icons.image)),
+circle\petitions.dart:3529:  
+                Icon(Icons.ar
+row_forward_ios, size: 16, 
+color: 
+AppColors.textDisabled),
+circle\petitions.dart:3543:  
+                 _buildMiniSt
+at(Icons.remove_red_eye, 
+'${petition.views}', 
+'Views'),
+circle\petitions.dart:3544:  
+                 
+_buildMiniStat(Icons.forum, 
+'Active', 'Discussion'),
+circle\petitions.dart:3722:  
+              
+_buildCompactStat('Views', 
+'${_petition.views}', 
+Icons.remove_red_eye),
+circle\petitions.dart:3724:  
+              
+_buildCompactStat('Shares', 
+'${_petition.shares}', 
+Icons.share),
+circle\petitions.dart:3731:  
+          
+_buildActionItem('Edit 
+Petition Details', 
+Icons.edit, _editPetition),
+circle\petitions.dart:3732:  
+          
+_buildActionItem('Manage 
+Collaborators', 
+Icons.group_add, 
+_addCollaborator),
+circle\petitions.dart:3733:  
+          
+_buildActionItem('View 
+Detailed Analytics', 
+Icons.analytics, () {
+circle\petitions.dart:3736:  
+          
+_buildActionItem('Post 
+Official Announcement', 
+Icons.campaign, 
+_sendAnnouncement),
+circle\petitions.dart:3737:  
+          
+_buildActionItem('Export 
+Signature Data (CSV)', 
+Icons.download, () {
+circle\petitions.dart:3743:  
+          
+_buildActionItem('Promotion 
+Insights', 
+Icons.trending_up, () {
+circle\petitions.dart:3783:  
+                deleteIcon: 
+Icon(Icons.close, size: 16, 
+color: AppColors.error),
+circle\petitions.dart:3927:  
+            Icon(Icons.arrow_
+forward_ios, size: 14, 
+color: 
+AppColors.textDisabled),
+circle\polls.dart:231:       
+               : 
+Icon(Icons.add_a_photo, 
+circle\polls.dart:272:       
+ icon: 
+Icon(Icons.arrow_back, 
+color: 
+AppColors.primaryLavender),
+circle\polls.dart:320:       
+                   
+Icon(Icons.poll, color: 
+AppColors.primaryLavender, 
+size: 24),
+circle\polls.dart:346:       
+         
+_buildSectionHeader('Poll 
+Question', 
+Icons.question_answer),
+circle\polls.dart:372:       
+               prefixIcon: 
+Icon(Icons.edit, color: 
+AppColors.primaryLavender),
+circle\polls.dart:381:       
+         
+_buildSectionHeader('Poll 
+Options', Icons.list),
+circle\polls.dart:421:       
+                 
+Icon(Icons.add, color: 
+AppColors.primaryLavender, 
+size: 20),
+circle\polls.dart:434:       
+         
+_buildSectionHeader('Poll 
+Duration', Icons.timer),
+circle\polls.dart:475:       
+               prefixIcon: 
+Icon(Icons.schedule, color: 
+AppColors.primaryLavender),
+circle\polls.dart:483:       
+         
+_buildSectionHeader('Age 
+Rating', Icons.people),
+circle\polls.dart:524:       
+               prefixIcon: 
+Icon(Icons.people_outline, 
+color: 
+AppColors.primaryLavender),
+circle\polls.dart:532:       
+         _buildSectionHeader(
+'Hashtags', Icons.tag),
+circle\polls.dart:558:       
+               prefixIcon: 
+Icon(Icons.tag, color: 
+AppColors.primaryLavender),
+circle\polls.dart:567:       
+                   child: 
+Icon(Icons.add, color: 
+AppColors.backgroundDeep, 
+size: 18),
+circle\polls.dart:624:       
+                         
+child: Icon(Icons.close, 
+size: 16, color: 
+AppColors.secondaryTeal),
+circle\polls.dart:669:       
+                       
+Icon(Icons.poll, size: 20),
+circle\polls.dart:831:       
+                     const 
+Icon(Icons.error, size: 16),
+circle\polls.dart:876:       
+                   const 
+Icon(Icons.error, size: 16),
+feed\addpost.dart:15:import '
+package:flutter_feather_icons
+/flutter_feather_icons.dart';
+feed\addpost.dart:281:       
+           leading: Icon(Icon
+s.check_circle_outline, 
+color: 
+AppColors.primaryLavender, 
+size: 16),
+feed\addpost.dart:433:       
+                     Icon(Fea
+therIcons.uploadCloud, 
+color: 
+AppColors.backgroundDeep, 
+size: 32),
+feed\addpost.dart:464:       
+                     
+Icon(FeatherIcons.camera, 
+color: 
+AppColors.primaryLavender, 
+size: 32),
+feed\addpost.dart:613:       
+               prefixIcon: 
+Icon(FeatherIcons.link, 
+color: 
+AppColors.textDisabled, 
+size: 18),
+feed\addpost.dart:620:       
+           icon: 
+Icon(FeatherIcons.info, 
+color: 
+AppColors.primaryLavender, 
+size: 18),
+feed\addpost.dart:651:       
+   icon: 
+Icon(FeatherIcons.arrowLeft, 
+color: 
+AppColors.primaryLavender),
+feed\addpost.dart:680:       
+         icon: 
+Icon(FeatherIcons.check, 
+color: 
+AppColors.primaryLavender),
+hub_screens\chatscreen.dart:1
+66:                    
+isRead ? Icons.done_all : 
+Icons.done,
+hub_screens\chatscreen.dart:2
+10:                icon: 
+Icon(Icons.send, color: 
+AppColors.backgroundDeep),
+hub_screens\chatscreen.dart:4
+39:                
+prefixIcon: 
+Icon(Icons.search, color: 
+AppColors.primaryLavender),
+hub_screens\messaging.dart:7:
+import 'package:flutter_vecto
+r_icons/flutter_vector_icons.
+dart';
+hub_screens\messaging.dart:24
+1:                      
+child: Icon(Icons.favorite, 
+color: 
+AppColors.secondaryTeal, 
+size: 24),
+hub_screens\messaging.dart:33
+8:                        
+Icon(Icons.verified, size: 
+14, color: 
+AppColors.primaryLavender),
+hub_screens\notifications_scr
+een.dart:7:import 'package:fl
+utter_vector_icons/flutter_ve
+ctor_icons.dart';
+hub_screens\notifications_scr
+een.dart:80:        iconData 
+= Icons.favorite;
+hub_screens\post.dart:25:impo
+rt 'package:flutter_vector_ic
+ons/flutter_vector_icons.dart
+';
+hub_screens\post.dart:1971:  
+          child: const 
+Icon(Icons.error, color: 
+AppColors.error)),
+hub_screens\post.dart:2051:  
+                            
+child: const 
+Icon(Icons.favorite, size: 
+100, color: Colors.red, 
+shadows: [Shadow(color: 
+Colors.black45, blurRadius: 
+15, offset: Offset(0, 4))]),
+hub_screens\post.dart:2283:  
+                             
+   child: Icon(isLiked ? 
+Icons.favorite : 
+Icons.favorite_border, size: 
+26, color: isLiked ? 
+AppColors.error : 
+AppColors.textHigh),
+hub_screens\post.dart:2291:  
+                             
+   child: Icon(isSaved ? 
+Icons.bookmark : 
+Icons.bookmark_border, size: 
+26, color: isSaved ? 
+AppColors.accentMustard : 
+AppColors.textHigh),
+hub_screens\post.dart:3149:  
+                             
+           child: const 
+Icon(Icons.error, color: 
+AppColors.error),
+hub_screens\post.dart:3181:  
+                             
+       isLiked ? 
+Icons.favorite : 
+Icons.favorite_border,
+hub_screens\post.dart:3239:  
+                             
+       _isSaved ? 
+Icons.bookmark : 
+Icons.bookmark_border,
+hub_screens\post.dart:3449:  
+                            
+icon: const Icon(Icons.send, 
+color: 
+AppColors.primaryLavender),
+hub_screens\post.dart:3587:  
+                          
+Icon(Icons.verified, color: 
+Colors.blue, size: 16),
+hub_screens\post.dart:3681:  
+                      
+isLiked ? Icons.favorite : 
+Icons.favorite_border,
+hub_screens\post.dart:4308:  
+            
+Icons.play_arrow, // Simple 
+play icon
+hub_screens\post.dart:4349:  
+                      
+IconButton(iconSize: 60, 
+icon: Icon(_controller.value.
+isPlaying ? 
+Icons.pause_circle_outline : 
+Icons.play_circle_outline, 
+color: Colors.white), 
+onPressed: _togglePlay),
+hub_screens\post.dart:4391:  
+        if 
+(!widget.isFullScreen) 
+IconButton(icon: const 
+Icon(Icons.fullscreen, 
+color: Colors.white, size: 
+20), onPressed: () => 
+_enterFullScreen(context)),
+hub_screens\post.dart:4641:  
+                child: const 
+Icon(Icons.person, size: 14, 
+color: 
+AppColors.textDisabled),
+hub_screens\profile.dart:15:i
+mport 'package:flutter_vector
+_icons/flutter_vector_icons.d
+art';
+hub_screens\profile.dart:19:i
+mport 'package:flutter_feathe
+r_icons/flutter_feather_icons
+.dart';
+hub_screens\profile.dart:39: 
+       icon = isVerified ? 
+Icons.verified : 
+Icons.business;
+hub_screens\profile.dart:44: 
+       icon = isVerified ? 
+Icons.verified_user : 
+Icons.medical_services;
+hub_screens\profile.dart:49: 
+       icon = Icons.person;
+hub_screens\profile.dart:255:
+                            
+errorWidget: (context, url, 
+error) => const 
+Icon(Icons.error, color: 
+AppColors.error),
+hub_screens\profile.dart:292:
+          child: 
+Center(child: 
+Icon(FeatherIcons.video, 
+color: Colors.white24)),
+hub_screens\profile.dart:336:
+                        
+service.progress >= 0.9 ? 
+FeatherIcons.check : 
+FeatherIcons.upload,
+hub_screens\profile.dart:460:
+          child: const 
+Icon(Icons.broken_image, 
+color: Colors.red),
+hub_screens\profile.dart:582:
+                      child: 
+const Icon(Icons.camera_alt, 
+color: Colors.white),
+hub_screens\profile.dart:598:
+                      
+_isEditing ? Icons.save : 
+Icons.edit,
+hub_screens\profile.dart:699:
+                            
+canChangeName ? 
+Icons.warning_amber_rounded 
+: Icons.lock_clock,
+hub_screens\profile.dart:882:
+              const 
+Icon(Icons.star, size: 16, 
+color: 
+AppColors.accentMustard),
+hub_screens\profile.dart:901:
+                  
+Icon(Icons.access_time, 
+size: 16, color: 
+AppColors.secondaryTeal),
+hub_screens\profile.dart:1097
+:                  icon: 
+const Icon(Icons.remove_circl
+e_outline, color: 
+AppColors.error, size: 20),
+hub_screens\profile.dart:1108
+:            icon: const 
+Icon(Icons.add, color: 
+AppColors.success, size: 18),
+hub_screens\profile.dart:1245
+:                          
+icon: Icon(Icons.dashboard, 
+color: 
+AppColors.backgroundDeep),
+hub_screens\profile.dart:1259
+:                          
+icon: Icon(Icons.campaign, 
+color: 
+AppColors.backgroundDeep),
+hub_screens\search.dart:12:im
+port 'package:flutter_vector_
+icons/flutter_vector_icons.da
+rt';
+hub_screens\search.dart:719: 
+           
+suggestion.startsWith('@') ? 
+Icons.person : Icons.tag,
+hub_screens\search.dart:831: 
+                             
+child: Icon(Icons.error, 
+color: AppColors.error),
+hub_screens\search.dart:839: 
+                           
+child: 
+Icon(Icons.play_arrow, 
+color: Colors.white, size: 
+36),
+hub_screens\search.dart:925: 
+                       const 
+Icon(Icons.verified, color: 
+Colors.blue, size: 16),
+hub_screens\search.dart:1008:
+        trailing: const Icon(
+Icons.arrow_forward_ios, 
+size: 16, color: 
+AppColors.textDisabled),
+hub_screens\search.dart:1089:
+          
+Icon(Icons.search_off, size: 
+64, color: 
+AppColors.textDisabled),
+hub_screens\search.dart:1152:
+      leading: 
+Icon(Icons.history, color: 
+AppColors.textMedium),
+hub_screens\search.dart:1155:
+        icon: 
+Icon(Icons.close, size: 16, 
+color: 
+AppColors.textDisabled),
+hub_screens\settings.dart:20:
+          icon: 
+Icon(Icons.arrow_back, 
+color: 
+AppColors.primaryLavender),
+hub_screens\settings.dart:57:
+                child: 
+Icon(Icons.logout, color: 
+AppColors.error),
+hub_screens\settings.dart:106
+:                child: 
+Icon(Icons.circle, color: 
+primary, size: 12),
+hub_screens\story.dart:150:  
+              icon: 
+Icon(Icons.camera_alt),
+hub_screens\story.dart:159:  
+              icon: 
+Icon(Icons.photo_library),
+hub_screens\story.dart:216:  
+          : Center(child: 
+Icon(Icons.play_arrow, size: 
+50, color: Colors.white)),
+hub_screens\story.dart:341:  
+                             
+             child: 
+Icon(Icons.play_arrow, 
+color: Colors.white, size: 
+50),
+hub_screens\story.dart:373:  
+                             
+   icon: 
+Icon(Icons.photo_library),
+hub_screens\story.dart:379:  
+                             
+   icon: 
+Icon(Icons.camera_alt),
+hub_screens\story.dart:469:  
+                             
+     errorWidget: (context, 
+url, error) => 
+Icon(Icons.error, color: 
+AppColors.error),
+hub_screens\story.dart:474:  
+                             
+       child: 
+Icon(Icons.play_arrow, 
+color: Colors.white, size: 
+30),
+hub_screens\story.dart:653:  
+                             
+ child: Icon(Icons.error, 
+color: Colors.white),
+hub_screens\story.dart:659:  
+                             
+ child: 
+Icon(Icons.play_arrow, 
+color: Colors.white, size: 
+50),
+hub_screens\story.dart:767:  
+                  icon: 
+Icon(Icons.close, color: 
+Colors.white),
+hub_screens\wellness.dart:8:i
+mport 'package:flutter_vector
+_icons/flutter_vector_icons.d
+art';
+hub_screens\wellness.dart:631
+:                          
+streakActive ? 
+Ionicons.flame : 
+Ionicons.flame_outline, 
+hub_screens\wellness.dart:746
+:            
+Icon(Ionicons.flame_outline, 
+size: 48, color: 
+AppColors.textDisabled),
+services\custom_camera_screen
+.dart:5:import 'package:flutt
+er_feather_icons/flutter_feat
+her_icons.dart';
+services\custom_camera_screen
+.dart:97:              icon: 
+Icon(FeatherIcons.x, color: 
+Colors.white, size: 30),
+services\custom_camera_screen
+.dart:109:                  
+icon: 
+Icon(FeatherIcons.refreshCw, 
+color: Colors.white),
+services\custom_gallery_scree
+n.dart:5:import 'package:flut
+ter_feather_icons/flutter_fea
+ther_icons.dart'; // Uses 
+FeatherIcons class
+services\custom_gallery_scree
+n.dart:149:              // 
+FIXED: Changed Feather.x to 
+FeatherIcons.x
+services\custom_gallery_scree
+n.dart:150:              
+icon: Icon(FeatherIcons.x, 
+color: Colors.white, size: 
+22),
+services\custom_gallery_scree
+n.dart:286:                  
+      // FIXED: Changed 
+Feather.play to 
+FeatherIcons.play
+services\custom_gallery_scree
+n.dart:287:                  
+      
+Icon(FeatherIcons.play, 
+color: Colors.white, size: 
+10),
+therapy\screens\therapist_das
+hboard.dart:83:          
+leading: Icon(Icons.history, 
+color: 
+AppColors.textDisabled),
+therapy\screens\therapist_das
+hboard.dart:86:          
+trailing: 
+Icon(Icons.chevron_right, 
+color: 
+AppColors.textDisabled),
+therapy\screens\therapist_das
+hboard.dart:187:             
+         child: 
+profileImage.isEmpty ? 
+Icon(Icons.person, color: 
+AppColors.textDisabled) : 
+null,
+therapy\screens\therapist_das
+hboard.dart:268:             
+             child: 
+profileImage.isEmpty ? 
+Icon(Icons.person, color: 
+AppColors.textDisabled) : 
+null,
+therapy\screens\therapist_das
+hboard.dart:288:             
+           icon: Icon(Icons.c
+hat_bubble_outline, color: 
+AppColors.secondaryTeal),
+therapy\screens\therapist_das
+hboard.dart:293:             
+           icon: Icon(Icons.c
+heck_circle_outline, color: 
+AppColors.success),
+therapy\screens\therapist_das
+hboard.dart:310:             
+         
+Icon(item.isCompleted ? 
+Icons.check_box : Icons.check
+_box_outline_blank, 
+therapy\screens\therapist_das
+hboard.dart:320:             
+   icon: Icon(Icons.add, 
+size: 16),
+therapy\screens\therapy_disco
+very_screen.dart:4:import 'pa
+ckage:flutter_vector_icons/fl
+utter_vector_icons.dart';
+therapy\screens\therapy_disco
+very_screen.dart:39:         
+   icon: Icon(Icons.history, 
+color: 
+AppColors.primaryLavender),
+therapy\screens\therapy_disco
+very_screen.dart:83:        
+deleteIcon: selected != null 
+? Icon(Icons.close, size: 
+14, color: 
+AppColors.backgroundDeep) : 
+null,
+therapy\screens\therapy_disco
+very_screen.dart:168:        
+                  child: 
+Icon(Icons.check, size: 10, 
+color: Colors.white),
+therapy\screens\therapy_disco
+very_screen.dart:175:        
+              
+Icon(Icons.star, size: 14, 
+color: 
+AppColors.accentMustard),
+therapy\screens\therapy_histo
+ry_screen.dart:36:           
+       Icon(Icons.history, 
+size: 64, color: 
+AppColors.textDisabled),
+therapy\screens\therapy_histo
+ry_screen.dart:76:           
+ leading: 
+Icon(Icons.verified_user, 
+color: 
+AppColors.primaryLavender),
+therapy\screens\therapy_histo
+ry_screen.dart:88:           
+ trailing: Icon(Icons.arrow_f
+orward_ios, size: 16, color: 
+AppColors.textDisabled),
+therapy\widgets\booking_flow.
+dart:54:            icon: 
+Icons.flash_on,
+therapy\widgets\booking_flow.
+dart:61:            icon: 
+Icons.auto_awesome,
+therapy\widgets\booking_flow.
+dart:133:            if 
+(isSelected) 
+Icon(Icons.check_circle, 
+color: 
+AppColors.secondaryTeal),
+therapy\widgets\rating_report
+_dialog.dart:48:             
+         index < _rating ? 
+Icons.star : 
+Icons.star_border,
+wellness_widgets\journal.dart
+:7:import 'package:flutter_ve
+ctor_icons/flutter_vector_ico
+ns.dart';
+wellness_widgets\period_track
+er.dart:6:import 'package:flu
+tter_vector_icons/flutter_vec
+tor_icons.dart'; // Using 
+Feather Icons
+wellness_widgets\tracker.dart
+:82:            icon: 
+Icons.track_changes_rounded,
+wellness_widgets\tracker.dart
+:232:                      
+child: Icon(Icons.error, 
+color: AppColors.error),
+wellness_widgets\tracker.dart
+:401:                  
+Icon(Icons.poll, size: 16, 
+color: 
+AppColors.primaryLavender),
+wellness_widgets\tracker.dart
+:474:              child: 
+Icon(Icons.poll, color: 
+AppColors.primaryLavender),
+wellness_widgets\tracker.dart
+:483:      child: 
+Icon(Icons.poll, size: 40, 
+color: 
+AppColors.primaryLavender),
+wellness_widgets\tracker.dart
+:543:            
+Icons.error_outline,
+wellness_widgets\twin_finder.
+dart:8:import 'package:flutte
+r_vector_icons/flutter_vector
+_icons.dart';
+wellness_widgets\widget_custo
+mization_service.dart:3:impor
+t 'package:flutter_vector_ico
+ns/flutter_vector_icons.dart'
+;
+wellness_widgets\widget_custo
+mization_service.dart:97:    
+  icon: 
+Ionicons.water_outline,
+wellness_widgets\widget_custo
+mization_service.dart:114:   
+   icon: 
+Ionicons.people_outline,
+wellness_widgets\widget_custo
+mization_service.dart:122:   
+   icon: MaterialCommunityIco
+ns.shield_check_outline,
+wellness_widgets\leakguard\ce
+ase_desist_generator.dart:3:i
+mport 'package:flutter_vector
+_icons/flutter_vector_icons.d
+art';
+wellness_widgets\leakguard\de
+epfake_defense.dart:3:import 
+'package:flutter_vector_icons
+/flutter_vector_icons.dart';
+wellness_widgets\leakguard\ev
+idence_locker.dart:5:import '
+package:flutter_vector_icons/
+flutter_vector_icons.dart';
+wellness_widgets\leakguard\fa
+ke_payment_generator.dart:2:i
+mport 'package:flutter_vector
+_icons/flutter_vector_icons.d
+art';
+wellness_widgets\leakguard\le
+akguard.dart:3:import 'packag
+e:flutter_vector_icons/flutte
+r_vector_icons.dart';
+wellness_widgets\leakguard\le
+akguard.dart:627:            
+          Icons.favorite, // 
+Filled heart
+wellness_widgets\leakguard\ne
+gotiation_data.dart:2:import 
+'package:flutter_vector_icons
+/flutter_vector_icons.dart';
+wellness_widgets\leakguard\ne
+gotiation_playbook.dart:3:imp
+ort 'package:flutter_vector_i
+cons/flutter_vector_icons.dar
+t';
+wellness_widgets\leakguard\so
+cial_airlock.dart:2:import 'p
+ackage:flutter_vector_icons/f
+lutter_vector_icons.dart';
+wellness_widgets\leakguard\so
+cial_airlock.dart:41:      
+icon: FontAwesome.facebook,
+wellness_widgets\leakguard\so
+cial_airlock.dart:55:      
+icon: FontAwesome.music, // 
+Proxy for TikTok
+wellness_widgets\leakguard\so
+cial_airlock.dart:68:      
+icon: FontAwesome.linkedin,
+wellness_widgets\leakguard\so
+cial_airlock.dart:81:      
+icon: FontAwesome.youtube,
+wellness_widgets\leakguard\so
+cial_airlock.dart:96:      
+icon: FontAwesome.instagram,
+wellness_widgets\leakguard\so
+cial_airlock.dart:107:      
+icon: FontAwesome.twitter,
+wellness_widgets\leakguard\so
+cial_airlock.dart:119:      
+icon: FontAwesome.at,
+wellness_widgets\leakguard\so
+cial_airlock.dart:134:      
+icon: 
+FontAwesome.snapchat_ghost,
+wellness_widgets\leakguard\so
+cial_airlock.dart:146:      
+icon: FontAwesome.reddit,
+wellness_widgets\leakguard\so
+cial_airlock.dart:158:      
+icon: MaterialCommunityIcons.
+discord,
+wellness_widgets\leakguard\so
+cial_airlock.dart:169:      
+icon: FontAwesome.telegram,
+wellness_widgets\leakguard\so
+cial_airlock.dart:265:       
+     Icon(Icons.circle, 
+size: 10, color: color),
+
+
