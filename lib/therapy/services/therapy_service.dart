@@ -8,14 +8,32 @@ class TherapyService {
 
   // --- Session Management ---
 
-  Future<String?> bookTherapist(String therapistId, SessionType type, String problemDescription) async {
+  Future<String?> bookTherapist(
+    String therapistId,
+    SessionType type,
+    String problemDescription,
+  ) async {
     try {
       final String clientId = _auth.currentUser!.uid;
-      
+
+      // Check User's Pending Requests (Max 3 active pending)
+      final userPendingSessions = await _firestore
+          .collection('therapy_sessions')
+          .where('clientId', isEqualTo: clientId)
+          .where('status', isEqualTo: SessionStatus.pending.index)
+          .get();
+
+      if (userPendingSessions.docs.length >= 3) {
+        return "You can only have 3 pending therapy requests at a time.";
+      }
+
       // Check therapist capacity (Max 3 active clients)
-      final therapistDoc = await _firestore.collection('users').doc(therapistId).get();
+      final therapistDoc = await _firestore
+          .collection('users')
+          .doc(therapistId)
+          .get();
       final activeClients = therapistDoc.data()?['activeClients'] ?? 0;
-      
+
       if (activeClients >= 3) {
         return "Therapist is currently at maximum capacity (3/3 clients).";
       }
@@ -34,19 +52,31 @@ class TherapyService {
 
       await sessionRef.set(session.toMap());
 
-      // Update Therapist active count (or maybe only on acceptance? 
-      // User said they can manage up to 3, so we should check capacity on booking but increment on acceptance)
-      // Actually, let's increment a 'pendingCount' if we want, or just leave it for now.
-      
       // Create Notification for Therapist
       await _firestore.collection('notifications').add({
         'toUserId': therapistId,
         'fromUserId': clientId,
         'type': 'therapy_booking',
+        'title': 'New Therapy Request',
+        'body': 'A new client has requested a therapy session.',
         'timestamp': FieldValue.serverTimestamp(),
         'read': false,
         'sessionId': sessionRef.id,
       });
+
+      await _firestore
+          .collection('users')
+          .doc(therapistId)
+          .collection('notifications')
+          .add({
+            'type': 'therapy_booking',
+            'title': 'New Therapy Request',
+            'body': 'A new client has requested a therapy session.',
+            'sessionId': sessionRef.id,
+            'fromUserId': clientId,
+            'isRead': false,
+            'timestamp': FieldValue.serverTimestamp(),
+          });
 
       return null; // Success
     } catch (e) {
@@ -55,9 +85,12 @@ class TherapyService {
   }
 
   Future<void> acceptSession(String sessionId) async {
-    final sessionDoc = await _firestore.collection('therapy_sessions').doc(sessionId).get();
+    final sessionDoc = await _firestore
+        .collection('therapy_sessions')
+        .doc(sessionId)
+        .get();
     if (!sessionDoc.exists) return;
-    
+
     final data = sessionDoc.data()!;
     final therapistId = data['therapistId'];
     final clientId = data['clientId'];
@@ -74,8 +107,11 @@ class TherapyService {
     });
 
     // Create a chat if it doesn't exist
-    final chatsQuery = await _firestore.collection('chats')
+    // Create a chat if it doesn't exist
+    final chatsQuery = await _firestore
+        .collection('chats')
         .where('participants', arrayContains: therapistId)
+        .where('type', isEqualTo: 'therapy')
         .get();
 
     bool chatExists = false;
@@ -89,6 +125,7 @@ class TherapyService {
     if (!chatExists) {
       await _firestore.collection('chats').add({
         'participants': [therapistId, clientId],
+        'type': 'therapy',
         'lastMessage': 'Therapy session accepted. You can now chat.',
         'lastMessageTime': FieldValue.serverTimestamp(),
         'unreadCount': {therapistId: 0, clientId: 1},
@@ -101,10 +138,26 @@ class TherapyService {
       'toUserId': clientId,
       'fromUserId': therapistId,
       'type': 'therapy_accepted',
+      'title': 'Request Accepted',
+      'body': 'Your therapy request has been accepted.',
       'timestamp': FieldValue.serverTimestamp(),
       'read': false,
       'sessionId': sessionId,
     });
+
+    await _firestore
+        .collection('users')
+        .doc(clientId)
+        .collection('notifications')
+        .add({
+          'type': 'therapy_accepted',
+          'title': 'Request Accepted',
+          'body': 'Your therapy request has been accepted.',
+          'fromUserId': therapistId,
+          'isRead': false,
+          'timestamp': FieldValue.serverTimestamp(),
+          'sessionId': sessionId,
+        });
   }
 
   Future<void> completeSession(String sessionId, String therapistId) async {
@@ -112,7 +165,7 @@ class TherapyService {
       'status': SessionStatus.completed.index,
       'endTime': FieldValue.serverTimestamp(),
     });
-    
+
     await _firestore.collection('users').doc(therapistId).update({
       'activeClients': FieldValue.increment(-1),
     });
@@ -120,10 +173,14 @@ class TherapyService {
 
   // --- Ratings & Reviews ---
 
-  Future<void> rateTherapist(String therapistId, double rating, String comment) async {
+  Future<void> rateTherapist(
+    String therapistId,
+    double rating,
+    String comment,
+  ) async {
     final String reviewerId = _auth.currentUser!.uid;
     final reviewRef = _firestore.collection('therapist_reviews').doc();
-    
+
     await reviewRef.set({
       'id': reviewRef.id,
       'therapistId': therapistId,
@@ -134,11 +191,14 @@ class TherapyService {
     });
 
     // Update Average Rating
-    final therapistDoc = await _firestore.collection('users').doc(therapistId).get();
+    final therapistDoc = await _firestore
+        .collection('users')
+        .doc(therapistId)
+        .get();
     final data = therapistDoc.data()!;
     final currentAvg = (data['averageRating'] ?? 0.0).toDouble();
     final totalRatings = data['totalRatings'] ?? 0;
-    
+
     final newTotal = totalRatings + 1;
     final newAvg = ((currentAvg * totalRatings) + rating) / newTotal;
 
@@ -150,7 +210,9 @@ class TherapyService {
     // Check for Verification (500 clients + mostly 5 stars?)
     // Simplified: Check if totalClients >= 500 and averageRating >= 4.5
     if (newTotal >= 500 && newAvg >= 4.5) {
-      await _firestore.collection('users').doc(therapistId).update({'isVerified': true});
+      await _firestore.collection('users').doc(therapistId).update({
+        'isVerified': true,
+      });
     }
   }
 
@@ -185,7 +247,9 @@ class TherapyService {
     String? language,
     String? livedExperience,
   }) {
-    Query query = _firestore.collection('users').where('accountType', isEqualTo: 'therapist');
+    Query query = _firestore
+        .collection('users')
+        .where('accountType', isEqualTo: 'therapist');
 
     if (region != null && region.isNotEmpty && region != 'All') {
       query = query.where('region', isEqualTo: region);

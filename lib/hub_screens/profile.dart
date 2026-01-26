@@ -25,15 +25,13 @@ import 'package:femn/circle/discussions.dart';
 import 'package:femn/analytics/screens/analytics_dashboard.dart'; // <--- Analytics Import
 import 'package:rxdart/rxdart.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:femn/services/notification_service.dart';
 
 // ======== AccountBadge Widget ========
 class AccountBadge extends StatelessWidget {
   final String accountType;
   final bool isVerified;
-  const AccountBadge({
-    required this.accountType,
-    required this.isVerified,
-  });
+  const AccountBadge({required this.accountType, required this.isVerified});
 
   @override
   Widget build(BuildContext context) {
@@ -204,29 +202,65 @@ class _PostGridWithPreviewState extends State<PostGridWithPreview> {
           .collection('posts')
           .where('userId', isEqualTo: widget.userId)
           .snapshots()
-          .map((s) => s.docs.map((d) => {'type': 'post', 'data': d, 'time': d.data()['timestamp']}).toList());
+          .map(
+            (s) => s.docs
+                .map(
+                  (d) => {
+                    'type': 'post',
+                    'data': d,
+                    'time': d.data()['timestamp'],
+                  },
+                )
+                .toList(),
+          );
 
       final pollsStream = firestore
           .collection('polls')
           .where('createdBy', isEqualTo: widget.userId)
           .snapshots()
-          .map((s) => s.docs.map((d) => {'type': 'poll', 'data': d, 'time': d.data()['createdAt']}).toList());
+          .map(
+            (s) => s.docs
+                .map(
+                  (d) => {
+                    'type': 'poll',
+                    'data': d,
+                    'time': d.data()['createdAt'],
+                  },
+                )
+                .toList(),
+          );
 
       final groupsStream = firestore
           .collection('groups')
           .where('createdBy', isEqualTo: widget.userId)
           .snapshots()
-          .map((s) => s.docs.map((d) {
-                final data = d.data() as Map<String, dynamic>;
-                final isDiscussion = data['category'] == 'Discussions';
-                return {'type': isDiscussion ? 'discussion' : 'group', 'data': d, 'time': data['createdAt']};
-              }).toList());
+          .map(
+            (s) => s.docs.map((d) {
+              final data = d.data() as Map<String, dynamic>;
+              final isDiscussion = data['category'] == 'Discussions';
+              return {
+                'type': isDiscussion ? 'discussion' : 'group',
+                'data': d,
+                'time': data['createdAt'],
+              };
+            }).toList(),
+          );
 
       final petitionsStream = firestore
           .collection('petitions')
           .where('createdBy', isEqualTo: widget.userId)
           .snapshots()
-          .map((s) => s.docs.map((d) => {'type': 'petition', 'data': d, 'time': d.data()['createdAt']}).toList());
+          .map(
+            (s) => s.docs
+                .map(
+                  (d) => {
+                    'type': 'petition',
+                    'data': d,
+                    'time': d.data()['createdAt'],
+                  },
+                )
+                .toList(),
+          );
 
       return CombineLatestStream.list([
         postsStream,
@@ -244,18 +278,33 @@ class _PostGridWithPreviewState extends State<PostGridWithPreview> {
       });
     } else if (widget.tabType == ProfileTabType.saved) {
       // Saved posts in User doc
-      return firestore.collection('users').doc(widget.userId).snapshots().asyncMap((userDoc) async {
+      return firestore.collection('users').doc(widget.userId).snapshots().asyncMap((
+        userDoc,
+      ) async {
         final savedIds = List<String>.from(userDoc.data()?['savedPosts'] ?? []);
         if (savedIds.isEmpty) return [];
 
         // Fetch posts in chunks of 10 (Firestore limit is 10 for whereIn, but actually 30 now, let's play safe)
         List<Map<String, dynamic>> results = [];
         for (var i = 0; i < savedIds.length; i += 10) {
-          final chunk = savedIds.sublist(i, i + 10 > savedIds.length ? savedIds.length : i + 10);
-          final snap = await firestore.collection('posts').where(FieldPath.documentId, whereIn: chunk).get();
-          results.addAll(snap.docs.map((d) => {'type': 'post', 'data': d, 'time': d.data()['timestamp']}));
+          final chunk = savedIds.sublist(
+            i,
+            i + 10 > savedIds.length ? savedIds.length : i + 10,
+          );
+          final snap = await firestore
+              .collection('posts')
+              .where(FieldPath.documentId, whereIn: chunk)
+              .get();
+          results.addAll(
+            snap.docs.map(
+              (d) => {'type': 'post', 'data': d, 'time': d.data()['timestamp']},
+            ),
+          );
         }
-        results.sort((a, b) => ((b['time'] as Timestamp?)?.toDate() ?? DateTime(0)).compareTo((a['time'] as Timestamp?)?.toDate() ?? DateTime(0)));
+        results.sort(
+          (a, b) => ((b['time'] as Timestamp?)?.toDate() ?? DateTime(0))
+              .compareTo((a['time'] as Timestamp?)?.toDate() ?? DateTime(0)),
+        );
         return results;
       });
     } else if (widget.tabType == ProfileTabType.liked) {
@@ -263,40 +312,80 @@ class _PostGridWithPreviewState extends State<PostGridWithPreview> {
           .collection('posts')
           .where('likes', arrayContains: widget.userId)
           .snapshots()
-          .map((s) => s.docs.map((d) => {'type': 'post', 'data': d, 'time': d.data()['timestamp']}).toList());
+          .map(
+            (s) => s.docs
+                .map(
+                  (d) => {
+                    'type': 'post',
+                    'data': d,
+                    'time': d.data()['timestamp'],
+                  },
+                )
+                .toList(),
+          );
     } else if (widget.tabType == ProfileTabType.polls) {
       return firestore
           .collection('polls')
           .snapshots()
-          .map((s) => s.docs.where((d) {
-                final voters = List.from((d.data() as Map<String, dynamic>)['voters'] ?? []);
-                return voters.any((v) => v is Map && v['userId'] == widget.userId);
-              }).map((d) => {'type': 'poll', 'data': d, 'time': d.data()['createdAt']}).toList());
+          .map(
+            (s) => s.docs
+                .where((d) {
+                  final voters = List.from(
+                    (d.data() as Map<String, dynamic>)['voters'] ?? [],
+                  );
+                  return voters.any(
+                    (v) => v is Map && v['userId'] == widget.userId,
+                  );
+                })
+                .map(
+                  (d) => {
+                    'type': 'poll',
+                    'data': d,
+                    'time': d.data()['createdAt'],
+                  },
+                )
+                .toList(),
+          );
     } else if (widget.tabType == ProfileTabType.petitions) {
       return firestore
           .collection('petitions')
           .where('signers', arrayContains: widget.userId)
           .snapshots()
-          .map((s) => s.docs.map((d) => {'type': 'petition', 'data': d, 'time': d.data()['createdAt']}).toList());
+          .map(
+            (s) => s.docs
+                .map(
+                  (d) => {
+                    'type': 'petition',
+                    'data': d,
+                    'time': d.data()['createdAt'],
+                  },
+                )
+                .toList(),
+          );
     }
 
     return Stream.value([]);
   }
 
- @override
+  @override
   Widget build(BuildContext context) {
     // Check if we are uploading
     final uploadService = PostUploadService.instance;
-    final bool isUploading = widget.isOwnProfile && uploadService.status == UploadStatus.uploading;
+    final bool isUploading =
+        widget.isOwnProfile && uploadService.status == UploadStatus.uploading;
 
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: _getCombinedStream(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
+          return Center(
+            child: CircularProgressIndicator(color: AppColors.primaryLavender),
+          );
         }
 
-        final newItems = snapshot.hasData ? snapshot.data! : <Map<String, dynamic>>[];
+        final newItems = snapshot.hasData
+            ? snapshot.data!
+            : <Map<String, dynamic>>[];
         if (newItems.length != _combinedItems.length) {
           _combinedItems = newItems;
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -304,8 +393,14 @@ class _PostGridWithPreviewState extends State<PostGridWithPreview> {
           });
         }
 
-        bool showCreateButton = widget.isOwnProfile && widget.tabType == ProfileTabType.activity && widget.createPostButton != null;
-        bool showGhostPost = widget.isOwnProfile && widget.tabType == ProfileTabType.activity && isUploading;
+        bool showCreateButton =
+            widget.isOwnProfile &&
+            widget.tabType == ProfileTabType.activity &&
+            widget.createPostButton != null;
+        bool showGhostPost =
+            widget.isOwnProfile &&
+            widget.tabType == ProfileTabType.activity &&
+            isUploading;
 
         int itemCount = _combinedItems.length;
         if (showCreateButton) itemCount++;
@@ -313,11 +408,17 @@ class _PostGridWithPreviewState extends State<PostGridWithPreview> {
 
         if (itemCount == 0) {
           String msg = 'No activity yet';
-          if (widget.tabType == ProfileTabType.saved) msg = 'No saved posts';
-          else if (widget.tabType == ProfileTabType.liked) msg = 'No liked posts';
-          else if (widget.tabType == ProfileTabType.polls) msg = 'No polls participated in';
-          else if (widget.tabType == ProfileTabType.petitions) msg = 'No petitions signed';
-          return Center(child: Text(msg, style: TextStyle(color: AppColors.textMedium)));
+          if (widget.tabType == ProfileTabType.saved)
+            msg = 'No saved posts';
+          else if (widget.tabType == ProfileTabType.liked)
+            msg = 'No liked posts';
+          else if (widget.tabType == ProfileTabType.polls)
+            msg = 'No polls participated in';
+          else if (widget.tabType == ProfileTabType.petitions)
+            msg = 'No petitions signed';
+          return Center(
+            child: Text(msg, style: TextStyle(color: AppColors.textMedium)),
+          );
         }
 
         return Padding(
@@ -334,15 +435,17 @@ class _PostGridWithPreviewState extends State<PostGridWithPreview> {
                 offset++;
               }
               if (showGhostPost) {
-                if (index == offset) return _buildGhostUploadItem(uploadService);
+                if (index == offset)
+                  return _buildGhostUploadItem(uploadService);
                 offset++;
               }
               final itemIndex = index - offset;
-              if (itemIndex < 0 || itemIndex >= _combinedItems.length) return Container();
+              if (itemIndex < 0 || itemIndex >= _combinedItems.length)
+                return Container();
 
               final item = _combinedItems[itemIndex];
               Widget child;
-              
+
               if (item['type'] == 'post') {
                 child = _buildPostGridItem(item['data'] as DocumentSnapshot);
               } else {
@@ -350,13 +453,15 @@ class _PostGridWithPreviewState extends State<PostGridWithPreview> {
               }
 
               // Apply Staggered Start for Polls and Petitions
-              if (widget.tabType == ProfileTabType.polls || widget.tabType == ProfileTabType.petitions) {
+              if (widget.tabType == ProfileTabType.polls ||
+                  widget.tabType == ProfileTabType.petitions) {
                 int columns = ResponsiveLayout.getColumnCount(context);
                 int column = index % columns;
                 if ((column == 0 || column == columns - 1) && index < columns) {
                   // Pseudo-random offset based on user ID and column
                   final int seed = widget.userId.hashCode + column;
-                  final double staggerOffset = (seed % 35) + 15.0; // 15px to 50px range
+                  final double staggerOffset =
+                      (seed % 35) + 15.0; // 15px to 50px range
                   return Padding(
                     padding: EdgeInsets.only(top: staggerOffset),
                     child: child,
@@ -379,7 +484,11 @@ class _PostGridWithPreviewState extends State<PostGridWithPreview> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => PostDetailScreen(postId: post.id, userId: widget.userId, source: 'profile'),
+            builder: (context) => PostDetailScreen(
+              postId: post.id,
+              userId: widget.userId,
+              source: 'profile',
+            ),
           ),
         );
       },
@@ -390,8 +499,10 @@ class _PostGridWithPreviewState extends State<PostGridWithPreview> {
               ? CachedNetworkImage(
                   imageUrl: postData['mediaUrl'],
                   fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(color: AppColors.elevation),
-                  errorWidget: (context, url, error) => const Icon(Feather.alert_circle, color: AppColors.error),
+                  placeholder: (context, url) =>
+                      Container(color: AppColors.elevation),
+                  errorWidget: (context, url, error) =>
+                      const Icon(Feather.alert_circle, color: AppColors.error),
                 )
               : VideoGridItem(
                   url: postData['mediaUrl'],
@@ -485,11 +596,28 @@ class _PostGridWithPreviewState extends State<PostGridWithPreview> {
         borderRadius: BorderRadius.circular(18),
         onTap: () {
           if (type == 'discussion') {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => DiscussionViewScreen(discussionId: doc.id)));
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    DiscussionViewScreen(discussionId: doc.id),
+              ),
+            );
           } else if (type == 'group') {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => GroupViewScreen(groupId: doc.id)));
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => GroupViewScreen(groupId: doc.id),
+              ),
+            );
           } else if (type == 'petition') {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => EnhancedPetitionDetailScreen(petitionId: doc.id)));
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    EnhancedPetitionDetailScreen(petitionId: doc.id),
+              ),
+            );
           }
         },
         child: Padding(
@@ -511,7 +639,9 @@ class _PostGridWithPreviewState extends State<PostGridWithPreview> {
                               fit: BoxFit.cover,
                               placeholder: (context, url) => Shimmer.fromColors(
                                 baseColor: AppColors.elevation,
-                                highlightColor: AppColors.surface.withOpacity(0.5),
+                                highlightColor: AppColors.surface.withOpacity(
+                                  0.5,
+                                ),
                                 child: Container(color: Colors.white),
                               ),
                               errorWidget: (context, url, error) => Container(
@@ -523,7 +653,8 @@ class _PostGridWithPreviewState extends State<PostGridWithPreview> {
                               color: color.withOpacity(0.1),
                               child: Icon(icon, color: color, size: 24),
                             ),
-                      if (badge != null) Positioned(top: 4, left: 4, child: badge),
+                      if (badge != null)
+                        Positioned(top: 4, left: 4, child: badge),
                     ],
                   ),
                 ),
@@ -565,7 +696,11 @@ class _PostGridWithPreviewState extends State<PostGridWithPreview> {
       ),
       child: Text(
         text,
-        style: TextStyle(color: AppColors.backgroundDeep, fontSize: 8, fontWeight: FontWeight.bold),
+        style: TextStyle(
+          color: AppColors.backgroundDeep,
+          fontSize: 8,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
@@ -601,7 +736,12 @@ class _PostGridWithPreviewState extends State<PostGridWithPreview> {
     );
   }
 
-  Widget _buildStatsPill(String type, Map<String, dynamic> data, Color color, IconData icon) {
+  Widget _buildStatsPill(
+    String type,
+    Map<String, dynamic> data,
+    Color color,
+    IconData icon,
+  ) {
     String text = '';
     if (type == 'poll') {
       text = '${data['totalVotes'] ?? 0} votes';
@@ -612,17 +752,19 @@ class _PostGridWithPreviewState extends State<PostGridWithPreview> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: BoxDecoration(
-        color: (type == 'discussion' && _isDiscussionArchived(data)) 
-            ? AppColors.textDisabled 
+        color: (type == 'discussion' && _isDiscussionArchived(data))
+            ? AppColors.textDisabled
             : AppColors.secondaryTeal,
         borderRadius: BorderRadius.circular(50),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon == Feather.bar_chart_2 ? icon : Feather.users, 
-               size: 10, 
-               color: AppColors.textOnSecondary),
+          Icon(
+            icon == Feather.bar_chart_2 ? icon : Feather.users,
+            size: 10,
+            color: AppColors.textOnSecondary,
+          ),
           const SizedBox(width: 4),
           Text(
             text,
@@ -639,10 +781,9 @@ class _PostGridWithPreviewState extends State<PostGridWithPreview> {
 
   // --- NEW WIDGET: The Ghost Upload Item ---
   Widget _buildGhostUploadItem(PostUploadService service) {
-    
     // Determine what to show as the background
     Widget backgroundWidget;
-    
+
     if (service.currentMediaType == 'video') {
       if (service.currentThumbnail != null) {
         // Show generated thumbnail
@@ -676,7 +817,7 @@ class _PostGridWithPreviewState extends State<PostGridWithPreview> {
           children: [
             // 1. Background (Image or Video Thumbnail)
             backgroundWidget,
-            
+
             // 2. Dark Overlay
             Container(color: Colors.black45),
 
@@ -689,7 +830,7 @@ class _PostGridWithPreviewState extends State<PostGridWithPreview> {
                     alignment: Alignment.center,
                     children: [
                       SizedBox(
-                        width: 40, 
+                        width: 40,
                         height: 40,
                         child: CircularProgressIndicator(
                           value: service.progress,
@@ -699,7 +840,9 @@ class _PostGridWithPreviewState extends State<PostGridWithPreview> {
                         ),
                       ),
                       Icon(
-                        service.progress >= 0.9 ? Feather.check : Feather.upload,
+                        service.progress >= 0.9
+                            ? Feather.check
+                            : Feather.upload,
                         color: Colors.white,
                         size: 18,
                       ),
@@ -709,11 +852,11 @@ class _PostGridWithPreviewState extends State<PostGridWithPreview> {
                   Text(
                     service.progress >= 0.9 ? "Finalizing..." : "Posting...",
                     style: TextStyle(
-                      color: Colors.white, 
-                      fontSize: 10, 
-                      fontWeight: FontWeight.bold
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
                     ),
-                  )
+                  ),
                 ],
               ),
             ),
@@ -848,12 +991,16 @@ class _VideoGridItemState extends State<VideoGridItem> {
           Positioned.fill(child: thumbnailWidget),
           if (_controller != null && _controller!.value.isInitialized)
             Positioned.fill(child: VideoPlayer(_controller!)),
-          if (_shouldPlay && (_controller == null || !_controller!.value.isInitialized))
+          if (_shouldPlay &&
+              (_controller == null || !_controller!.value.isInitialized))
             const Center(
               child: SizedBox(
                 width: 20,
                 height: 20,
-                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
               ),
             ),
         ],
@@ -874,7 +1021,8 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _bioController = TextEditingController();
-  final TextEditingController _missionStatementController = TextEditingController();
+  final TextEditingController _missionStatementController =
+      TextEditingController();
   final TextEditingController _websiteController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
@@ -893,7 +1041,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       fixMissingBioFields();
     });
-    
+
     if (!_isOwnProfile) {
       _incrementProfileVisits();
     }
@@ -901,9 +1049,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _incrementProfileVisits() async {
     try {
-      await FirebaseFirestore.instance.collection('users').doc(widget.userId).update({
-        'profileVisits': FieldValue.increment(1)
-      });
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.userId)
+          .update({'profileVisits': FieldValue.increment(1)});
     } catch (e) {
       print("Error incrementing visits: $e");
     }
@@ -947,9 +1096,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   CircleAvatar(
                     radius: 50,
                     backgroundColor: AppColors.elevation,
-                    backgroundImage: (userData['profileImage'] ?? userData['logo'] ?? '').isNotEmpty
-                        ? CachedNetworkImageProvider(userData['profileImage'] ?? userData['logo'] ?? '')
-                        : const AssetImage('assets/default_avatar.png') as ImageProvider,
+                    backgroundImage:
+                        (userData['profileImage'] ?? userData['logo'] ?? '')
+                            .isNotEmpty
+                        ? CachedNetworkImageProvider(
+                            userData['profileImage'] ?? userData['logo'] ?? '',
+                          )
+                        : const AssetImage('assets/default_avatar.png')
+                              as ImageProvider,
                   ),
                   if (_isEditing)
                     Container(
@@ -1005,7 +1159,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             decoration: BoxDecoration(
               color: AppColors.elevation,
               borderRadius: BorderRadius.circular(15),
-              border: Border.all(color: AppColors.secondaryTeal.withOpacity(0.5)),
+              border: Border.all(
+                color: AppColors.secondaryTeal.withOpacity(0.5),
+              ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -1031,7 +1187,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     controller: _fullNameController,
                     enabled: canChangeName,
                     style: TextStyle(
-                      color: canChangeName ? AppColors.textHigh : AppColors.textDisabled,
+                      color: canChangeName
+                          ? AppColors.textHigh
+                          : AppColors.textDisabled,
                     ),
                     decoration: InputDecoration(
                       labelText: 'Full Name',
@@ -1051,7 +1209,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       contentPadding: EdgeInsets.zero,
                       title: Text(
                         "Show Twin Finder Personality",
-                        style: TextStyle(color: AppColors.textMedium, fontSize: 14),
+                        style: TextStyle(
+                          color: AppColors.textMedium,
+                          fontSize: 14,
+                        ),
                       ),
                       value: _showPersonality,
                       onChanged: (val) {
@@ -1069,15 +1230,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             : AppColors.error.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: canChangeName ? Colors.orange : AppColors.error,
+                          color: canChangeName
+                              ? Colors.orange
+                              : AppColors.error,
                           width: 1,
                         ),
                       ),
                       child: Row(
                         children: [
                           Icon(
-                            canChangeName ? Feather.alert_triangle : Feather.lock,
-                            color: canChangeName ? Colors.orange : AppColors.error,
+                            canChangeName
+                                ? Feather.alert_triangle
+                                : Feather.lock,
+                            color: canChangeName
+                                ? Colors.orange
+                                : AppColors.error,
                             size: 20,
                           ),
                           const SizedBox(width: 10),
@@ -1088,7 +1255,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   : "Name change locked. You can change it again in $daysRemaining days.",
                               style: TextStyle(
                                 fontSize: 12,
-                                color: canChangeName ? Colors.orange : AppColors.error,
+                                color: canChangeName
+                                    ? Colors.orange
+                                    : AppColors.error,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -1100,8 +1269,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               )
             : Text(
-                userData['fullName'] ?? userData['organizationName'] ?? 'No Name',
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textHigh),
+                userData['fullName'] ??
+                    userData['organizationName'] ??
+                    'No Name',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textHigh,
+                ),
               ),
         const SizedBox(height: 2),
         Text(
@@ -1111,9 +1286,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ProfileStatsWidget(userId: user.id, isOwnProfile: _isOwnProfile),
         const SizedBox(height: 8),
 
-
-        if (userData['accountType'] == 'organization') ..._buildOrganizationProfile(user),
-        if (userData['accountType'] == 'therapist') ..._buildTherapistProfile(user),
+        if (userData['accountType'] == 'organization')
+          ..._buildOrganizationProfile(user),
+        if (userData['accountType'] == 'therapist')
+          ..._buildTherapistProfile(user),
         if ((userData['accountType'] ?? 'personal') == 'personal')
           _isEditing
               ? Padding(
@@ -1166,7 +1342,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
         ),
-      if (userData['website'] != null && (userData['website'] as String).isNotEmpty)
+      if (userData['website'] != null &&
+          (userData['website'] as String).isNotEmpty)
         Padding(
           padding: const EdgeInsets.only(top: 4.0),
           child: Text(
@@ -1191,10 +1368,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   label: 'Website (optional)',
                 ),
                 const SizedBox(height: 8),
-                _buildTextField(
-                  controller: _phoneController,
-                  label: 'Phone',
-                ),
+                _buildTextField(controller: _phoneController, label: 'Phone'),
                 const SizedBox(height: 8),
                 _buildTextField(
                   controller: _addressController,
@@ -1205,7 +1379,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   controller: _bioController,
                   label: 'About Us',
                   maxLines: 3,
-                )
+                ),
               ],
             )
           : const SizedBox.shrink(),
@@ -1221,28 +1395,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final specs = (userData['specialization'] as List).join(', ');
         if (specs.isNotEmpty) parts.add(specs);
       }
-      if (userData['experienceLevel'] != null && userData['experienceLevel'].toString().isNotEmpty) {
+      if (userData['experienceLevel'] != null &&
+          userData['experienceLevel'].toString().isNotEmpty) {
         parts.add(userData['experienceLevel']);
       }
-      if (userData['region'] != null && userData['region'].toString().isNotEmpty) {
+      if (userData['region'] != null &&
+          userData['region'].toString().isNotEmpty) {
         parts.add(userData['region']);
       }
       if (userData['languages'] is List) {
         final langs = (userData['languages'] as List).join(', ');
         if (langs.isNotEmpty) parts.add(langs);
       }
-      if (userData['genderPreference'] != null && userData['genderPreference'].toString().isNotEmpty) {
+      if (userData['genderPreference'] != null &&
+          userData['genderPreference'].toString().isNotEmpty) {
         parts.add(userData['genderPreference']);
       }
     } else if (type == 'organization') {
-      if (userData['category'] != null && userData['category'].toString().isNotEmpty) {
+      if (userData['category'] != null &&
+          userData['category'].toString().isNotEmpty) {
         parts.add(userData['category']);
       }
       if (userData['areasOfFocus'] is List) {
         final focus = (userData['areasOfFocus'] as List).join(', ');
         if (focus.isNotEmpty) parts.add(focus);
       }
-      if (userData['country'] != null && userData['country'].toString().isNotEmpty) {
+      if (userData['country'] != null &&
+          userData['country'].toString().isNotEmpty) {
         parts.add(userData['country']);
       }
     }
@@ -1280,18 +1459,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Feather.star, size: 16, color: AppColors.accentMustard),
+              const Icon(
+                Feather.star,
+                size: 16,
+                color: AppColors.accentMustard,
+              ),
               const SizedBox(width: 4),
               Text(
                 '${(userData['averageRating'] ?? 0.0).toStringAsFixed(1)} (${userData['totalRatings'] ?? 0})',
-                style: const TextStyle(color: AppColors.textMedium, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  color: AppColors.textMedium,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
         ),
       if (_isEditing && userData['accountType'] == 'therapist')
         _buildAvailabilityField(),
-      if (!_isEditing && userData['availability'] != null && (userData['availability'] as List).isNotEmpty)
+      if (!_isEditing &&
+          userData['availability'] != null &&
+          (userData['availability'] as List).isNotEmpty)
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Column(
@@ -1301,19 +1489,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   Icon(Feather.clock, size: 16, color: AppColors.secondaryTeal),
                   SizedBox(width: 8),
-                  Text('Availability', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textHigh)),
+                  Text(
+                    'Availability',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textHigh,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 8),
               ...(userData['availability'] as List).map<Widget>((slot) {
                 final day = slot['day'];
-                final start = TimeOfDay(hour: slot['startHour'] ?? 0, minute: slot['startMinute'] ?? 0);
-                final end = TimeOfDay(hour: slot['endHour'] ?? 0, minute: slot['endMinute'] ?? 0);
+                final start = TimeOfDay(
+                  hour: slot['startHour'] ?? 0,
+                  minute: slot['startMinute'] ?? 0,
+                );
+                final end = TimeOfDay(
+                  hour: slot['endHour'] ?? 0,
+                  minute: slot['endMinute'] ?? 0,
+                );
                 return Padding(
                   padding: const EdgeInsets.only(left: 24, bottom: 4),
                   child: Text(
                     '$day: ${start.format(context)} - ${end.format(context)}',
-                    style: const TextStyle(color: AppColors.success, fontWeight: FontWeight.w500, fontSize: 13),
+                    style: const TextStyle(
+                      color: AppColors.success,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 13,
+                    ),
                   ),
                 );
               }).toList(),
@@ -1361,7 +1565,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _saveProfileChanges() async {
     try {
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(widget.userId).get();
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.userId)
+          .get();
       final userData = userDoc.data() as Map<String, dynamic>? ?? {};
 
       Map<String, dynamic> updateData = {
@@ -1371,9 +1578,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       if (_fullNameController.text.trim() != (userData['fullName'] ?? '')) {
         if (userData['lastNameChangeDate'] != null &&
-            DateTime.now().difference((userData['lastNameChangeDate'] as Timestamp).toDate()).inDays < 30) {
+            DateTime.now()
+                    .difference(
+                      (userData['lastNameChangeDate'] as Timestamp).toDate(),
+                    )
+                    .inDays <
+                30) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Name change locked for 30 days.'), backgroundColor: AppColors.error),
+            const SnackBar(
+              content: Text('Name change locked for 30 days.'),
+              backgroundColor: AppColors.error,
+            ),
           );
           return;
         }
@@ -1389,44 +1604,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
 
       if (userData['accountType'] == 'therapist') {
-        updateData['availability'] = _availabilitySlots.map((s) => s.toMap()).toList();
+        updateData['availability'] = _availabilitySlots
+            .map((s) => s.toMap())
+            .toList();
       }
 
-      await FirebaseFirestore.instance.collection('users').doc(widget.userId).update(updateData);
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.userId)
+          .update(updateData);
       setState(() => _isEditing = false);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profile updated!')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Profile updated!')));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 
   Future<void> _uploadProfileImage() async {
     if (_profileImageFile == null) return;
     try {
-      final ref = FirebaseStorage.instance.ref().child('profile_images/${widget.userId}.jpg');
+      final ref = FirebaseStorage.instance.ref().child(
+        'profile_images/${widget.userId}.jpg',
+      );
       await ref.putFile(_profileImageFile!);
       final url = await ref.getDownloadURL();
-      await FirebaseFirestore.instance.collection('users').doc(widget.userId).set(
-            {'profileImage': url},
-            SetOptions(merge: true),
-          );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profile picture updated!')),
-      );
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.userId)
+          .set({'profileImage': url}, SetOptions(merge: true));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Profile picture updated!')));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
     }
   }
 
   Future<void> fixMissingBioFields() async {
     try {
-      await FirebaseFirestore.instance.collection('users').doc(widget.userId).set(
-            {'bio': ''},
-            SetOptions(merge: true),
-          );
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.userId)
+          .set({'bio': ''}, SetOptions(merge: true));
     } catch (_) {}
   }
 
@@ -1436,20 +1662,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         const Padding(
           padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-          child: Text('Edit Availability', style: TextStyle(color: AppColors.primaryLavender, fontWeight: FontWeight.bold)),
+          child: Text(
+            'Edit Availability',
+            style: TextStyle(
+              color: AppColors.primaryLavender,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
         ..._availabilitySlots.asMap().entries.map((entry) {
           int index = entry.key;
           AvailabilitySlot slot = entry.value;
           return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 4.0,
+            ),
             child: Row(
               children: [
                 Expanded(
                   child: DropdownButton<String>(
                     value: slot.day,
                     dropdownColor: AppColors.surface,
-                    style: const TextStyle(color: AppColors.textHigh, fontSize: 13),
+                    style: const TextStyle(
+                      color: AppColors.textHigh,
+                      fontSize: 13,
+                    ),
                     onChanged: (val) {
                       if (val != null) {
                         setState(() {
@@ -1457,22 +1695,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         });
                       }
                     },
-                    items: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-                        .map((d) => DropdownMenuItem(value: d, child: Text(d)))
-                        .toList(),
+                    items:
+                        [
+                              'Monday',
+                              'Tuesday',
+                              'Wednesday',
+                              'Thursday',
+                              'Friday',
+                              'Saturday',
+                              'Sunday',
+                            ]
+                            .map(
+                              (d) => DropdownMenuItem(value: d, child: Text(d)),
+                            )
+                            .toList(),
                   ),
                 ),
                 TextButton(
                   onPressed: () => _selectTime(index, true),
-                  child: Text(slot.startTime.format(context), style: const TextStyle(color: AppColors.secondaryTeal, fontSize: 13)),
+                  child: Text(
+                    slot.startTime.format(context),
+                    style: const TextStyle(
+                      color: AppColors.secondaryTeal,
+                      fontSize: 13,
+                    ),
+                  ),
                 ),
                 const Text('-', style: TextStyle(color: AppColors.textMedium)),
                 TextButton(
                   onPressed: () => _selectTime(index, false),
-                  child: Text(slot.endTime.format(context), style: const TextStyle(color: AppColors.secondaryTeal, fontSize: 13)),
+                  child: Text(
+                    slot.endTime.format(context),
+                    style: const TextStyle(
+                      color: AppColors.secondaryTeal,
+                      fontSize: 13,
+                    ),
+                  ),
                 ),
                 IconButton(
-                  icon: const Icon(Feather.minus_circle, color: AppColors.error, size: 20),
+                  icon: const Icon(
+                    Feather.minus_circle,
+                    color: AppColors.error,
+                    size: 20,
+                  ),
                   onPressed: () => _removeAvailabilitySlot(index),
                 ),
               ],
@@ -1484,7 +1749,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: TextButton.icon(
             onPressed: _addAvailabilitySlot,
             icon: const Icon(Feather.plus, color: AppColors.success, size: 18),
-            label: const Text('Add Slot', style: TextStyle(color: AppColors.success, fontSize: 13)),
+            label: const Text(
+              'Add Slot',
+              style: TextStyle(color: AppColors.success, fontSize: 13),
+            ),
           ),
         ),
       ],
@@ -1493,11 +1761,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _addAvailabilitySlot() {
     setState(() {
-      _availabilitySlots.add(AvailabilitySlot(
-        day: 'Monday',
-        startTime: const TimeOfDay(hour: 9, minute: 0),
-        endTime: const TimeOfDay(hour: 17, minute: 0),
-      ));
+      _availabilitySlots.add(
+        AvailabilitySlot(
+          day: 'Monday',
+          startTime: const TimeOfDay(hour: 9, minute: 0),
+          endTime: const TimeOfDay(hour: 17, minute: 0),
+        ),
+      );
     });
   }
 
@@ -1510,14 +1780,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _selectTime(int index, bool isStart) async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
-      initialTime: isStart ? _availabilitySlots[index].startTime : _availabilitySlots[index].endTime,
+      initialTime: isStart
+          ? _availabilitySlots[index].startTime
+          : _availabilitySlots[index].endTime,
     );
     if (picked != null) {
       setState(() {
         if (isStart) {
-          _availabilitySlots[index] = _availabilitySlots[index].copyWith(startTime: picked);
+          _availabilitySlots[index] = _availabilitySlots[index].copyWith(
+            startTime: picked,
+          );
         } else {
-          _availabilitySlots[index] = _availabilitySlots[index].copyWith(endTime: picked);
+          _availabilitySlots[index] = _availabilitySlots[index].copyWith(
+            endTime: picked,
+          );
         }
       });
     }
@@ -1548,7 +1824,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: const Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Feather.plus_circle, size: 40, color: AppColors.primaryLavender),
+              Icon(
+                Feather.plus_circle,
+                size: 40,
+                color: AppColors.primaryLavender,
+              ),
               SizedBox(height: 8),
               Text(
                 'Create Post',
@@ -1558,7 +1838,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   fontWeight: FontWeight.bold,
                 ),
                 textAlign: TextAlign.center,
-              )
+              ),
             ],
           ),
         ),
@@ -1571,7 +1851,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text('Profile', style: TextStyle(color: AppColors.textHigh)),
+        title: const Text(
+          'Profile',
+          style: TextStyle(color: AppColors.textHigh),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: _isOwnProfile
@@ -1593,10 +1876,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                   child: IconButton(
-                    icon: const Icon(Feather.bar_chart_2, color: AppColors.primaryLavender, size: 20),
+                    icon: const Icon(
+                      Feather.bar_chart_2,
+                      color: AppColors.primaryLavender,
+                      size: 20,
+                    ),
                     onPressed: () => Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => AnalyticsDashboardScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => AnalyticsDashboardScreen(),
+                      ),
                     ),
                   ),
                 ),
@@ -1618,7 +1907,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                   child: IconButton(
-                    icon: const Icon(Feather.settings, color: AppColors.primaryLavender, size: 20),
+                    icon: const Icon(
+                      Feather.settings,
+                      color: AppColors.primaryLavender,
+                      size: 20,
+                    ),
                     onPressed: () => Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => SettingsScreen()),
@@ -1630,11 +1923,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
             : null,
       ),
       body: FutureBuilder<DocumentSnapshot>(
-        future: FirebaseFirestore.instance.collection('users').doc(widget.userId).get(),
+        future: FirebaseFirestore.instance
+            .collection('users')
+            .doc(widget.userId)
+            .get(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting)
-            return const Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
-          if (!snapshot.hasData) return const Center(child: Text('User not found'));
+            return const Center(
+              child: CircularProgressIndicator(
+                color: AppColors.primaryLavender,
+              ),
+            );
+          if (!snapshot.hasData)
+            return const Center(child: Text('User not found'));
 
           var user = snapshot.data!;
           var userData = user.data() as Map<String, dynamic>? ?? {};
@@ -1644,7 +1945,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _bioController.text = userData['bio'] ?? '';
             if (userData['availability'] != null) {
               _availabilitySlots = (userData['availability'] as List)
-                  .map((slot) => AvailabilitySlot.fromMap(Map<String, dynamic>.from(slot)))
+                  .map(
+                    (slot) => AvailabilitySlot.fromMap(
+                      Map<String, dynamic>.from(slot),
+                    ),
+                  )
                   .toList();
             }
           }
@@ -1661,44 +1966,93 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           _buildProfileHeader(user),
                           const SizedBox(height: 4),
-// Removed ProfileStatsWidget from here to move it between @ and bio
 
-
-
+                          // Removed ProfileStatsWidget from here to move it between @ and bio
                           if (!_isOwnProfile) const SizedBox(height: 16),
                           if (!_isOwnProfile)
                             ElevatedButton(
                               onPressed: () async {
                                 List f = List.from(userData['followers'] ?? []);
-                                if (f.contains(FirebaseAuth.instance.currentUser!.uid)) {
-                                  await FirebaseFirestore.instance.collection('users').doc(widget.userId).update({
-                                    'followers': FieldValue.arrayRemove([FirebaseAuth.instance.currentUser!.uid])
-                                  });
-                                  await FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid).update({
-                                    'following': FieldValue.arrayRemove([widget.userId])
-                                  });
+                                if (f.contains(
+                                  FirebaseAuth.instance.currentUser!.uid,
+                                )) {
+                                  await FirebaseFirestore.instance
+                                      .collection('users')
+                                      .doc(widget.userId)
+                                      .update({
+                                        'followers': FieldValue.arrayRemove([
+                                          FirebaseAuth
+                                              .instance
+                                              .currentUser!
+                                              .uid,
+                                        ]),
+                                      });
+                                  await FirebaseFirestore.instance
+                                      .collection('users')
+                                      .doc(
+                                        FirebaseAuth.instance.currentUser!.uid,
+                                      )
+                                      .update({
+                                        'following': FieldValue.arrayRemove([
+                                          widget.userId,
+                                        ]),
+                                      });
                                 } else {
-                                  await FirebaseFirestore.instance.collection('users').doc(widget.userId).update({
-                                    'followers': FieldValue.arrayUnion([FirebaseAuth.instance.currentUser!.uid])
-                                  });
-                                  await FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid).update({
-                                    'following': FieldValue.arrayUnion([widget.userId])
-                                  });
-                                  await FirebaseFirestore.instance.collection('notifications').add({
-                                    'type': 'follow',
-                                    'fromUserId': FirebaseAuth.instance.currentUser!.uid,
-                                    'toUserId': widget.userId,
-                                    'timestamp': DateTime.now(),
-                                    'read': false,
-                                  });
+                                  await FirebaseFirestore.instance
+                                      .collection('users')
+                                      .doc(widget.userId)
+                                      .update({
+                                        'followers': FieldValue.arrayUnion([
+                                          FirebaseAuth
+                                              .instance
+                                              .currentUser!
+                                              .uid,
+                                        ]),
+                                      });
+                                  await FirebaseFirestore.instance
+                                      .collection('users')
+                                      .doc(
+                                        FirebaseAuth.instance.currentUser!.uid,
+                                      )
+                                      .update({
+                                        'following': FieldValue.arrayUnion([
+                                          widget.userId,
+                                        ]),
+                                      });
+                                  // Send notification using service
+                                  final currentUser =
+                                      FirebaseAuth.instance.currentUser;
+                                  if (currentUser != null) {
+                                    final currentUserDoc =
+                                        await FirebaseFirestore.instance
+                                            .collection('users')
+                                            .doc(currentUser.uid)
+                                            .get();
+                                    final followerUsername =
+                                        currentUserDoc.data()?['username'] ??
+                                        'Someone';
+                                    await NotificationService()
+                                        .sendFollowNotification(
+                                          followedUserId: widget.userId,
+                                          followerUsername: followerUsername,
+                                        );
+                                  }
                                 }
                               },
-                              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryLavender),
-                              child: Text(
-                                List.from(userData['followers'] ?? []).contains(FirebaseAuth.instance.currentUser!.uid) ? 'Unfollow' : 'Follow',
-                                style: const TextStyle(color: AppColors.backgroundDeep),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primaryLavender,
                               ),
-                            )
+                              child: Text(
+                                List.from(userData['followers'] ?? []).contains(
+                                      FirebaseAuth.instance.currentUser!.uid,
+                                    )
+                                    ? 'Unfollow'
+                                    : 'Follow',
+                                style: const TextStyle(
+                                  color: AppColors.backgroundDeep,
+                                ),
+                              ),
+                            ),
                         ],
                       ),
                     ),
@@ -1724,11 +2078,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
               },
               body: TabBarView(
                 children: [
-                  PostGridWithPreview(userId: widget.userId, isOwnProfile: _isOwnProfile, tabType: ProfileTabType.activity, createPostButton: _isOwnProfile ? _buildCreatePostButton() : null),
-                  PostGridWithPreview(userId: widget.userId, isOwnProfile: _isOwnProfile, tabType: ProfileTabType.saved),
-                  PostGridWithPreview(userId: widget.userId, isOwnProfile: _isOwnProfile, tabType: ProfileTabType.liked),
-                  PostGridWithPreview(userId: widget.userId, isOwnProfile: _isOwnProfile, tabType: ProfileTabType.polls),
-                  PostGridWithPreview(userId: widget.userId, isOwnProfile: _isOwnProfile, tabType: ProfileTabType.petitions),
+                  PostGridWithPreview(
+                    userId: widget.userId,
+                    isOwnProfile: _isOwnProfile,
+                    tabType: ProfileTabType.activity,
+                    createPostButton: _isOwnProfile
+                        ? _buildCreatePostButton()
+                        : null,
+                  ),
+                  PostGridWithPreview(
+                    userId: widget.userId,
+                    isOwnProfile: _isOwnProfile,
+                    tabType: ProfileTabType.saved,
+                  ),
+                  PostGridWithPreview(
+                    userId: widget.userId,
+                    isOwnProfile: _isOwnProfile,
+                    tabType: ProfileTabType.liked,
+                  ),
+                  PostGridWithPreview(
+                    userId: widget.userId,
+                    isOwnProfile: _isOwnProfile,
+                    tabType: ProfileTabType.polls,
+                  ),
+                  PostGridWithPreview(
+                    userId: widget.userId,
+                    isOwnProfile: _isOwnProfile,
+                    tabType: ProfileTabType.petitions,
+                  ),
                 ],
               ),
             ),
@@ -1758,9 +2135,16 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
   }
 
   void _checkIfFollowing() async {
-    final doc = await FirebaseFirestore.instance.collection('users').doc(widget.userId).get();
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.userId)
+        .get();
     if (doc.exists) {
-      setState(() => _isFollowing = List<String>.from(doc.data()?['followers'] ?? []).contains(FirebaseAuth.instance.currentUser!.uid));
+      setState(
+        () => _isFollowing = List<String>.from(
+          doc.data()?['followers'] ?? [],
+        ).contains(FirebaseAuth.instance.currentUser!.uid),
+      );
     }
   }
 
@@ -1769,15 +2153,25 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text('Profile', style: TextStyle(color: AppColors.textHigh)),
+        title: const Text(
+          'Profile',
+          style: TextStyle(color: AppColors.textHigh),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
       body: FutureBuilder<DocumentSnapshot>(
-        future: FirebaseFirestore.instance.collection('users').doc(widget.userId).get(),
+        future: FirebaseFirestore.instance
+            .collection('users')
+            .doc(widget.userId)
+            .get(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting)
-            return const Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
+            return const Center(
+              child: CircularProgressIndicator(
+                color: AppColors.primaryLavender,
+              ),
+            );
 
           final user = snapshot.data?.data() as Map<String, dynamic>? ?? {};
 
@@ -1799,14 +2193,22 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
                           CircleAvatar(
                             radius: 50,
                             backgroundColor: AppColors.elevation,
-                            backgroundImage: (user['profileImage'] ?? '').isNotEmpty
-                                ? CachedNetworkImageProvider(user['profileImage'])
-                                : const AssetImage('assets/default_avatar.png') as ImageProvider,
+                            backgroundImage:
+                                (user['profileImage'] ?? '').isNotEmpty
+                                ? CachedNetworkImageProvider(
+                                    user['profileImage'],
+                                  )
+                                : const AssetImage('assets/default_avatar.png')
+                                      as ImageProvider,
                           ),
                           const SizedBox(height: 8),
                           Text(
                             user['fullName'] ?? 'No Name',
-                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textHigh),
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textHigh,
+                            ),
                           ),
                           const SizedBox(height: 2),
                           Text(
@@ -1816,16 +2218,27 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
                           if (showPersonality && personalityType != null)
                             Container(
                               margin: const EdgeInsets.symmetric(vertical: 6),
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppColors.elevation,
                                 borderRadius: BorderRadius.circular(15),
-                                border: Border.all(color: AppColors.secondaryTeal.withOpacity(0.5)),
+                                border: Border.all(
+                                  color: AppColors.secondaryTeal.withOpacity(
+                                    0.5,
+                                  ),
+                                ),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Feather.zap, size: 12, color: AppColors.secondaryTeal),
+                                  Icon(
+                                    Feather.zap,
+                                    size: 12,
+                                    color: AppColors.secondaryTeal,
+                                  ),
                                   const SizedBox(width: 6),
                                   Text(
                                     "$personalityType - $personalityTitle",
@@ -1838,43 +2251,89 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
                                 ],
                               ),
                             ),
-                          ProfileStatsWidget(userId: widget.userId, isOwnProfile: false),
+                          ProfileStatsWidget(
+                            userId: widget.userId,
+                            isOwnProfile: false,
+                          ),
                           Text(
                             user['bio'] ?? 'No bio yet',
                             textAlign: TextAlign.center,
                             style: const TextStyle(color: AppColors.textMedium),
                           ),
-// ProfileStatsWidget moved up
+                          // ProfileStatsWidget moved up
                           const SizedBox(height: 16),
                           ElevatedButton(
                             onPressed: () async {
                               if (_isFollowing) {
-                                await FirebaseFirestore.instance.collection('users').doc(widget.userId).update({
-                                  'followers': FieldValue.arrayRemove([FirebaseAuth.instance.currentUser!.uid])
-                                });
-                                await FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid).update({
-                                  'following': FieldValue.arrayRemove([widget.userId])
-                                });
+                                await FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(widget.userId)
+                                    .update({
+                                      'followers': FieldValue.arrayRemove([
+                                        FirebaseAuth.instance.currentUser!.uid,
+                                      ]),
+                                    });
+                                await FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(FirebaseAuth.instance.currentUser!.uid)
+                                    .update({
+                                      'following': FieldValue.arrayRemove([
+                                        widget.userId,
+                                      ]),
+                                    });
                               } else {
-                                await FirebaseFirestore.instance.collection('users').doc(widget.userId).update({
-                                  'followers': FieldValue.arrayUnion([FirebaseAuth.instance.currentUser!.uid])
-                                });
-                                await FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid).update({
-                                  'following': FieldValue.arrayUnion([widget.userId])
-                                });
+                                await FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(widget.userId)
+                                    .update({
+                                      'followers': FieldValue.arrayUnion([
+                                        FirebaseAuth.instance.currentUser!.uid,
+                                      ]),
+                                    });
+                                await FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(FirebaseAuth.instance.currentUser!.uid)
+                                    .update({
+                                      'following': FieldValue.arrayUnion([
+                                        widget.userId,
+                                      ]),
+                                    });
+
+                                // Send notification using service
+                                final currentUser =
+                                    FirebaseAuth.instance.currentUser;
+                                if (currentUser != null) {
+                                  final currentUserDoc = await FirebaseFirestore
+                                      .instance
+                                      .collection('users')
+                                      .doc(currentUser.uid)
+                                      .get();
+                                  final followerUsername =
+                                      currentUserDoc.data()?['username'] ??
+                                      'Someone';
+                                  await NotificationService()
+                                      .sendFollowNotification(
+                                        followedUserId: widget.userId,
+                                        followerUsername: followerUsername,
+                                      );
+                                }
                               }
                               setState(() => _isFollowing = !_isFollowing);
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: _isFollowing ? AppColors.elevation : AppColors.secondaryTeal,
+                              backgroundColor: _isFollowing
+                                  ? AppColors.elevation
+                                  : AppColors.secondaryTeal,
                             ),
                             child: Text(
                               _isFollowing ? 'Unfollow' : 'Follow',
                               style: TextStyle(
-                                color: _isFollowing ? AppColors.textHigh : AppColors.backgroundDeep,
+                                color: _isFollowing
+                                    ? AppColors.textHigh
+                                    : AppColors.backgroundDeep,
                               ),
                             ),
-                          )
+                          ),
                         ],
                       ),
                     ),
@@ -1900,11 +2359,31 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
               },
               body: TabBarView(
                 children: [
-                  PostGridWithPreview(userId: widget.userId, isOwnProfile: false, tabType: ProfileTabType.activity),
-                  PostGridWithPreview(userId: widget.userId, isOwnProfile: false, tabType: ProfileTabType.saved),
-                  PostGridWithPreview(userId: widget.userId, isOwnProfile: false, tabType: ProfileTabType.liked),
-                  PostGridWithPreview(userId: widget.userId, isOwnProfile: false, tabType: ProfileTabType.polls),
-                  PostGridWithPreview(userId: widget.userId, isOwnProfile: false, tabType: ProfileTabType.petitions),
+                  PostGridWithPreview(
+                    userId: widget.userId,
+                    isOwnProfile: false,
+                    tabType: ProfileTabType.activity,
+                  ),
+                  PostGridWithPreview(
+                    userId: widget.userId,
+                    isOwnProfile: false,
+                    tabType: ProfileTabType.saved,
+                  ),
+                  PostGridWithPreview(
+                    userId: widget.userId,
+                    isOwnProfile: false,
+                    tabType: ProfileTabType.liked,
+                  ),
+                  PostGridWithPreview(
+                    userId: widget.userId,
+                    isOwnProfile: false,
+                    tabType: ProfileTabType.polls,
+                  ),
+                  PostGridWithPreview(
+                    userId: widget.userId,
+                    isOwnProfile: false,
+                    tabType: ProfileTabType.petitions,
+                  ),
                 ],
               ),
             ),
@@ -1931,23 +2410,39 @@ class _FollowListScreenState extends State<FollowListScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: Text(widget.showFollowers ? 'Followers' : 'Following', style: const TextStyle(color: AppColors.textHigh)),
+        title: Text(
+          widget.showFollowers ? 'Followers' : 'Following',
+          style: const TextStyle(color: AppColors.textHigh),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
       body: StreamBuilder<DocumentSnapshot>(
-        stream: FirebaseFirestore.instance.collection('users').doc(widget.userId).snapshots(),
+        stream: FirebaseFirestore.instance
+            .collection('users')
+            .doc(widget.userId)
+            .snapshots(),
         builder: (context, userSnapshot) {
           if (userSnapshot.connectionState == ConnectionState.waiting)
-            return const Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
+            return const Center(
+              child: CircularProgressIndicator(
+                color: AppColors.primaryLavender,
+              ),
+            );
 
           final u = userSnapshot.data?.data() as Map<String, dynamic>? ?? {};
-          final ids = List<String>.from(widget.showFollowers ? (u['followers'] ?? []) : (u['following'] ?? []));
+          final ids = List<String>.from(
+            widget.showFollowers
+                ? (u['followers'] ?? [])
+                : (u['following'] ?? []),
+          );
 
           if (ids.isEmpty)
             return Center(
               child: Text(
-                widget.showFollowers ? 'No followers yet' : 'Not following anyone',
+                widget.showFollowers
+                    ? 'No followers yet'
+                    : 'Not following anyone',
                 style: const TextStyle(color: AppColors.textMedium),
               ),
             );
@@ -1955,7 +2450,10 @@ class _FollowListScreenState extends State<FollowListScreen> {
           return ListView.builder(
             itemCount: ids.length,
             itemBuilder: (context, index) => FutureBuilder<DocumentSnapshot>(
-              future: FirebaseFirestore.instance.collection('users').doc(ids[index]).get(),
+              future: FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(ids[index])
+                  .get(),
               builder: (context, snap) {
                 final user = snap.data?.data() as Map<String, dynamic>? ?? {};
                 return ListTile(
@@ -1963,14 +2461,22 @@ class _FollowListScreenState extends State<FollowListScreen> {
                     backgroundColor: AppColors.elevation,
                     backgroundImage: (user['profileImage'] ?? '').isNotEmpty
                         ? CachedNetworkImageProvider(user['profileImage'])
-                        : const AssetImage('assets/default_avatar.png') as ImageProvider,
+                        : const AssetImage('assets/default_avatar.png')
+                              as ImageProvider,
                   ),
-                  title: Text(user['username'] ?? 'Loading...', style: const TextStyle(color: AppColors.textHigh)),
-                  subtitle: Text(user['fullName'] ?? '', style: const TextStyle(color: AppColors.textMedium)),
+                  title: Text(
+                    user['username'] ?? 'Loading...',
+                    style: const TextStyle(color: AppColors.textHigh),
+                  ),
+                  subtitle: Text(
+                    user['fullName'] ?? '',
+                    style: const TextStyle(color: AppColors.textMedium),
+                  ),
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ids[index] == FirebaseAuth.instance.currentUser!.uid
+                      builder: (context) =>
+                          ids[index] == FirebaseAuth.instance.currentUser!.uid
                           ? ProfileScreen(userId: ids[index])
                           : OtherUserProfileScreen(userId: ids[index]),
                     ),
@@ -1998,12 +2504,22 @@ class ProfileStatsWidget extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _buildStat("posts", FirebaseFirestore.instance.collection('posts').where('userId', isEqualTo: userId).snapshots().map((s) => s.docs.length)),
+          _buildStat(
+            "posts",
+            FirebaseFirestore.instance
+                .collection('posts')
+                .where('userId', isEqualTo: userId)
+                .snapshots()
+                .map((s) => s.docs.length),
+          ),
           const SizedBox(width: 16),
           GestureDetector(
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => FollowListScreen(userId: userId, showFollowers: true)),
+              MaterialPageRoute(
+                builder: (context) =>
+                    FollowListScreen(userId: userId, showFollowers: true),
+              ),
             ),
             child: _buildStatFuture("followers", userId, true),
           ),
@@ -2011,7 +2527,10 @@ class ProfileStatsWidget extends StatelessWidget {
           GestureDetector(
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => FollowListScreen(userId: userId, showFollowers: false)),
+              MaterialPageRoute(
+                builder: (context) =>
+                    FollowListScreen(userId: userId, showFollowers: false),
+              ),
             ),
             child: _buildStatFuture("following", userId, false),
           ),
@@ -2023,58 +2542,92 @@ class ProfileStatsWidget extends StatelessWidget {
   }
 
   Widget _buildStat(String label, Stream<int> stream) => StreamBuilder<int>(
-        stream: stream,
-        builder: (context, snapshot) => Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              (snapshot.data ?? 0).toString(),
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textHigh),
-            ),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.normal, color: AppColors.textMedium),
-            ),
-          ],
+    stream: stream,
+    builder: (context, snapshot) => Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          (snapshot.data ?? 0).toString(),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+            color: AppColors.textHigh,
+          ),
         ),
-      );
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.normal,
+            color: AppColors.textMedium,
+          ),
+        ),
+      ],
+    ),
+  );
 
-  Widget _buildStatFuture(String label, String userId, bool f) => FutureBuilder<DocumentSnapshot>(
-        future: FirebaseFirestore.instance.collection('users').doc(userId).get(),
-        builder: (context, snapshot) => Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              (List.from((snapshot.data?.data() as Map?)?[f ? 'followers' : 'following'] ?? [])).length.toString(),
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textHigh),
-            ),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.normal, color: AppColors.textMedium),
-            ),
-          ],
+  Widget _buildStatFuture(
+    String label,
+    String userId,
+    bool f,
+  ) => FutureBuilder<DocumentSnapshot>(
+    future: FirebaseFirestore.instance.collection('users').doc(userId).get(),
+    builder: (context, snapshot) => Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          (List.from(
+            (snapshot.data?.data() as Map?)?[f ? 'followers' : 'following'] ??
+                [],
+          )).length.toString(),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+            color: AppColors.textHigh,
+          ),
         ),
-      );
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.normal,
+            color: AppColors.textMedium,
+          ),
+        ),
+      ],
+    ),
+  );
 
   Widget _buildEmbersStat(String userId) => StreamBuilder<DocumentSnapshot>(
-        stream: FirebaseFirestore.instance.collection('users').doc(userId).snapshots(),
-        builder: (context, snapshot) => Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              ((snapshot.data?.data() as Map?)?['embers'] ?? 0).toString(),
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textHigh),
-            ),
-            const SizedBox(width: 4),
-            Text(
-              "embers",
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.normal, color: AppColors.textMedium),
-            ),
-          ],
+    stream: FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .snapshots(),
+    builder: (context, snapshot) => Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          ((snapshot.data?.data() as Map?)?['embers'] ?? 0).toString(),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+            color: AppColors.textHigh,
+          ),
         ),
-      );
+        const SizedBox(width: 4),
+        Text(
+          "embers",
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.normal,
+            color: AppColors.textMedium,
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
@@ -2088,11 +2641,12 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => _tabBar.preferredSize.height;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-      color: AppColors.surface.withOpacity(0.8),
-      child: _tabBar,
-    );
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return Container(color: AppColors.surface.withOpacity(0.8), child: _tabBar);
   }
 
   @override

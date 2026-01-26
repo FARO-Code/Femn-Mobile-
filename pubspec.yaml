@@ -1,7 +1,7 @@
 name: femn
 description: "A new Flutter project."
 publish_to: 'none'
-version: 4.0.2+4
+version: 5.0.5+5
 
 environment:
   sdk: ^3.8.1
@@ -64,6 +64,11 @@ dependencies:
   printing: ^5.14.2
   local_auth: ^2.3.0
   firebase_app_check: ^0.4.1+4
+  image: ^4.5.4
+  http: ^1.6.0
+  path: ^1.9.1
+  firebase_messaging: ^16.1.1
+  flutter_local_notifications: ^19.5.0
 
 dev_dependencies:
   flutter_test:
@@ -72,14 +77,18 @@ dev_dependencies:
   flutter_launcher_icons: ^0.13.1
   flutter_native_splash: ^2.4.0
 
-flutter_icons:
-  android: true
+flutter_launcher_icons:
+  android: "launcher_icon"
   ios: true
-  image_path: "assets/femnlogo.png"
+  image_path: "assets/ic_launcher_foreground.png" # Fallback for older devices
+  min_sdk_android: 21 
+  adaptive_icon_background: "#AD80BF" # Your purple color
+  adaptive_icon_foreground: "assets/ic_launcher_foreground.png"
+  adaptive_icon_foreground_inset: 25 # Shrinks logo to prevent cutting off
 
 flutter_native_splash:
-  color: "#ffe1e0"              # background color
-  image: assets/femnlogo.png        # splash logo
+  color: "#AD80BF"                # Updated to your Purple hex
+  image: assets/ic_launcher_foreground.png  # Updated to match your App Icon
   android: true
   ios: true
   web: false
@@ -88,6 +97,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/
+    - assets/data/
     - assets/femnlogotxt.png
     - assets/femnlogo.png
   fonts:

@@ -1,17 +1,12 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:femn/customization/colors.dart'; 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
-
-// --- CONFIGURATION ---
-// ⚠️ REPLACE WITH YOUR ACTUAL API KEY
-const String _kGeminiApiKey = "AIzaSyBM7gJsKazBd2gGXKuHdfJM1iATDXi8cfM"; 
+import 'twin_finder_engine.dart';
 
 class TwinFinderScreen extends StatefulWidget {
   @override
@@ -19,237 +14,172 @@ class TwinFinderScreen extends StatefulWidget {
 }
 
 class _TwinFinderScreenState extends State<TwinFinderScreen> {
-  // AI Model
-  late GenerativeModel _model;
+  // Logic Engine
+  final TwinFinderEngine _engine = TwinFinderEngine();
   
   // State
-  List<Map<String, dynamic>> _history = []; // Stores Q&A history
-  Map<String, dynamic>? _currentQuestion;
-  
-  // Prefetch Buffer
-  Map<String, dynamic>? _prefetchedData; // Can be a question OR a result
-  bool _isPrefetching = false;
-
-  bool _isLoading = true; // For the very first load
+  bool _isLoading = true;
   bool _isFinished = false;
-  bool _checkingExisting = true; // New: for initial Firebase check
+  bool _isCalculating = false; // "Fake" loading phase
+  bool _checkingExisting = true; 
 
   // Result Data
   String? _resultArchetype;
   String? _resultTitle;
   String? _resultDescription;
-  
-  // Progress Management
-  int _questionCount = 0;
-  final int _minQuestions = 10;
-  final int _maxQuestions = 25;
+  int? _resultColor; // Stored as int from hex string
+
+  // Progress for "Calculating" screen
+  double _calcProgress = 0.0;
+  String _calcStatus = "Analyzing Cognitive Stack...";
 
   @override
   void initState() {
     super.initState();
-    _model = GenerativeModel(model: 'gemini-2.5-flash', apiKey: _kGeminiApiKey);
     _checkExistingResult();
   }
 
-  // --- 1. CHECK FOR EXISTING RESULT ---
   Future<void> _checkExistingResult() async {
     final uid = FirebaseAuth.instance.currentUser!.uid;
     try {
       final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
       if (doc.exists && doc.data()!.containsKey('personalityType')) {
         final data = doc.data()!;
-        setState(() {
+        _loadResult(data);
+      } else {
+        await _startSession();
+      }
+    } catch (e) {
+      await _startSession();
+    }
+  }
+
+  void _loadResult(Map<String, dynamic> data) {
+      setState(() {
           _resultArchetype = data['personalityType'];
           _resultTitle = data['personalityTitle'];
           _resultDescription = data['personalityDesc'];
+          // Fallback legacy calculation for color if missing
+          if (data['personalityColor'] != null) {
+              _resultColor = data['personalityColor'];
+          } else {
+             _resultColor = int.parse("0xFF805da1"); // Default Purple
+          }
+
           _isFinished = true;
           _checkingExisting = false;
           _isLoading = false;
         });
-      } else {
-        // No result found → start fresh test
-        setState(() => _checkingExisting = false);
-        _startSession();
-      }
-    } catch (e) {
-      // On error (e.g., network), just start the test
-      setState(() => _checkingExisting = false);
-      _startSession();
-    }
   }
 
-  // --- 2. AI LOGIC ---
   Future<void> _startSession() async {
-    // 1. Fetch the very first question (Blocking load)
-    await _fetchDataFromAI(isPrefetch: false);
+    setState(() => _checkingExisting = false);
+    await _engine.loadQuestions();
+    _engine.startSession();
+    setState(() => _isLoading = false);
   }
 
-  /// The core function to talk to Gemini
-  /// [isPrefetch]: If true, saves to buffer. If false, updates UI immediately.
-  Future<void> _fetchDataFromAI({required bool isPrefetch}) async {
-    if (isPrefetch) {
-      _isPrefetching = true;
-    } else {
-      setState(() => _isLoading = true);
-    }
-
-    try {
-      final historyJson = jsonEncode(_history);
-      
-      final prompt = '''
-      Act as an expert psychologist performing a personality assessment (Jungian Cognitive Functions).
-      
-      Current Session History (JSON): $historyJson
-      Question Count: $_questionCount
-      
-      RULES:
-      1. Analyze the history to determine the user's likely cognitive stack.
-      2. If Question Count >= $_minQuestions AND you are >90% certain of the type, or if Question Count >= $_maxQuestions, output the RESULT JSON.
-      3. Otherwise, generate the next best question to narrow down the possibilities.
-      
-      FORMAT 1 (Next Question):
-      {
-        "type": "question",
-        "text": "The scenario text...",
-        "optionA": "The Option A text (e.g. Focus on facts)",
-        "optionB": "The Option B text (e.g. Focus on concepts)",
-        "trait": "The specific axis being tested (e.g. Si/Ni)"
-      }
-
-      FORMAT 2 (Result):
-      {
-        "type": "result",
-        "archetype": "The 4 Letter Code (e.g. INFJ)",
-        "title": "The Archetype Name (e.g. The Advocate)",
-        "description": "A 2-sentence description of their personality."
-      }
-      
-      RETURN ONLY RAW JSON. NO MARKDOWN.
-      ''';
-
-      final content = [Content.text(prompt)];
-      final response = await _model.generateContent(content);
-      
-      String? cleanJson = response.text?.replaceAll('```json', '').replaceAll('```', '').trim();
-      
-      if (cleanJson != null) {
-        final data = jsonDecode(cleanJson);
-        
-        if (isPrefetch) {
-          _prefetchedData = data;
-          _isPrefetching = false;
-          print("✅ Background Prefetch Complete");
-        } else {
-          _processIncomingData(data);
-        }
-      }
-    } catch (e) {
-      print("AI Error: $e");
-      if (isPrefetch) _isPrefetching = false;
-      // In production, consider showing error UI or retry
-    }
-  }
-
-  void _processIncomingData(Map<String, dynamic> data) {
-    if (data['type'] == 'result') {
-      _finishTest(data);
-    } else {
-      setState(() {
-        _currentQuestion = data;
-        _isLoading = false;
-      });
-      // 🚀 Prefetch next item as soon as current question is displayed
-      _fetchDataFromAI(isPrefetch: true); 
-    }
-  }
-
-  void _handleAnswer(int value) {
-    if (_currentQuestion == null) return;
-
-    String answerText = "";
-    if (value == 0) answerText = "Strongly preferred Option A: ${_currentQuestion!['optionA']}";
-    if (value == 1) answerText = "Slightly preferred Option A";
-    if (value == 2) answerText = "Slightly preferred Option B";
-    if (value == 3) answerText = "Strongly preferred Option B: ${_currentQuestion!['optionB']}";
-
-    _history.add({
-      "question": _currentQuestion!['text'],
-      "trait_tested": _currentQuestion!['trait'],
-      "user_choice_value": value, 
-      "interpretation": answerText
+  void _handleAnswer(int value) async {
+    _engine.setAnswer(value);
+    
+    // Auto-advance logic
+    Future.delayed(Duration(milliseconds: 250), () {
+        _goNext();
     });
-
-    _questionCount++;
-
-    Future.delayed(const Duration(milliseconds: 300), () {
-      _loadNextFromBuffer();
-    });
+    setState(() {});
   }
 
-  Future<void> _loadNextFromBuffer() async {
-    if (_prefetchedData != null) {
-      final nextData = _prefetchedData!;
-      _prefetchedData = null;
-      _processIncomingData(nextData);
-    } else {
-      setState(() => _isLoading = true);
-      if (!_isPrefetching) {
-        await _fetchDataFromAI(isPrefetch: false);
+  void _goNext() {
+      // If we are at the end...
+      if (_engine.currentIndex >= _engine.totalQuestions - 1) {
+          // Check if answered?
+          if (_engine.currentAnswer != null) {
+              _startCalculationSequence();
+          }
       } else {
-        await _fetchDataFromAI(isPrefetch: false);
+          _engine.nextQuestion();
+          setState(() {});
       }
-    }
+  }
+
+  void _goBack() {
+      _engine.previousQuestion();
+      setState(() {});
+  }
+
+  // --- CALCULATING SEQUENCE ---
+  void _startCalculationSequence() async {
+      setState(() {
+          _isCalculating = true;
+      });
+
+      // Simulate steps
+      final steps = [
+          "Analyzing Cognitive Functions...",
+          "Mapping Dominant Traits...",
+          "Resolving Paradoxes...",
+          "Finalizing Archetype..."
+      ];
+
+      for (int i = 0; i < steps.length; i++) {
+          await Future.delayed(Duration(milliseconds: 800));
+          if (!mounted) return;
+          setState(() {
+              _calcStatus = steps[i];
+              _calcProgress = (i + 1) / steps.length;
+          });
+      }
+
+       await Future.delayed(Duration(milliseconds: 500));
+       if (!mounted) return;
+
+       final result = _engine.calculateResult();
+       _finishTest(result);
   }
 
   Future<void> _finishTest(Map<String, dynamic> resultData) async {
     final uid = FirebaseAuth.instance.currentUser!.uid;
     
-    // Save to Firestore with default visibility set to true
+    // Parse Color
+    int colorInt = int.parse(resultData['color']);
+
+    // Save to Firestore
     await FirebaseFirestore.instance.collection('users').doc(uid).update({
       'personalityType': resultData['archetype'],
       'personalityTitle': resultData['title'],
       'personalityDesc': resultData['description'],
+      'personalityColor': colorInt,
       'personalityTestDate': DateTime.now(),
-      'showPersonality': true, // Default to visible
+      'showPersonality': true, 
     });
 
     setState(() {
+      _isCalculating = false;
       _isFinished = true;
       _resultArchetype = resultData['archetype'];
       _resultTitle = resultData['title'];
       _resultDescription = resultData['description'];
-      _isLoading = false;
+      _resultColor = colorInt;
     });
   }
 
-  // --- RETAKE LOGIC ---
   Future<void> _retakeTest() async {
     setState(() {
       _isLoading = true;
       _isFinished = false;
-      _history.clear();
-      _questionCount = 0;
-      _prefetchedData = null;
-      _currentQuestion = null;
     });
-
-    // Clear previous result from Firestore
     final uid = FirebaseAuth.instance.currentUser!.uid;
     await FirebaseFirestore.instance.collection('users').doc(uid).update({
       'personalityType': FieldValue.delete(),
-      'personalityTitle': FieldValue.delete(),
-      'personalityDesc': FieldValue.delete(),
-      'showPersonality': FieldValue.delete(),
     });
-
-    // Start fresh
-    await _startSession();
+    _engine.startSession();
+    setState(() => _isLoading = false);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.transparent, // Assumes background from parent or stack
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -264,96 +194,203 @@ class _TwinFinderScreenState extends State<TwinFinderScreen> {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: _checkingExisting
-            ? Center(child: CircularProgressIndicator(color: AppColors.primaryLavender))
-            : (_isFinished ? _buildResultView() : _buildQuizView()),
+        child: _buildBody(),
       ),
     );
   }
 
-  Widget _buildQuizView() {
-    if (_isLoading) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(color: AppColors.primaryLavender),
-            SizedBox(height: 16),
-            Text(
-              "Syncing...", 
-              style: TextStyle(color: AppColors.textMedium, fontStyle: FontStyle.italic),
-            ).animate(onPlay: (c) => c.repeat()).shimmer(duration: 1500.ms),
-          ],
-        ),
-      );
-    }
+  Widget _buildBody() {
+      if (_checkingExisting) {
+          return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
+      }
+      if (_isCalculating) {
+          return _buildCalculatingView();
+      }
+      if (_isFinished) {
+          return _buildResultView();
+      }
+      return _buildQuizView();
+  }
 
-    return Padding(
-      key: ValueKey(_questionCount), 
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-      child: Column(
-        children: [
-          SizedBox(height: 20),
-          LinearPercentIndicator(
-            lineHeight: 6.0,
-            percent: (_questionCount / _maxQuestions).clamp(0.0, 1.0),
-            backgroundColor: AppColors.elevation,
-            progressColor: AppColors.secondaryTeal,
-            barRadius: Radius.circular(10),
-            animation: true,
-            animateFromLastPercent: true,
-          ),
-          SizedBox(height: 10),
-          Text(
-            "Question ${_questionCount + 1}",
-            style: TextStyle(color: AppColors.textDisabled, fontSize: 12),
-          ),
-          Spacer(),
-          Container(
-            padding: EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 15,
-                  offset: Offset(0, 5),
-                )
-              ],
-              border: Border.all(color: AppColors.elevation),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+  // --- LOADING VIEW ---
+  Widget _buildCalculatingView() {
+      return Center(
+          child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  _currentQuestion!['text'],
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: AppColors.textHigh,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    height: 1.3,
+                  Stack(
+                      alignment: Alignment.center,
+                      children: [
+                          SizedBox(
+                              width: 100,
+                              height: 100,
+                              child: CircularProgressIndicator(
+                                  value: _calcProgress,
+                                  color: AppColors.secondaryTeal,
+                                  backgroundColor: AppColors.elevation,
+                                  strokeWidth: 8,
+                              ),
+                          ),
+                          Icon(Feather.cpu, color: AppColors.textHigh, size: 32)
+                              .animate(onPlay: (c) => c.repeat())
+                              .fadeIn(duration: 600.ms)
+                              .then().fadeOut(duration: 600.ms),
+                      ],
+                  ),
+                  SizedBox(height: 32),
+                  Text(
+                      _calcStatus,
+                      style: TextStyle(color: AppColors.textHigh, fontSize: 16, fontWeight: FontWeight.bold),
+                  ).animate().slideY(begin: 0.1, end: 0),
+                  SizedBox(height: 8),
+                  Text(
+                      "${(_calcProgress * 100).toInt()}% Complete",
+                      style: TextStyle(color: AppColors.textMedium, fontSize: 12),
+                  ),
+              ],
+          ),
+      );
+  }
+
+  // --- QUIZ VIEW ---
+  Widget _buildQuizView() {
+    if (_isLoading) return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
+
+    final question = _engine.currentQuestion;
+    if (question == null) return SizedBox();
+
+    return Column(
+      children: [
+        Expanded(
+          child: Padding(
+            key: ValueKey(question['id']), // Animate on change
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: Column(
+              children: [
+                SizedBox(height: 10),
+                LinearPercentIndicator(
+                  lineHeight: 8.0,
+                  percent: _engine.progress.clamp(0.0, 1.0),
+                  backgroundColor: AppColors.elevation,
+                  progressColor: AppColors.secondaryTeal,
+                  barRadius: Radius.circular(10),
+                  animation: true,
+                  animateFromLastPercent: true,
+                ),
+                SizedBox(height: 10),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Question ${_engine.currentIndex + 1}/${_engine.totalQuestions}",
+                        style: TextStyle(color: AppColors.textDisabled, fontSize: 12),
+                      ),
+                      Text(
+                        question['category'] ?? "General",
+                        style: TextStyle(color: AppColors.primaryLavender, fontSize: 12, fontWeight: FontWeight.bold),
+                      ),
+                    ],
                   ),
                 ),
+                Spacer(),
+                // Question Card
+                Container(
+                  padding: EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 15,
+                        offset: Offset(0, 5),
+                      )
+                    ],
+                    border: Border.all(color: AppColors.elevation),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        question['text'],
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: AppColors.textHigh,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          height: 1.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1, end: 0),
+                Spacer(),
+                _buildSpectrumOptions(question),
+                Spacer(),
               ],
             ),
-          ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1, end: 0),
-          Spacer(),
-          _buildSpectrumOptions(),
-          Spacer(),
-        ],
-      ),
+          ),
+        ),
+        
+        // --- BOTTOM NAVIGATION BAR ---
+        Container(
+            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            decoration: BoxDecoration(
+                color: AppColors.surface,
+                border: Border(top: BorderSide(color: AppColors.elevation)),
+            ),
+            child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                    // Previous Button
+                     Opacity(
+                        opacity: _engine.canGoBack ? 1.0 : 0.3,
+                        child: TextButton.icon(
+                            icon: Icon(Feather.chevron_left, color: AppColors.textMedium),
+                            label: Text("Previous", style: TextStyle(color: AppColors.textMedium)),
+                            onPressed: _engine.canGoBack ? _goBack : null,
+                        ),
+                     ),
+
+                     // Indicator dots or simple spacer
+                     Row(
+                         children: [
+                             Container(width: 6, height: 6, decoration: BoxDecoration(shape: BoxShape.circle, color: _engine.currentAnswer != null ? AppColors.secondaryTeal : AppColors.elevation)),
+                             SizedBox(width: 4),
+                             Container(width: 6, height: 6, decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.elevation)),
+                         ],
+                     ),
+
+                    // Next Button
+                    Opacity(
+                        opacity: (_engine.currentAnswer != null) ? 1.0 : 0.3, 
+                        child: Directionality(
+                            textDirection: TextDirection.rtl,
+                            child: TextButton.icon(
+                                icon: Icon(Feather.chevron_right, color: AppColors.primaryLavender),
+                                label: Text("Next", style: TextStyle(color: AppColors.primaryLavender, fontWeight: FontWeight.bold)),
+                                onPressed: (_engine.currentAnswer != null) ? _goNext : null,
+                            ),
+                        ),
+                    ),
+                ],
+            ),
+        ),
+      ],
     );
   }
 
-  Widget _buildSpectrumOptions() {
+  Widget _buildSpectrumOptions(Map<String, dynamic> question) {
+      int? selected = _engine.currentAnswer;
+
     return Column(
       children: [
         Text(
-          _currentQuestion!['optionA'].toUpperCase(),
+          question['optionA']['text'].toUpperCase(),
           textAlign: TextAlign.center,
-          style: TextStyle(color: AppColors.secondaryTeal, fontWeight: FontWeight.bold, letterSpacing: 1.0, fontSize: 12),
+          style: TextStyle(color: AppColors.secondaryTeal, fontWeight: FontWeight.bold, letterSpacing: 0.5, fontSize: 11),
         ),
         SizedBox(height: 20),
         Container(
@@ -361,119 +398,155 @@ class _TwinFinderScreenState extends State<TwinFinderScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildSpectrumButton(0, Colors.teal, 60), 
-              _buildSpectrumButton(1, Colors.teal.withOpacity(0.6), 45),
-              _buildSpectrumButton(2, AppColors.primaryLavender.withOpacity(0.6), 45), 
-              _buildSpectrumButton(3, AppColors.primaryLavender, 60),
+              _buildSpectrumButton(0, Colors.teal, 60, selected == 0), 
+              _buildSpectrumButton(1, Colors.teal.withOpacity(0.6), 45, selected == 1),
+              _buildSpectrumButton(2, AppColors.primaryLavender.withOpacity(0.6), 45, selected == 2), 
+              _buildSpectrumButton(3, AppColors.primaryLavender, 60, selected == 3),
             ],
           ),
         ),
         SizedBox(height: 20),
         Text(
-          _currentQuestion!['optionB'].toUpperCase(),
+          question['optionB']['text'].toUpperCase(),
           textAlign: TextAlign.center,
-          style: TextStyle(color: AppColors.primaryLavender, fontWeight: FontWeight.bold, letterSpacing: 1.0, fontSize: 12),
+          style: TextStyle(color: AppColors.primaryLavender, fontWeight: FontWeight.bold, letterSpacing: 0.5, fontSize: 11),
         ),
       ],
     );
   }
 
-  Widget _buildSpectrumButton(int value, Color color, double size) {
+  Widget _buildSpectrumButton(int value, Color color, double size, bool isSelected) {
     return GestureDetector(
       onTap: () => _handleAnswer(value),
-      child: Container(
-        width: size,
-        height: size,
+      child: AnimatedContainer(
+        duration: Duration(milliseconds: 200),
+        width: isSelected ? size * 1.2 : size,
+        height: isSelected ? size * 1.2 : size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: AppColors.elevation,
-          border: Border.all(color: color, width: 2),
+          border: Border.all(color: isSelected ? Colors.white : color, width: isSelected ? 3 : 2),
           boxShadow: [
             BoxShadow(color: color.withOpacity(0.2), blurRadius: 10, spreadRadius: 1)
           ]
         ),
         child: Center(
-          child: Container(
-            width: size * 0.4,
-            height: size * 0.4,
+          child: AnimatedContainer(
+            duration: Duration(milliseconds: 200),
+            width: isSelected ? size * 0.6 : size * 0.4,
+            height: isSelected ? size * 0.6 : size * 0.4,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: color,
             ),
+            child: isSelected ? Icon(Feather.check, color: Colors.white, size: 16) : null,
           ),
         ),
       ),
-    ).animate().scale(duration: 200.ms, curve: Curves.easeOutBack);
+    );
   }
 
+  // --- RESULT VIEW ---
   Widget _buildResultView() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Feather.check_circle, size: 80, color: AppColors.secondaryTeal)
-                .animate().scale(duration: 500.ms, curve: Curves.elasticOut),
-            SizedBox(height: 24),
-            Text(
-              "Personality Analysis",
-              style: TextStyle(color: AppColors.textMedium, fontSize: 16),
-            ),
-            SizedBox(height: 12),
-            Text(
-              "You are The ${_resultTitle ?? '...'}",
-              style: TextStyle(color: AppColors.textHigh, fontSize: 26, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 8),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppColors.elevation,
-                borderRadius: BorderRadius.circular(20)
-              ),
-              child: Text(
-                _resultArchetype ?? "",
-                style: TextStyle(color: AppColors.primaryLavender, fontWeight: FontWeight.bold, letterSpacing: 1.5, fontSize: 18),
-              ),
-            ),
-            SizedBox(height: 16),
-            Text(
-              _resultDescription ?? "",
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textMedium, fontSize: 14),
-            ),
-            SizedBox(height: 40),
-            
-            // DONE BUTTON
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryLavender,
-                padding: EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-              ),
-              child: Text("Close", style: TextStyle(color: AppColors.backgroundDeep, fontSize: 16, fontWeight: FontWeight.bold)),
-            ),
+    Color coreColor = Color(_resultColor ?? 0xFF805da1);
 
-            SizedBox(height: 16),
-            
-            // RETAKE BUTTON
-            TextButton(
-              onPressed: _retakeTest,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
+    return SingleChildScrollView(
+        child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Feather.refresh_ccw, size: 14, color: AppColors.textMedium),
-                  SizedBox(width: 8),
-                  Text("Retake Test", style: TextStyle(color: AppColors.textMedium)),
+                    SizedBox(height: 40),
+                    Icon(Feather.check_circle, size: 80, color: coreColor)
+                        .animate().scale(duration: 500.ms, curve: Curves.elasticOut),
+                    SizedBox(height: 24),
+                    Text(
+                        "Personality Analysis Complete",
+                        style: TextStyle(color: AppColors.textMedium, fontSize: 14, letterSpacing: 1.5),
+                    ),
+                    SizedBox(height: 12),
+                    Text(
+                        "You are The ${_resultTitle ?? '...'}",
+                        style: TextStyle(color: AppColors.textHigh, fontSize: 26, fontWeight: FontWeight.bold),
+                        textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 12),
+                    Container(
+                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        decoration: BoxDecoration(
+                            color: coreColor.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: coreColor.withOpacity(0.5))
+                        ),
+                        child: Text(
+                            _resultArchetype ?? "",
+                            style: TextStyle(color: coreColor, fontWeight: FontWeight.bold, letterSpacing: 2.0, fontSize: 22),
+                        ),
+                    ),
+                    SizedBox(height: 32),
+                    
+                    // Main Description Card
+                    Container(
+                        padding: EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppColors.elevation),
+                        ),
+                        child: Column(
+                            children: [
+                                Icon(Feather.align_left, color: coreColor, size: 24),
+                                SizedBox(height: 16),
+                                Text(
+                                    _resultDescription ?? "",
+                                    textAlign: TextAlign.justify,
+                                    style: TextStyle(
+                                        color: AppColors.textHigh, 
+                                        fontSize: 15,
+                                        height: 1.6,
+                                        fontFamily: 'Roboto'
+                                    ),
+                                ),
+                            ],
+                        ),
+                    ),
+                    
+                    SizedBox(height: 40),
+                    
+                    // DONE BUTTON
+                    SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: coreColor,
+                                padding: EdgeInsets.symmetric(vertical: 20),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            ),
+                            child: Text(
+                                "Close Analysis", 
+                                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)
+                            ),
+                        ),
+                    ),
+
+                    SizedBox(height: 16),
+                    
+                    TextButton(
+                        onPressed: _retakeTest,
+                        child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                                Icon(Feather.refresh_ccw, size: 14, color: AppColors.textMedium),
+                                SizedBox(width: 8),
+                                Text("Retake Test", style: TextStyle(color: AppColors.textMedium)),
+                            ],
+                        ),
+                    ),
+                    SizedBox(height: 20),
                 ],
-              ),
-            )
-          ],
+            ),
         ),
-      ),
     );
   }
 }

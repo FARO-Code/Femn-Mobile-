@@ -16,6 +16,7 @@ import 'package:femn/customization/layout.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../feed/personalized_feed_service.dart'; // Import Service
 import 'package:google_fonts/google_fonts.dart'; // <--- IMPORT COLORS
+import '../services/notification_service.dart';
 
 final List<String> _ageRatings = ['13-17', '18-25', '26+'];
 
@@ -106,7 +107,9 @@ class Petition {
       isFeatured: data['isFeatured'] ?? false,
       category: data['category'] ?? 'General',
       discussionEnabled: data['discussionEnabled'] ?? true,
-      discussionModerators: List<String>.from(data['discussionModerators'] ?? []),
+      discussionModerators: List<String>.from(
+        data['discussionModerators'] ?? [],
+      ),
       collaborators: List<String>.from(data['collaborators'] ?? []),
       externalLinks: List<String>.from(data['externalLinks'] ?? []),
       discussionSettings: data['discussionSettings'],
@@ -126,7 +129,9 @@ class Petition {
       'ageRating': ageRating,
       'hashtags': hashtags,
       'signers': signers,
-      'signaturesWithComments': signaturesWithComments.map((sig) => sig.toMap()).toList(),
+      'signaturesWithComments': signaturesWithComments
+          .map((sig) => sig.toMap())
+          .toList(),
       'createdAt': createdAt,
       'deadline': deadline,
       'views': views,
@@ -143,7 +148,8 @@ class Petition {
   }
 
   bool get hasDeadline => deadline != null;
-  bool get isExpired => hasDeadline && deadline!.toDate().isBefore(DateTime.now());
+  bool get isExpired =>
+      hasDeadline && deadline!.toDate().isBefore(DateTime.now());
   int get daysLeft {
     if (!hasDeadline) return -1;
     final now = DateTime.now();
@@ -151,6 +157,7 @@ class Petition {
     final difference = end.difference(now).inDays;
     return difference >= 0 ? difference : 0;
   }
+
   double get progress => goal > 0 ? currentSignatures / goal : 0.0;
 }
 
@@ -272,8 +279,9 @@ class DiscussionMessage {
     };
   }
 
-  bool get hasReplies => false; 
-  int get totalReactions => reactions.values.fold(0, (sum, userList) => sum + userList.length);
+  bool get hasReplies => false;
+  int get totalReactions =>
+      reactions.values.fold(0, (sum, userList) => sum + userList.length);
 
   List<String> getUserReactions(String userId) {
     return reactions.entries
@@ -286,20 +294,25 @@ class DiscussionMessage {
 // Enhanced Petition Creation Screen
 class EnhancedPetitionCreationScreen extends StatefulWidget {
   final Petition? existingPetition;
-  const EnhancedPetitionCreationScreen({Key? key, this.existingPetition}) : super(key: key);
+  const EnhancedPetitionCreationScreen({Key? key, this.existingPetition})
+    : super(key: key);
 
   @override
-  _EnhancedPetitionCreationScreenState createState() => _EnhancedPetitionCreationScreenState();
+  _EnhancedPetitionCreationScreenState createState() =>
+      _EnhancedPetitionCreationScreenState();
 }
 
-class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreationScreen> {
+class _EnhancedPetitionCreationScreenState
+    extends State<EnhancedPetitionCreationScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _fullStoryController = TextEditingController();
-  final TextEditingController _goalController = TextEditingController(text: '100');
+  final TextEditingController _goalController = TextEditingController(
+    text: '100',
+  );
   final TextEditingController _hashtagController = TextEditingController();
   String _selectedAgeRating = '13-17';
   String _selectedCategory = 'General';
@@ -328,9 +341,13 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
       _collaborators.addAll(widget.existingPetition!.collaborators);
       _existingBannerUrl = widget.existingPetition!.bannerImageUrl;
       _deadline = widget.existingPetition!.deadline?.toDate();
-      
+
       // Load links
-      for (int i = 0; i < widget.existingPetition!.externalLinks.length && i < 2; i++) {
+      for (
+        int i = 0;
+        i < widget.existingPetition!.externalLinks.length && i < 2;
+        i++
+      ) {
         _externalLinks[i] = widget.existingPetition!.externalLinks[i];
       }
     }
@@ -346,11 +363,13 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
     'Animal Rights',
     'Social Justice',
     'Technology',
-    'Other'
+    'Other',
   ];
 
   Future<void> _pickBannerImage() async {
-    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+    final pickedFile = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+    );
     if (pickedFile != null) {
       final croppedFile = await ImageCropper().cropImage(
         sourcePath: pickedFile.path,
@@ -376,13 +395,17 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
             hidesNavigationBar: false,
           ),
         ],
-        aspectRatio: CropAspectRatio(ratioX: 9, ratioY: 16), // Consistent Vertical Crop
+        aspectRatio: CropAspectRatio(
+          ratioX: 9,
+          ratioY: 16,
+        ), // Consistent Vertical Crop
       );
 
       if (croppedFile != null) {
         setState(() {
           _bannerImage = File(croppedFile.path);
-          _existingBannerUrl = null; // Preference local over existing during edit
+          _existingBannerUrl =
+              null; // Preference local over existing during edit
         });
       }
     }
@@ -418,7 +441,10 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
   Future<String?> _uploadBannerImage(String petitionId) async {
     if (_bannerImage == null) return null;
     try {
-      final ref = _storage.ref().child('petition_banners').child('$petitionId.jpg');
+      final ref = _storage
+          .ref()
+          .child('petition_banners')
+          .child('$petitionId.jpg');
       final uploadTask = ref.putFile(_bannerImage!);
       final snapshot = await uploadTask;
       return await snapshot.ref.getDownloadURL();
@@ -435,27 +461,46 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
     final goalText = _goalController.text.trim();
     final currentUserId = _auth.currentUser?.uid;
 
-    if (title.isEmpty || description.isEmpty || fullStory.isEmpty || goalText.isEmpty || (_bannerImage == null && _existingBannerUrl == null) || currentUserId == null) {
+    if (title.isEmpty ||
+        description.isEmpty ||
+        fullStory.isEmpty ||
+        goalText.isEmpty ||
+        (_bannerImage == null && _existingBannerUrl == null) ||
+        currentUserId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Title, Description, Full Story, Goal, and Banner Image are mandatory.')),
+        SnackBar(
+          content: Text(
+            'Title, Description, Full Story, Goal, and Banner Image are mandatory.',
+          ),
+        ),
       );
       return;
     }
 
     // Validate links: Maximum 2, only GoFundMe, TikTok, Instagram
-    List<String> validLinks = _externalLinks.where((l) => l.trim().isNotEmpty).map((l) => l.trim()).toList();
+    List<String> validLinks = _externalLinks
+        .where((l) => l.trim().isNotEmpty)
+        .map((l) => l.trim())
+        .toList();
     if (validLinks.length > 2) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Maximum 2 attachment links allowed.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Maximum 2 attachment links allowed.')),
+      );
       return;
     }
 
     for (String link in validLinks) {
-      bool isAllowed = link.contains('gofundme.com') || 
-                       link.contains('tiktok.com') || 
-                       link.contains('instagram.com');
+      bool isAllowed =
+          link.contains('gofundme.com') ||
+          link.contains('tiktok.com') ||
+          link.contains('instagram.com');
       if (!isAllowed) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Allowed links: GoFundMe, TikTok, and Instagram only.')),
+          SnackBar(
+            content: Text(
+              'Allowed links: GoFundMe, TikTok, and Instagram only.',
+            ),
+          ),
         );
         return;
       }
@@ -489,8 +534,12 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
         'description': description,
         'fullStory': fullStory,
         'goal': goal,
-        'createdBy': _isEditing ? widget.existingPetition!.createdBy : currentUserId,
-        'createdAt': _isEditing ? widget.existingPetition!.createdAt : FieldValue.serverTimestamp(),
+        'createdBy': _isEditing
+            ? widget.existingPetition!.createdBy
+            : currentUserId,
+        'createdAt': _isEditing
+            ? widget.existingPetition!.createdAt
+            : FieldValue.serverTimestamp(),
         'ageRating': _selectedAgeRating,
         'hashtags': _hashtags,
         'bannerImageUrl': bannerImageUrl,
@@ -498,13 +547,16 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
         'category': _selectedCategory,
         'collaborators': _collaborators,
         'externalLinks': validLinks,
-        'discussionModerators': _isEditing 
-            ? widget.existingPetition!.discussionModerators 
+        'discussionModerators': _isEditing
+            ? widget.existingPetition!.discussionModerators
             : [currentUserId],
       };
 
       if (_isEditing) {
-        await _firestore.collection('petitions').doc(petitionId).update(petitionData);
+        await _firestore
+            .collection('petitions')
+            .doc(petitionId)
+            .update(petitionData);
       } else {
         petitionData['currentSignatures'] = 0;
         petitionData['signers'] = [];
@@ -513,13 +565,31 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
         petitionData['shares'] = 0;
         petitionData['isFeatured'] = false;
         petitionData['discussionEnabled'] = true;
-        await _firestore.collection('petitions').doc(petitionId).set(petitionData);
+        await _firestore
+            .collection('petitions')
+            .doc(petitionId)
+            .set(petitionData);
+
+        // Send notifications to followers
+        final userDoc = await _firestore
+            .collection('users')
+            .doc(currentUserId)
+            .get();
+        final username = userDoc.data()?['username'] ?? 'User';
+        NotificationService().sendPetitionCreatedNotification(
+          creatorId: currentUserId,
+          creatorUsername: username,
+          petitionId: petitionId,
+          petitionTitle: title,
+          bannerImageUrl: bannerImageUrl,
+        );
       }
 
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => EnhancedPetitionDetailScreen(petitionId: petitionId),
+          builder: (context) =>
+              EnhancedPetitionDetailScreen(petitionId: petitionId),
         ),
       );
     } catch (e) {
@@ -534,7 +604,11 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
     }
   }
 
-  Widget _buildSectionHeader(String title, IconData icon, {bool isMandatory = false}) {
+  Widget _buildSectionHeader(
+    String title,
+    IconData icon, {
+    bool isMandatory = false,
+  }) {
     return Row(
       children: [
         Container(
@@ -560,7 +634,11 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
             if (isMandatory)
               const Text(
                 ' *',
-                style: TextStyle(color: AppColors.error, fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: AppColors.error,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
           ],
         ),
@@ -605,7 +683,11 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
                   children: [
                     Row(
                       children: [
-                        Icon(Feather.flag, color: AppColors.primaryLavender, size: 24),
+                        Icon(
+                          Feather.flag,
+                          color: AppColors.primaryLavender,
+                          size: 24,
+                        ),
                         SizedBox(width: 10),
                         Text(
                           'Start Your Movement',
@@ -630,7 +712,11 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
               ),
               SizedBox(height: 24),
               // Petition Title
-              _buildSectionHeader('Petition Title', Feather.type, isMandatory: true),
+              _buildSectionHeader(
+                'Petition Title',
+                Feather.type,
+                isMandatory: true,
+              ),
               SizedBox(height: 8),
               Container(
                 decoration: BoxDecoration(
@@ -649,14 +735,24 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
                     ),
                     filled: true,
                     fillColor: AppColors.elevation,
-                    prefixIcon: Icon(Feather.edit_2, color: AppColors.primaryLavender),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    prefixIcon: Icon(
+                      Feather.edit_2,
+                      color: AppColors.primaryLavender,
+                    ),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
                   ),
                 ),
               ),
               SizedBox(height: 20),
               // Short Description
-              _buildSectionHeader('Short Description', Feather.file_text, isMandatory: true),
+              _buildSectionHeader(
+                'Short Description',
+                Feather.file_text,
+                isMandatory: true,
+              ),
               SizedBox(height: 8),
               Container(
                 decoration: BoxDecoration(
@@ -683,7 +779,11 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
               ),
               SizedBox(height: 20),
               // Full Story
-              _buildSectionHeader('Full Story', Feather.file_text, isMandatory: true),
+              _buildSectionHeader(
+                'Full Story',
+                Feather.file_text,
+                isMandatory: true,
+              ),
               SizedBox(height: 8),
               Container(
                 decoration: BoxDecoration(
@@ -694,7 +794,8 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
                   controller: _fullStoryController,
                   style: TextStyle(fontSize: 16, color: AppColors.textHigh),
                   decoration: InputDecoration(
-                    labelText: 'Tell the complete story behind your petition...',
+                    labelText:
+                        'Tell the complete story behind your petition...',
                     labelStyle: TextStyle(color: AppColors.textMedium),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
@@ -710,7 +811,11 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
               ),
               SizedBox(height: 20),
               // Signature Goal
-              _buildSectionHeader('Signature Goal', Feather.users, isMandatory: true),
+              _buildSectionHeader(
+                'Signature Goal',
+                Feather.users,
+                isMandatory: true,
+              ),
               SizedBox(height: 8),
               Container(
                 decoration: BoxDecoration(
@@ -729,8 +834,14 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
                     ),
                     filled: true,
                     fillColor: AppColors.elevation,
-                    prefixIcon: Icon(Feather.flag, color: AppColors.primaryLavender),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    prefixIcon: Icon(
+                      Feather.flag,
+                      color: AppColors.primaryLavender,
+                    ),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
                   ),
                   keyboardType: TextInputType.number,
                 ),
@@ -766,7 +877,10 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
                     ),
                     filled: true,
                     fillColor: AppColors.elevation,
-                    prefixIcon: Icon(Feather.grid, color: AppColors.primaryLavender),
+                    prefixIcon: Icon(
+                      Feather.grid,
+                      color: AppColors.primaryLavender,
+                    ),
                     contentPadding: EdgeInsets.symmetric(horizontal: 20),
                   ),
                   dropdownColor: AppColors.surface,
@@ -791,24 +905,37 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
                       color: AppColors.primaryLavender.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(Feather.calendar, color: AppColors.primaryLavender),
+                    child: Icon(
+                      Feather.calendar,
+                      color: AppColors.primaryLavender,
+                    ),
                   ),
                   title: Text(
-                    _deadline == null 
-                        ? 'Add Deadline (Optional)' 
+                    _deadline == null
+                        ? 'Add Deadline (Optional)'
                         : 'Deadline: ${DateFormat('MMM d, yyyy').format(_deadline!)}',
                     style: TextStyle(
-                      color: _deadline != null ? AppColors.primaryLavender : AppColors.textMedium,
+                      color: _deadline != null
+                          ? AppColors.primaryLavender
+                          : AppColors.textMedium,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  subtitle: _deadline != null 
-                      ? Text('${_deadline!.difference(DateTime.now()).inDays} days from now', style: TextStyle(color: AppColors.textMedium))
-                      : Text('Set an end date for your petition', style: TextStyle(color: AppColors.textDisabled)),
+                  subtitle: _deadline != null
+                      ? Text(
+                          '${_deadline!.difference(DateTime.now()).inDays} days from now',
+                          style: TextStyle(color: AppColors.textMedium),
+                        )
+                      : Text(
+                          'Set an end date for your petition',
+                          style: TextStyle(color: AppColors.textDisabled),
+                        ),
                   trailing: ElevatedButton(
                     onPressed: _selectDeadline,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryLavender.withOpacity(0.1),
+                      backgroundColor: AppColors.primaryLavender.withOpacity(
+                        0.1,
+                      ),
                       foregroundColor: AppColors.primaryLavender,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -822,16 +949,30 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
               ),
               SizedBox(height: 20),
               // Banner Image Upload
-              _buildSectionHeader('Banner Image', Feather.image, isMandatory: true),
+              _buildSectionHeader(
+                'Banner Image',
+                Feather.image,
+                isMandatory: true,
+              ),
               SizedBox(height: 8),
               if (_bannerImage != null || _existingBannerUrl != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12.0),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(15),
-                    child: _bannerImage != null 
-                        ? Image.file(_bannerImage!, height: 300, width: double.infinity, fit: BoxFit.cover)
-                        : CachedNetworkImage(imageUrl: _existingBannerUrl!, height: 300, width: double.infinity, fit: BoxFit.cover),
+                    child: _bannerImage != null
+                        ? Image.file(
+                            _bannerImage!,
+                            height: 300,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          )
+                        : CachedNetworkImage(
+                            imageUrl: _existingBannerUrl!,
+                            height: 300,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
                   ),
                 ),
               Container(
@@ -847,27 +988,44 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
                       color: AppColors.primaryLavender.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(Feather.image, color: AppColors.primaryLavender),
+                    child: Icon(
+                      Feather.image,
+                      color: AppColors.primaryLavender,
+                    ),
                   ),
                   title: Text(
-                    (_bannerImage != null || _existingBannerUrl != null) ? 'Image Selected' : 'Add Banner Image',
+                    (_bannerImage != null || _existingBannerUrl != null)
+                        ? 'Image Selected'
+                        : 'Add Banner Image',
                     style: TextStyle(
-                      color: (_bannerImage != null || _existingBannerUrl != null) ? AppColors.primaryLavender : AppColors.textMedium,
+                      color:
+                          (_bannerImage != null || _existingBannerUrl != null)
+                          ? AppColors.primaryLavender
+                          : AppColors.textMedium,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  subtitle: Text('Make your petition visually appealing', style: TextStyle(color: AppColors.textDisabled)),
+                  subtitle: Text(
+                    'Make your petition visually appealing',
+                    style: TextStyle(color: AppColors.textDisabled),
+                  ),
                   trailing: ElevatedButton(
                     onPressed: _pickBannerImage,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryLavender.withOpacity(0.1),
+                      backgroundColor: AppColors.primaryLavender.withOpacity(
+                        0.1,
+                      ),
                       foregroundColor: AppColors.primaryLavender,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
                       elevation: 0,
                     ),
-                    child: Text((_bannerImage != null || _existingBannerUrl != null) ? 'Change' : 'Upload'),
+                    child: Text(
+                      (_bannerImage != null || _existingBannerUrl != null)
+                          ? 'Change'
+                          : 'Upload',
+                    ),
                   ),
                 ),
               ),
@@ -892,7 +1050,10 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
                     ),
                     filled: true,
                     fillColor: AppColors.elevation,
-                    prefixIcon: Icon(Feather.hash, color: AppColors.primaryLavender),
+                    prefixIcon: Icon(
+                      Feather.hash,
+                      color: AppColors.primaryLavender,
+                    ),
                     suffixIcon: IconButton(
                       icon: Container(
                         width: 32,
@@ -901,10 +1062,16 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
                           color: AppColors.primaryLavender,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Icon(Feather.plus, color: AppColors.backgroundDeep, size: 18),
+                        child: Icon(
+                          Feather.plus,
+                          color: AppColors.backgroundDeep,
+                          size: 18,
+                        ),
                       ),
                       onPressed: () {
-                        String newTag = _hashtagController.text.trim().replaceAll('#', '');
+                        String newTag = _hashtagController.text
+                            .trim()
+                            .replaceAll('#', '');
                         if (newTag.isNotEmpty && !_hashtags.contains(newTag)) {
                           setState(() {
                             _hashtags.add(newTag);
@@ -913,10 +1080,16 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
                         }
                       },
                     ),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
                   ),
                   onSubmitted: (_) {
-                    String newTag = _hashtagController.text.trim().replaceAll('#', '');
+                    String newTag = _hashtagController.text.trim().replaceAll(
+                      '#',
+                      '',
+                    );
                     if (newTag.isNotEmpty && !_hashtags.contains(newTag)) {
                       setState(() {
                         _hashtags.add(newTag);
@@ -939,7 +1112,10 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -957,7 +1133,11 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
                                   _hashtags.remove(tag);
                                 });
                               },
-                              child: Icon(Feather.x, size: 16, color: AppColors.secondaryTeal),
+                              child: Icon(
+                                Feather.x,
+                                size: 16,
+                                color: AppColors.secondaryTeal,
+                              ),
                             ),
                           ],
                         ),
@@ -996,8 +1176,14 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
                     ),
                     filled: true,
                     fillColor: AppColors.elevation,
-                    prefixIcon: Icon(Feather.users, color: AppColors.primaryLavender),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    prefixIcon: Icon(
+                      Feather.users,
+                      color: AppColors.primaryLavender,
+                    ),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
                   ),
                   dropdownColor: AppColors.surface,
                   style: TextStyle(fontSize: 16, color: AppColors.textHigh),
@@ -1005,7 +1191,7 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
                 ),
               ),
               SizedBox(height: 24),
-              
+
               // External Links
               _buildSectionHeader('Support Links (Max 2)', Feather.link),
               SizedBox(height: 8),
@@ -1014,31 +1200,37 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
                 style: TextStyle(color: AppColors.textMedium, fontSize: 12),
               ),
               SizedBox(height: 8),
-              ...List.generate(2, (index) => Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(15),
-                    color: AppColors.elevation,
-                  ),
-                  child: TextField(
-                    onChanged: (v) => _externalLinks[index] = v,
-                    style: TextStyle(color: AppColors.textHigh),
-                    decoration: InputDecoration(
-                      hintText: 'Link ${index + 1} (GoFundMe/Social)',
-                      hintStyle: TextStyle(color: AppColors.textDisabled),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide.none,
+              ...List.generate(
+                2,
+                (index) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(15),
+                      color: AppColors.elevation,
+                    ),
+                    child: TextField(
+                      onChanged: (v) => _externalLinks[index] = v,
+                      style: TextStyle(color: AppColors.textHigh),
+                      decoration: InputDecoration(
+                        hintText: 'Link ${index + 1} (GoFundMe/Social)',
+                        hintStyle: TextStyle(color: AppColors.textDisabled),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(15),
+                          borderSide: BorderSide.none,
+                        ),
+                        filled: true,
+                        fillColor: AppColors.elevation,
+                        prefixIcon: Icon(
+                          Feather.link,
+                          color: AppColors.primaryLavender,
+                        ),
                       ),
-                      filled: true,
-                      fillColor: AppColors.elevation,
-                      prefixIcon: Icon(Feather.link, color: AppColors.primaryLavender),
                     ),
                   ),
                 ),
-              )),
-              
+              ),
+
               SizedBox(height: 24),
               // Collaborators Management
               _buildSectionHeader('Collaborators', Feather.user_plus),
@@ -1050,7 +1242,8 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
                 ),
                 child: TextField(
                   onSubmitted: (v) {
-                    if (v.trim().isNotEmpty && !_collaborators.contains(v.trim())) {
+                    if (v.trim().isNotEmpty &&
+                        !_collaborators.contains(v.trim())) {
                       setState(() {
                         _collaborators.add(v.trim());
                       });
@@ -1066,7 +1259,10 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
                     ),
                     filled: true,
                     fillColor: AppColors.elevation,
-                    prefixIcon: Icon(Feather.user_plus, color: AppColors.primaryLavender),
+                    prefixIcon: Icon(
+                      Feather.user_plus,
+                      color: AppColors.primaryLavender,
+                    ),
                   ),
                 ),
               ),
@@ -1075,13 +1271,30 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
                   padding: const EdgeInsets.only(top: 12.0),
                   child: Wrap(
                     spacing: 8,
-                    children: _collaborators.map((c) => Chip(
-                      label: Text(c, style: TextStyle(color: AppColors.textHigh, fontSize: 12)),
-                      backgroundColor: AppColors.surface,
-                      deleteIcon: Icon(Feather.x, size: 14, color: AppColors.error),
-                      onDeleted: () => setState(() => _collaborators.remove(c)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    )).toList(),
+                    children: _collaborators
+                        .map(
+                          (c) => Chip(
+                            label: Text(
+                              c,
+                              style: TextStyle(
+                                color: AppColors.textHigh,
+                                fontSize: 12,
+                              ),
+                            ),
+                            backgroundColor: AppColors.surface,
+                            deleteIcon: Icon(
+                              Feather.x,
+                              size: 14,
+                              color: AppColors.error,
+                            ),
+                            onDeleted: () =>
+                                setState(() => _collaborators.remove(c)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        )
+                        .toList(),
                   ),
                 ),
 
@@ -1098,10 +1311,14 @@ class _EnhancedPetitionCreationScreenState extends State<EnhancedPetitionCreatio
                       borderRadius: BorderRadius.circular(15),
                     ),
                   ),
-                  child: _isLoading 
-                      ? CircularProgressIndicator(color: AppColors.backgroundDeep)
+                  child: _isLoading
+                      ? CircularProgressIndicator(
+                          color: AppColors.backgroundDeep,
+                        )
                       : Text(
-                          _isEditing ? 'Save Changes' : 'Create Enhanced Petition',
+                          _isEditing
+                              ? 'Save Changes'
+                              : 'Create Enhanced Petition',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -1133,7 +1350,8 @@ class PetitionDiscussionScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _PetitionDiscussionScreenState createState() => _PetitionDiscussionScreenState();
+  _PetitionDiscussionScreenState createState() =>
+      _PetitionDiscussionScreenState();
 }
 
 class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
@@ -1164,7 +1382,10 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
   }
 
   Future<void> _fetchCurrentUsername() async {
-    final userDoc = await _firestore.collection('users').doc(_currentUserId).get();
+    final userDoc = await _firestore
+        .collection('users')
+        .doc(_currentUserId)
+        .get();
     if (userDoc.exists) {
       if (mounted) {
         setState(() {
@@ -1176,7 +1397,10 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
 
   Future<void> _loadPetition() async {
     try {
-      final doc = await _firestore.collection('petitions').doc(widget.petitionId).get();
+      final doc = await _firestore
+          .collection('petitions')
+          .doc(widget.petitionId)
+          .get();
       if (doc.exists) {
         setState(() {
           _petition = Petition.fromDocument(doc);
@@ -1194,9 +1418,11 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
         .collection('messages')
         .orderBy('timestamp', descending: false)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => DiscussionMessage.fromDocument(doc))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => DiscussionMessage.fromDocument(doc))
+              .toList(),
+        );
   }
 
   void _loadMessages() {
@@ -1204,35 +1430,42 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
       _isLoading = true;
     });
 
-    _getMessagesStream().listen((messages) {
-      setState(() {
-        _messages = messages;
-        _isLoading = false;
-      });
-      
-      // Auto-scroll to bottom when new messages arrive
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_scrollController.hasClients) {
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
-            duration: Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          );
-        }
-      });
-    }, onError: (error) {
-      print("Error loading messages: $error");
-      setState(() {
-        _isLoading = false;
-      });
-    });
+    _getMessagesStream().listen(
+      (messages) {
+        setState(() {
+          _messages = messages;
+          _isLoading = false;
+        });
+
+        // Auto-scroll to bottom when new messages arrive
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+        });
+      },
+      onError: (error) {
+        print("Error loading messages: $error");
+        setState(() {
+          _isLoading = false;
+        });
+      },
+    );
   }
 
   Future<void> _sendMessage() async {
     if (_messageController.text.trim().isEmpty || _isSending) return;
     if (!widget.isSigned && !widget.isCreator) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('You must sign the petition to participate in discussion')),
+        SnackBar(
+          content: Text(
+            'You must sign the petition to participate in discussion',
+          ),
+        ),
       );
       return;
     }
@@ -1242,7 +1475,10 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
     });
 
     try {
-      final userDoc = await _firestore.collection('users').doc(_currentUserId).get();
+      final userDoc = await _firestore
+          .collection('users')
+          .doc(_currentUserId)
+          .get();
       final userData = userDoc.data() as Map<String, dynamic>;
 
       final messageId = Uuid().v4();
@@ -1256,10 +1492,10 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
         timestamp: Timestamp.now(),
         replyToId: _replyingTo?.id,
         replyToUsername: _replyingTo?.username,
-        replyToText: _replyingTo != null ? 
-            (_replyingTo!.text.length > 50 
-                ? '${_replyingTo!.text.substring(0, 50)}...' 
-                : _replyingTo!.text) 
+        replyToText: _replyingTo != null
+            ? (_replyingTo!.text.length > 50
+                  ? '${_replyingTo!.text.substring(0, 50)}...'
+                  : _replyingTo!.text)
             : null,
       );
 
@@ -1272,12 +1508,11 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
 
       _messageController.clear();
       _cancelReply();
-
     } catch (e) {
       print("Error sending message: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to send message')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to send message')));
     } finally {
       setState(() {
         _isSending = false;
@@ -1309,7 +1544,9 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
       if (!messageDoc.exists) return;
 
       final message = DiscussionMessage.fromDocument(messageDoc);
-      final currentReactions = Map<String, List<String>>.from(message.reactions);
+      final currentReactions = Map<String, List<String>>.from(
+        message.reactions,
+      );
       final usersWhoReacted = currentReactions[emoji] ?? [];
 
       if (usersWhoReacted.contains(_currentUserId)) {
@@ -1328,7 +1565,6 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
 
       await messageRef.update({'reactions': currentReactions});
       _hideReactionMenu();
-
     } catch (e) {
       print("Error toggling reaction: $e");
     }
@@ -1348,14 +1584,14 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
         'text': '[Message deleted]',
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Message deleted')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Message deleted')));
     } catch (e) {
       print("Error deleting message: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to delete message')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to delete message')));
     }
   }
 
@@ -1380,9 +1616,9 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
         'text': '[Message removed by moderator]',
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Message removed by moderator')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Message removed by moderator')));
     } catch (e) {
       print("Error in admin delete: $e");
     }
@@ -1391,10 +1627,11 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
   bool _isModerator() {
     if (_petition == null) return false;
     final currentUserId = _auth.currentUser?.uid;
-    return widget.isCreator || 
-           _petition!.createdBy == currentUserId || 
-           _petition!.discussionModerators.contains(currentUserId) ||
-           (_currentUsername != null && _petition!.collaborators.contains(_currentUsername));
+    return widget.isCreator ||
+        _petition!.createdBy == currentUserId ||
+        _petition!.discussionModerators.contains(currentUserId) ||
+        (_currentUsername != null &&
+            _petition!.collaborators.contains(_currentUsername));
   }
 
   void _showReactionMenu(DiscussionMessage message) {
@@ -1422,23 +1659,43 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
             children: [
               Text(
                 'Moderator Actions',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textHigh),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textHigh,
+                ),
               ),
               SizedBox(height: 16),
               ListTile(
                 leading: Icon(Feather.trash_2, color: AppColors.error),
-                title: Text('Remove Message', style: TextStyle(color: AppColors.textHigh)),
-                subtitle: Text('Remove this message from discussion', style: TextStyle(color: AppColors.textMedium)),
+                title: Text(
+                  'Remove Message',
+                  style: TextStyle(color: AppColors.textHigh),
+                ),
+                subtitle: Text(
+                  'Remove this message from discussion',
+                  style: TextStyle(color: AppColors.textMedium),
+                ),
                 onTap: () {
                   Navigator.pop(context);
                   _showRemoveReasonDialog(message.id);
                 },
               ),
-              if (_isModerator() && !_petition!.discussionModerators.contains(message.userId))
+              if (_isModerator() &&
+                  !_petition!.discussionModerators.contains(message.userId))
                 ListTile(
-                  leading: Icon(Feather.shield, color: AppColors.primaryLavender),
-                  title: Text('Make Moderator', style: TextStyle(color: AppColors.textHigh)),
-                  subtitle: Text('Grant moderator privileges to this user', style: TextStyle(color: AppColors.textMedium)),
+                  leading: Icon(
+                    Feather.shield,
+                    color: AppColors.primaryLavender,
+                  ),
+                  title: Text(
+                    'Make Moderator',
+                    style: TextStyle(color: AppColors.textHigh),
+                  ),
+                  subtitle: Text(
+                    'Grant moderator privileges to this user',
+                    style: TextStyle(color: AppColors.textMedium),
+                  ),
                   onTap: () {
                     Navigator.pop(context);
                     _makeModerator(message.userId);
@@ -1458,22 +1715,37 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
         String reason = 'inappropriate_content';
         return AlertDialog(
           backgroundColor: AppColors.surface,
-          title: Text('Remove Message', style: TextStyle(color: AppColors.textHigh)),
+          title: Text(
+            'Remove Message',
+            style: TextStyle(color: AppColors.textHigh),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Select removal reason:', style: TextStyle(color: AppColors.textMedium)),
+              Text(
+                'Select removal reason:',
+                style: TextStyle(color: AppColors.textMedium),
+              ),
               SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: reason,
                 dropdownColor: AppColors.surface,
                 style: TextStyle(color: AppColors.textHigh),
                 items: [
-                  DropdownMenuItem(value: 'inappropriate_content', child: Text('Inappropriate Content')),
+                  DropdownMenuItem(
+                    value: 'inappropriate_content',
+                    child: Text('Inappropriate Content'),
+                  ),
                   DropdownMenuItem(value: 'spam', child: Text('Spam')),
-                  DropdownMenuItem(value: 'harassment', child: Text('Harassment')),
-                  DropdownMenuItem(value: 'off_topic', child: Text('Off-topic')),
+                  DropdownMenuItem(
+                    value: 'harassment',
+                    child: Text('Harassment'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'off_topic',
+                    child: Text('Off-topic'),
+                  ),
                 ],
                 onChanged: (value) {
                   reason = value!;
@@ -1484,14 +1756,20 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Cancel', style: TextStyle(color: AppColors.textMedium)),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: AppColors.textMedium),
+              ),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
                 _adminDeleteMessage(messageId, reason);
               },
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.error, foregroundColor: AppColors.backgroundDeep),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.error,
+                foregroundColor: AppColors.backgroundDeep,
+              ),
               child: Text('Remove'),
             ),
           ],
@@ -1506,9 +1784,9 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
         'discussionModerators': FieldValue.arrayUnion([userId]),
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('User added as moderator')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('User added as moderator')));
     } catch (e) {
       print("Error making moderator: $e");
     }
@@ -1523,7 +1801,9 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
       margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: isCurrentUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isCurrentUser
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         children: [
           if (!isCurrentUser) ...[
             CircleAvatar(
@@ -1531,14 +1811,18 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
               backgroundImage: message.userProfileImage != null
                   ? CachedNetworkImageProvider(message.userProfileImage!)
                   : null,
-              child: message.userProfileImage == null ? Icon(Feather.user, size: 16) : null,
+              child: message.userProfileImage == null
+                  ? Icon(Feather.user, size: 16)
+                  : null,
               backgroundColor: AppColors.elevation,
             ),
             SizedBox(width: 8),
           ],
           Expanded(
             child: Column(
-              crossAxisAlignment: isCurrentUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              crossAxisAlignment: isCurrentUser
+                  ? CrossAxisAlignment.end
+                  : CrossAxisAlignment.start,
               children: [
                 if (!isCurrentUser) ...[
                   Row(
@@ -1551,15 +1835,26 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
                           color: AppColors.textMedium,
                         ),
                       ),
-                      if (_petition?.discussionModerators.contains(message.userId) ?? false)
+                      if (_petition?.discussionModerators.contains(
+                            message.userId,
+                          ) ??
+                          false)
                         Padding(
                           padding: EdgeInsets.only(left: 4),
-                          child: Icon(Feather.check_circle, size: 12, color: AppColors.primaryLavender),
+                          child: Icon(
+                            Feather.check_circle,
+                            size: 12,
+                            color: AppColors.primaryLavender,
+                          ),
                         ),
                       if (message.userId == _petition?.createdBy)
                         Padding(
                           padding: EdgeInsets.only(left: 4),
-                          child: Icon(Feather.flag, size: 12, color: AppColors.accentMustard),
+                          child: Icon(
+                            Feather.flag,
+                            size: 12,
+                            color: AppColors.accentMustard,
+                          ),
                         ),
                     ],
                   ),
@@ -1579,7 +1874,9 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
                   child: Container(
                     padding: EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: isCurrentUser ? AppColors.secondaryTeal : AppColors.elevation,
+                      color: isCurrentUser
+                          ? AppColors.secondaryTeal
+                          : AppColors.elevation,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Column(
@@ -1608,7 +1905,10 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
                                 SizedBox(height: 2),
                                 Text(
                                   message.replyToText ?? '',
-                                  style: TextStyle(fontSize: 12, color: AppColors.textMedium),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.textMedium,
+                                  ),
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -1619,8 +1919,14 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
                         Text(
                           message.isDeleted ? message.text : message.text,
                           style: TextStyle(
-                            color: message.isDeleted ? AppColors.textDisabled : (isCurrentUser ? Colors.white : AppColors.textHigh),
-                            fontStyle: message.isDeleted ? FontStyle.italic : FontStyle.normal,
+                            color: message.isDeleted
+                                ? AppColors.textDisabled
+                                : (isCurrentUser
+                                      ? Colors.white
+                                      : AppColors.textHigh),
+                            fontStyle: message.isDeleted
+                                ? FontStyle.italic
+                                : FontStyle.normal,
                           ),
                         ),
                         // Reactions
@@ -1630,11 +1936,18 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
                             spacing: 8,
                             children: message.reactions.entries.map((entry) {
                               return Container(
-                                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: userReactions.contains(entry.key) 
-                                      ? AppColors.primaryLavender.withOpacity(0.2)
-                                      : AppColors.backgroundDeep.withOpacity(0.5),
+                                  color: userReactions.contains(entry.key)
+                                      ? AppColors.primaryLavender.withOpacity(
+                                          0.2,
+                                        )
+                                      : AppColors.backgroundDeep.withOpacity(
+                                          0.5,
+                                        ),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Row(
@@ -1644,7 +1957,10 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
                                     SizedBox(width: 4),
                                     Text(
                                       entry.value.length.toString(),
-                                      style: TextStyle(fontSize: 12, color: AppColors.textHigh),
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: AppColors.textHigh,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -1671,7 +1987,9 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
               backgroundImage: message.userProfileImage != null
                   ? CachedNetworkImageProvider(message.userProfileImage!)
                   : null,
-              child: message.userProfileImage == null ? Icon(Feather.user, size: 16) : null,
+              child: message.userProfileImage == null
+                  ? Icon(Feather.user, size: 16)
+                  : null,
               backgroundColor: AppColors.elevation,
             ),
           ],
@@ -1692,8 +2010,14 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
             children: [
               if (isCurrentUser)
                 ListTile(
-                  leading: Icon(Feather.corner_up_left, color: AppColors.primaryLavender),
-                  title: Text('Reply', style: TextStyle(color: AppColors.textHigh)),
+                  leading: Icon(
+                    Feather.corner_up_left,
+                    color: AppColors.primaryLavender,
+                  ),
+                  title: Text(
+                    'Reply',
+                    style: TextStyle(color: AppColors.textHigh),
+                  ),
                   onTap: () {
                     Navigator.pop(context);
                     _startReply(message);
@@ -1702,7 +2026,10 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
               if (isCurrentUser)
                 ListTile(
                   leading: Icon(Feather.trash_2, color: AppColors.error),
-                  title: Text('Delete Message', style: TextStyle(color: AppColors.textHigh)),
+                  title: Text(
+                    'Delete Message',
+                    style: TextStyle(color: AppColors.textHigh),
+                  ),
                   onTap: () {
                     Navigator.pop(context);
                     _deleteMessage(message.id);
@@ -1711,7 +2038,10 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
               if (_isModerator() && !isCurrentUser)
                 ListTile(
                   leading: Icon(Feather.shield, color: AppColors.accentMustard),
-                  title: Text('Moderator Actions', style: TextStyle(color: AppColors.textHigh)),
+                  title: Text(
+                    'Moderator Actions',
+                    style: TextStyle(color: AppColors.textHigh),
+                  ),
                   onTap: () {
                     Navigator.pop(context);
                     _showAdminActions(message);
@@ -1719,7 +2049,10 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
                 ),
               ListTile(
                 leading: Icon(Feather.x_circle, color: AppColors.textMedium),
-                title: Text('Cancel', style: TextStyle(color: AppColors.textMedium)),
+                title: Text(
+                  'Cancel',
+                  style: TextStyle(color: AppColors.textMedium),
+                ),
                 onTap: () => Navigator.pop(context),
               ),
             ],
@@ -1759,10 +2092,7 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
               },
               child: Container(
                 padding: EdgeInsets.all(8),
-                child: Text(
-                  emoji,
-                  style: TextStyle(fontSize: 24),
-                ),
+                child: Text(emoji, style: TextStyle(fontSize: 24)),
               ),
             );
           }).toList(),
@@ -1785,12 +2115,16 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
               children: [
                 Text(
                   'Replying to ${_replyingTo!.username}',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.primaryLavender),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                    color: AppColors.primaryLavender,
+                  ),
                 ),
                 SizedBox(height: 2),
                 Text(
-                  _replyingTo!.text.length > 50 
-                      ? '${_replyingTo!.text.substring(0, 50)}...' 
+                  _replyingTo!.text.length > 50
+                      ? '${_replyingTo!.text.substring(0, 50)}...'
                       : _replyingTo!.text,
                   style: TextStyle(fontSize: 12, color: AppColors.textMedium),
                 ),
@@ -1812,7 +2146,10 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
       return Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
-          title: Text('Discussion', style: TextStyle(color: AppColors.textHigh)),
+          title: Text(
+            'Discussion',
+            style: TextStyle(color: AppColors.textHigh),
+          ),
           backgroundColor: Colors.transparent,
           elevation: 0,
           iconTheme: IconThemeData(color: AppColors.primaryLavender),
@@ -1825,7 +2162,11 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
               SizedBox(height: 16),
               Text(
                 'Discussion Locked',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textHigh),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textHigh,
+                ),
               ),
               SizedBox(height: 8),
               Text(
@@ -1862,7 +2203,11 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
               onPressed: () {
                 // Show moderator tools
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Moderator tools - long press messages to manage')),
+                  SnackBar(
+                    content: Text(
+                      'Moderator tools - long press messages to manage',
+                    ),
+                  ),
                 );
               },
             ),
@@ -1873,39 +2218,50 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
           _buildReplyPreview(),
           Expanded(
             child: _isLoading
-                ? Center(child: CircularProgressIndicator(color: AppColors.primaryLavender))
+                ? Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.primaryLavender,
+                    ),
+                  )
                 : _messages.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Feather.message_square, size: 64, color: AppColors.textDisabled),
-                            SizedBox(height: 16),
-                            Text(
-                              'No messages yet',
-                              style: TextStyle(fontSize: 18, color: AppColors.textMedium),
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              'Start the conversation!',
-                              style: TextStyle(color: AppColors.textMedium),
-                            ),
-                          ],
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Feather.message_square,
+                          size: 64,
+                          color: AppColors.textDisabled,
                         ),
-                      )
-                    : Stack(
-                        children: [
-                          ListView.builder(
-                            controller: _scrollController,
-                            padding: EdgeInsets.only(bottom: 80),
-                            itemCount: _messages.length,
-                            itemBuilder: (context, index) {
-                              return _buildMessageBubble(_messages[index]);
-                            },
+                        SizedBox(height: 16),
+                        Text(
+                          'No messages yet',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: AppColors.textMedium,
                           ),
-                          _buildReactionMenu(),
-                        ],
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Start the conversation!',
+                          style: TextStyle(color: AppColors.textMedium),
+                        ),
+                      ],
+                    ),
+                  )
+                : Stack(
+                    children: [
+                      ListView.builder(
+                        controller: _scrollController,
+                        padding: EdgeInsets.only(bottom: 80),
+                        itemCount: _messages.length,
+                        itemBuilder: (context, index) {
+                          return _buildMessageBubble(_messages[index]);
+                        },
                       ),
+                      _buildReactionMenu(),
+                    ],
+                  ),
           ),
           Container(
             padding: EdgeInsets.all(8),
@@ -1925,7 +2281,10 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
                         hintText: 'Type a message...',
                         hintStyle: TextStyle(color: AppColors.textDisabled),
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                       ),
                       maxLines: null,
                       textInputAction: TextInputAction.send,
@@ -1935,7 +2294,8 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
                 ),
                 SizedBox(width: 8),
                 CircleAvatar(
-                  backgroundColor: _messageController.text.trim().isEmpty || _isSending
+                  backgroundColor:
+                      _messageController.text.trim().isEmpty || _isSending
                       ? AppColors.textDisabled
                       : AppColors.primaryLavender,
                   child: IconButton(
@@ -1971,13 +2331,16 @@ class _PetitionDiscussionScreenState extends State<PetitionDiscussionScreen> {
 // Enhanced Petition Detail Screen
 class EnhancedPetitionDetailScreen extends StatefulWidget {
   final String petitionId;
-  const EnhancedPetitionDetailScreen({Key? key, required this.petitionId}) : super(key: key);
+  const EnhancedPetitionDetailScreen({Key? key, required this.petitionId})
+    : super(key: key);
 
   @override
-  _EnhancedPetitionDetailScreenState createState() => _EnhancedPetitionDetailScreenState();
+  _EnhancedPetitionDetailScreenState createState() =>
+      _EnhancedPetitionDetailScreenState();
 }
 
-class _EnhancedPetitionDetailScreenState extends State<EnhancedPetitionDetailScreen> {
+class _EnhancedPetitionDetailScreenState
+    extends State<EnhancedPetitionDetailScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final PersonalizedFeedService _feedService = PersonalizedFeedService();
@@ -1986,7 +2349,8 @@ class _EnhancedPetitionDetailScreenState extends State<EnhancedPetitionDetailScr
   Petition? _petition;
   bool _isLoading = true;
   int _currentTab = 0;
-  final TextEditingController _signatureCommentController = TextEditingController();
+  final TextEditingController _signatureCommentController =
+      TextEditingController();
   bool _showSignatureDialog = false;
   bool _isSigning = false;
   bool _signatureIsPublic = true;
@@ -2001,7 +2365,10 @@ class _EnhancedPetitionDetailScreenState extends State<EnhancedPetitionDetailScr
 
   Future<void> _loadPetition() async {
     try {
-      final doc = await _firestore.collection('petitions').doc(widget.petitionId).get();
+      final doc = await _firestore
+          .collection('petitions')
+          .doc(widget.petitionId)
+          .get();
       if (doc.exists) {
         setState(() {
           _petition = Petition.fromDocument(doc);
@@ -2021,15 +2388,17 @@ class _EnhancedPetitionDetailScreenState extends State<EnhancedPetitionDetailScr
     await _firestore.collection('petitions').doc(widget.petitionId).update({
       'views': FieldValue.increment(1),
     });
-    
+
     // 2. Record Signal for Personalization & Funnel
     if (_currentUserId.isNotEmpty) {
       _feedService.recordInteraction(
         type: 'view',
         postId: widget.petitionId,
-        authorId: _petition?.createdBy, // Might be null initially, but that's ok
+        authorId:
+            _petition?.createdBy, // Might be null initially, but that's ok
         collection: 'petitions',
-        source: 'profile', // Assuming mostly accessed from profile for now, or pass via widget
+        source:
+            'profile', // Assuming mostly accessed from profile for now, or pass via widget
       );
     }
   }
@@ -2041,7 +2410,10 @@ class _EnhancedPetitionDetailScreenState extends State<EnhancedPetitionDetailScr
     });
 
     try {
-      final userDoc = await _firestore.collection('users').doc(_currentUserId).get();
+      final userDoc = await _firestore
+          .collection('users')
+          .doc(_currentUserId)
+          .get();
       final userData = userDoc.data() as Map<String, dynamic>;
       final signature = PetitionSignature(
         userId: _currentUserId,
@@ -2052,19 +2424,48 @@ class _EnhancedPetitionDetailScreenState extends State<EnhancedPetitionDetailScr
         isPublic: isPublic,
       );
 
+      bool justReachedGoal = false;
+      List<String> allSigners = [];
+
       await _firestore.runTransaction((transaction) async {
-        final petitionDoc = await transaction.get(_firestore.collection('petitions').doc(widget.petitionId));
+        final petitionDoc = await transaction.get(
+          _firestore.collection('petitions').doc(widget.petitionId),
+        );
         if (!petitionDoc.exists) throw Exception('Petition not found');
-        final currentSigners = List<String>.from(petitionDoc['signers'] ?? []);
-        if (currentSigners.contains(_currentUserId)) {
+
+        allSigners = List<String>.from(petitionDoc['signers'] ?? []);
+        if (allSigners.contains(_currentUserId)) {
           throw Exception('You have already signed this petition');
         }
-        transaction.update(_firestore.collection('petitions').doc(widget.petitionId), {
-          'currentSignatures': FieldValue.increment(1),
-          'signers': FieldValue.arrayUnion([_currentUserId]),
-          'signaturesWithComments': FieldValue.arrayUnion([signature.toMap()]),
-        });
+
+        final int currentCount = petitionDoc['currentSignatures'] ?? 0;
+        final int goal = petitionDoc['goal'] ?? 0;
+        if (currentCount + 1 >= goal && currentCount < goal) {
+          justReachedGoal = true;
+        }
+
+        allSigners.add(_currentUserId);
+
+        transaction.update(
+          _firestore.collection('petitions').doc(widget.petitionId),
+          {
+            'currentSignatures': FieldValue.increment(1),
+            'signers': FieldValue.arrayUnion([_currentUserId]),
+            'signaturesWithComments': FieldValue.arrayUnion([
+              signature.toMap(),
+            ]),
+          },
+        );
       });
+
+      if (justReachedGoal && _petition != null) {
+        NotificationService().sendPetitionGoalReachedNotification(
+          petitionId: widget.petitionId,
+          petitionTitle: _petition!.title,
+          signerIds: allSigners,
+          bannerImageUrl: _petition!.bannerImageUrl,
+        );
+      }
 
       await _loadPetition();
       setState(() {
@@ -2077,9 +2478,9 @@ class _EnhancedPetitionDetailScreenState extends State<EnhancedPetitionDetailScr
       );
     } catch (e) {
       print("Error signing petition: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to sign petition: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to sign petition: $e')));
     } finally {
       setState(() {
         _isSigning = false;
@@ -2098,19 +2499,35 @@ class _EnhancedPetitionDetailScreenState extends State<EnhancedPetitionDetailScr
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Share Petition', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
+              Text(
+                'Share Petition',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textHigh,
+                ),
+              ),
               SizedBox(height: 16),
               ListTile(
                 leading: Icon(Feather.link, color: AppColors.primaryLavender),
-                title: Text('Copy Link', style: TextStyle(color: AppColors.textHigh)),
+                title: Text(
+                  'Copy Link',
+                  style: TextStyle(color: AppColors.textHigh),
+                ),
                 onTap: () {
                   _copyPetitionLink();
                   Navigator.pop(context);
                 },
               ),
               ListTile(
-                leading: Icon(Feather.share_2, color: AppColors.primaryLavender),
-                title: Text('Share via...', style: TextStyle(color: AppColors.textHigh)),
+                leading: Icon(
+                  Feather.share_2,
+                  color: AppColors.primaryLavender,
+                ),
+                title: Text(
+                  'Share via...',
+                  style: TextStyle(color: AppColors.textHigh),
+                ),
                 onTap: () {
                   _sharePetition();
                   Navigator.pop(context);
@@ -2118,7 +2535,10 @@ class _EnhancedPetitionDetailScreenState extends State<EnhancedPetitionDetailScr
               ),
               ListTile(
                 leading: Icon(FontAwesome.whatsapp, color: Colors.green),
-                title: Text('Share on WhatsApp', style: TextStyle(color: AppColors.textHigh)),
+                title: Text(
+                  'Share on WhatsApp',
+                  style: TextStyle(color: AppColors.textHigh),
+                ),
                 onTap: () {
                   _shareOnWhatsApp();
                   Navigator.pop(context);
@@ -2126,7 +2546,10 @@ class _EnhancedPetitionDetailScreenState extends State<EnhancedPetitionDetailScr
               ),
               ListTile(
                 leading: Icon(Feather.camera, color: AppColors.primaryLavender),
-                title: Text('Generate Shareable Image', style: TextStyle(color: AppColors.textHigh)),
+                title: Text(
+                  'Generate Shareable Image',
+                  style: TextStyle(color: AppColors.textHigh),
+                ),
                 onTap: () {
                   _generateShareableImage();
                   Navigator.pop(context);
@@ -2141,42 +2564,43 @@ class _EnhancedPetitionDetailScreenState extends State<EnhancedPetitionDetailScr
 
   void _copyPetitionLink() {
     // final link = 'https://yourapp.com/petitions/${_petition!.id}';
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Link copied to clipboard')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Link copied to clipboard')));
   }
 
   void _sharePetition() {
     if (_petition == null) return;
-    final shareText = '''
+    final shareText =
+        '''
 📢 Check out this petition: "${_petition!.title}"
 ${_petition!.description}
 ${_petition!.currentSignatures} people have already signed! Help reach ${_petition!.goal} signatures.
 #${_petition!.hashtags.isNotEmpty ? _petition!.hashtags.first : 'Petition'}
 ''';
     Share.share(shareText);
-    
+
     // Increment Share
     _feedService.recordInteraction(
-       type: 'share',
-       postId: widget.petitionId,
-       authorId: _petition?.createdBy,
-       collection: 'petitions',
+      type: 'share',
+      postId: widget.petitionId,
+      authorId: _petition?.createdBy,
+      collection: 'petitions',
     );
-
   }
 
   Future<void> _shareOnWhatsApp() async {
     if (_petition == null) return;
-    final shareText = 'Check out this petition: "${_petition!.title}" - ${_petition!.description}';
+    final shareText =
+        'Check out this petition: "${_petition!.title}" - ${_petition!.description}';
     final url = 'https://wa.me/?text=${Uri.encodeComponent(shareText)}';
     final uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not open WhatsApp')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not open WhatsApp')));
     }
   }
 
@@ -2193,7 +2617,8 @@ ${_petition!.currentSignatures} people have already signed! Help reach ${_petiti
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (_petition!.bannerImageUrl != null && _petition!.bannerImageUrl!.isNotEmpty)
+          if (_petition!.bannerImageUrl != null &&
+              _petition!.bannerImageUrl!.isNotEmpty)
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: CachedNetworkImage(
@@ -2204,7 +2629,11 @@ ${_petition!.currentSignatures} people have already signed! Help reach ${_petiti
                 placeholder: (context, url) => Container(
                   height: 200,
                   color: AppColors.elevation,
-                  child: Center(child: CircularProgressIndicator(color: AppColors.primaryLavender)),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.primaryLavender,
+                    ),
+                  ),
                 ),
                 errorWidget: (context, url, error) => Container(
                   height: 200,
@@ -2216,49 +2645,103 @@ ${_petition!.currentSignatures} people have already signed! Help reach ${_petiti
           SizedBox(height: 16),
           // Creator Info
           FutureBuilder<DocumentSnapshot>(
-            future: _firestore.collection('users').doc(_petition!.createdBy).get(),
+            future: _firestore
+                .collection('users')
+                .doc(_petition!.createdBy)
+                .get(),
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                 final creator = snapshot.data!;
                 final creatorData = creator.data() as Map<String, dynamic>;
                 return ListTile(
                   leading: CircleAvatar(
-                    backgroundImage: creatorData['profileImage'] != null 
-                        ? CachedNetworkImageProvider(creatorData['profileImage'])
+                    backgroundImage: creatorData['profileImage'] != null
+                        ? CachedNetworkImageProvider(
+                            creatorData['profileImage'],
+                          )
                         : null,
                     backgroundColor: AppColors.elevation,
-                    child: creatorData['profileImage'] == null ? Icon(Feather.user) : null,
+                    child: creatorData['profileImage'] == null
+                        ? Icon(Feather.user)
+                        : null,
                   ),
-                  title: Text(creatorData['username'] ?? 'User', style: TextStyle(color: AppColors.textHigh)),
-                  subtitle: Text('Petition Creator', style: TextStyle(color: AppColors.primaryLavender)),
+                  title: Text(
+                    creatorData['username'] ?? 'User',
+                    style: TextStyle(color: AppColors.textHigh),
+                  ),
+                  subtitle: Text(
+                    'Petition Creator',
+                    style: TextStyle(color: AppColors.primaryLavender),
+                  ),
                   onTap: () {
                     // Navigate to creator profile
                   },
                 );
               }
               return ListTile(
-                leading: CircleAvatar(child: Icon(Feather.user), backgroundColor: AppColors.elevation),
-                title: Text('Loading...', style: TextStyle(color: AppColors.textHigh)),
-                subtitle: Text('Petition Creator', style: TextStyle(color: AppColors.textMedium)),
+                leading: CircleAvatar(
+                  child: Icon(Feather.user),
+                  backgroundColor: AppColors.elevation,
+                ),
+                title: Text(
+                  'Loading...',
+                  style: TextStyle(color: AppColors.textHigh),
+                ),
+                subtitle: Text(
+                  'Petition Creator',
+                  style: TextStyle(color: AppColors.textMedium),
+                ),
               );
             },
           ),
           SizedBox(height: 16),
-          Text(_petition!.title, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
+          Text(
+            _petition!.title,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textHigh,
+            ),
+          ),
           SizedBox(height: 8),
-          Text(_petition!.description, style: TextStyle(fontSize: 16, color: AppColors.textMedium)),
+          Text(
+            _petition!.description,
+            style: TextStyle(fontSize: 16, color: AppColors.textMedium),
+          ),
           SizedBox(height: 16),
-          Text('Full Story', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
+          Text(
+            'Full Story',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textHigh,
+            ),
+          ),
           SizedBox(height: 8),
-          Text(_petition!.fullStory, style: TextStyle(fontSize: 16, height: 1.5, color: AppColors.textHigh)),
+          Text(
+            _petition!.fullStory,
+            style: TextStyle(
+              fontSize: 16,
+              height: 1.5,
+              color: AppColors.textHigh,
+            ),
+          ),
           if (_petition!.externalLinks.isNotEmpty) ...[
             SizedBox(height: 24),
-            Text('Support & More Info', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
+            Text(
+              'Support & More Info',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textHigh,
+              ),
+            ),
             SizedBox(height: 8),
             ..._petition!.externalLinks.map((link) {
               IconData icon = Feather.link;
               if (link.contains('gofundme.com')) icon = Feather.heart;
-              if (link.contains('tiktok.com')) icon = FontAwesome.music; // Closest for TikTok
+              if (link.contains('tiktok.com'))
+                icon = FontAwesome.music; // Closest for TikTok
               if (link.contains('instagram.com')) icon = FontAwesome.instagram;
 
               return Padding(
@@ -2274,7 +2757,11 @@ ${_petition!.currentSignatures} people have already signed! Help reach ${_petiti
                       link,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: AppColors.primaryLavender, decoration: TextDecoration.underline, fontSize: 14),
+                      style: TextStyle(
+                        color: AppColors.primaryLavender,
+                        decoration: TextDecoration.underline,
+                        fontSize: 14,
+                      ),
                     ),
                     onTap: () async {
                       final uri = Uri.parse(link);
@@ -2288,13 +2775,29 @@ ${_petition!.currentSignatures} people have already signed! Help reach ${_petiti
             }).toList(),
           ],
           SizedBox(height: 32),
-          Text('Updates & Announcements', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
+          Text(
+            'Updates & Announcements',
+            style: GoogleFonts.outfit(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textHigh,
+            ),
+          ),
           SizedBox(height: 16),
           StreamBuilder<QuerySnapshot>(
-            stream: _firestore.collection('petitions').doc(_petition!.id).collection('announcements').orderBy('timestamp', descending: true).snapshots(),
+            stream: _firestore
+                .collection('petitions')
+                .doc(_petition!.id)
+                .collection('announcements')
+                .orderBy('timestamp', descending: true)
+                .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
+                return Center(
+                  child: CircularProgressIndicator(
+                    color: AppColors.primaryLavender,
+                  ),
+                );
               }
               if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                 return Container(
@@ -2305,12 +2808,20 @@ ${_petition!.currentSignatures} people have already signed! Help reach ${_petiti
                     border: Border.all(color: AppColors.surface, width: 1),
                   ),
                   child: Center(
-                    child: Text('No official updates yet.', style: TextStyle(color: AppColors.textDisabled, fontStyle: FontStyle.italic)),
+                    child: Text(
+                      'No official updates yet.',
+                      style: TextStyle(
+                        color: AppColors.textDisabled,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
                   ),
                 );
               }
               return Column(
-                children: snapshot.data!.docs.map((doc) => _buildAnnouncementCard(doc)).toList(),
+                children: snapshot.data!.docs
+                    .map((doc) => _buildAnnouncementCard(doc))
+                    .toList(),
               );
             },
           ),
@@ -2323,7 +2834,9 @@ ${_petition!.currentSignatures} people have already signed! Help reach ${_petiti
   Widget _buildAnnouncementCard(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     final timestamp = data['timestamp'] as Timestamp?;
-    final dateStr = timestamp != null ? DateFormat('MMM d, yyyy • HH:mm').format(timestamp.toDate()) : 'Recently';
+    final dateStr = timestamp != null
+        ? DateFormat('MMM d, yyyy • HH:mm').format(timestamp.toDate())
+        : 'Recently';
 
     return Container(
       margin: EdgeInsets.only(bottom: 16),
@@ -2331,8 +2844,17 @@ ${_petition!.currentSignatures} people have already signed! Help reach ${_petiti
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.primaryLavender.withOpacity(0.2), width: 1),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: Offset(0, 4))],
+        border: Border.all(
+          color: AppColors.primaryLavender.withOpacity(0.2),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2341,19 +2863,51 @@ ${_petition!.currentSignatures} people have already signed! Help reach ${_petiti
             children: [
               Container(
                 padding: EdgeInsets.all(6),
-                decoration: BoxDecoration(color: AppColors.primaryLavender.withOpacity(0.1), shape: BoxShape.circle),
-                child: Icon(Feather.volume_2, color: AppColors.primaryLavender, size: 16),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLavender.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Feather.volume_2,
+                  color: AppColors.primaryLavender,
+                  size: 16,
+                ),
               ),
               SizedBox(width: 8),
-              Text('OFFICIAL UPDATE', style: GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.primaryLavender, letterSpacing: 1.2)),
+              Text(
+                'OFFICIAL UPDATE',
+                style: GoogleFonts.outfit(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primaryLavender,
+                  letterSpacing: 1.2,
+                ),
+              ),
               Spacer(),
-              Text(dateStr, style: TextStyle(fontSize: 10, color: AppColors.textDisabled)),
+              Text(
+                dateStr,
+                style: TextStyle(fontSize: 10, color: AppColors.textDisabled),
+              ),
             ],
           ),
           SizedBox(height: 12),
-          Text(data['title'] ?? 'Update', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
+          Text(
+            data['title'] ?? 'Update',
+            style: GoogleFonts.outfit(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textHigh,
+            ),
+          ),
           SizedBox(height: 8),
-          Text(data['body'] ?? '', style: TextStyle(fontSize: 14, height: 1.5, color: AppColors.textMedium)),
+          Text(
+            data['body'] ?? '',
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.5,
+              color: AppColors.textMedium,
+            ),
+          ),
         ],
       ),
     );
@@ -2369,7 +2923,11 @@ ${_petition!.currentSignatures} people have already signed! Help reach ${_petiti
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Feather.message_circle, size: 64, color: AppColors.textDisabled),
+            Icon(
+              Feather.message_circle,
+              size: 64,
+              color: AppColors.textDisabled,
+            ),
             SizedBox(height: 16),
             Text(
               'No comments yet',
@@ -2403,10 +2961,12 @@ ${_petition!.currentSignatures} people have already signed! Help reach ${_petiti
                     CircleAvatar(
                       radius: 20,
                       backgroundColor: AppColors.elevation,
-                      backgroundImage: signature.profileImage != null 
+                      backgroundImage: signature.profileImage != null
                           ? CachedNetworkImageProvider(signature.profileImage!)
                           : null,
-                      child: signature.profileImage == null ? Icon(Feather.user, color: AppColors.textMedium) : null,
+                      child: signature.profileImage == null
+                          ? Icon(Feather.user, color: AppColors.textMedium)
+                          : null,
                     ),
                     SizedBox(width: 12),
                     Expanded(
@@ -2415,11 +2975,17 @@ ${_petition!.currentSignatures} people have already signed! Help reach ${_petiti
                         children: [
                           Text(
                             signature.username,
-                            style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textHigh),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textHigh,
+                            ),
                           ),
                           Text(
                             'Signed ${DateFormat('MMM d, yyyy').format(signature.signedAt.toDate())}',
-                            style: TextStyle(fontSize: 12, color: AppColors.textDisabled),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textDisabled,
+                            ),
                           ),
                         ],
                       ),
@@ -2430,7 +2996,11 @@ ${_petition!.currentSignatures} people have already signed! Help reach ${_petiti
                 if (signature.comment != null)
                   Text(
                     signature.comment!,
-                    style: TextStyle(fontSize: 14, height: 1.4, color: AppColors.textHigh),
+                    style: TextStyle(
+                      fontSize: 14,
+                      height: 1.4,
+                      color: AppColors.textHigh,
+                    ),
                   ),
               ],
             ),
@@ -2459,14 +3029,18 @@ ${_petition!.currentSignatures} people have already signed! Help reach ${_petiti
           });
         },
         style: TextButton.styleFrom(
-          backgroundColor: isSelected ? AppColors.primaryLavender.withOpacity(0.1) : Colors.transparent,
+          backgroundColor: isSelected
+              ? AppColors.primaryLavender.withOpacity(0.1)
+              : Colors.transparent,
           shape: RoundedRectangleBorder(),
           padding: EdgeInsets.symmetric(vertical: 16),
         ),
         child: Text(
           text,
           style: TextStyle(
-            color: isSelected ? AppColors.primaryLavender : AppColors.textMedium,
+            color: isSelected
+                ? AppColors.primaryLavender
+                : AppColors.textMedium,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           ),
         ),
@@ -2481,14 +3055,25 @@ ${_petition!.currentSignatures} people have already signed! Help reach ${_petiti
         return StatefulBuilder(
           builder: (context, setState) => AlertDialog(
             backgroundColor: AppColors.surface,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: Text('Sign Petition', style: TextStyle(color: AppColors.textHigh, fontWeight: FontWeight.bold)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: Text(
+              'Sign Petition',
+              style: TextStyle(
+                color: AppColors.textHigh,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Show your support for this movement by adding your signature.', style: TextStyle(color: AppColors.textMedium)),
+                  Text(
+                    'Show your support for this movement by adding your signature.',
+                    style: TextStyle(color: AppColors.textMedium),
+                  ),
                   SizedBox(height: 20),
                   Row(
                     children: [
@@ -2504,7 +3089,10 @@ ${_petition!.currentSignatures} people have already signed! Help reach ${_petiti
                       Expanded(
                         child: Text(
                           'Make my signature public',
-                          style: TextStyle(fontSize: 14, color: AppColors.textMedium),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textMedium,
+                          ),
                         ),
                       ),
                     ],
@@ -2520,12 +3108,23 @@ ${_petition!.currentSignatures} people have already signed! Help reach ${_petiti
                         });
                       },
                       style: TextButton.styleFrom(
-                        backgroundColor: AppColors.primaryLavender.withOpacity(0.1),
+                        backgroundColor: AppColors.primaryLavender.withOpacity(
+                          0.1,
+                        ),
                         padding: EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                      icon: Icon(Feather.message_square, color: AppColors.primaryLavender, size: 20),
-                      label: Text('Join the Discussion instead', style: TextStyle(color: AppColors.primaryLavender)),
+                      icon: Icon(
+                        Feather.message_square,
+                        color: AppColors.primaryLavender,
+                        size: 20,
+                      ),
+                      label: Text(
+                        'Join the Discussion instead',
+                        style: TextStyle(color: AppColors.primaryLavender),
+                      ),
                     ),
                   ),
                 ],
@@ -2534,20 +3133,37 @@ ${_petition!.currentSignatures} people have already signed! Help reach ${_petiti
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text('Cancel', style: TextStyle(color: AppColors.textMedium)),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(color: AppColors.textMedium),
+                ),
               ),
               ElevatedButton(
-                onPressed: _isSigning ? null : () {
-                  _signPetitionWithComment('', _signatureIsPublic); 
-                  Navigator.pop(context);
-                },
-                child: _isSigning 
-                    ? SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.backgroundDeep))
-                    : Text('Sign Petition', style: TextStyle(color: AppColors.backgroundDeep)),
+                onPressed: _isSigning
+                    ? null
+                    : () {
+                        _signPetitionWithComment('', _signatureIsPublic);
+                        Navigator.pop(context);
+                      },
+                child: _isSigning
+                    ? SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.backgroundDeep,
+                        ),
+                      )
+                    : Text(
+                        'Sign Petition',
+                        style: TextStyle(color: AppColors.backgroundDeep),
+                      ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryLavender,
                   padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ],
@@ -2563,14 +3179,21 @@ ${_petition!.currentSignatures} people have already signed! Help reach ${_petiti
       return Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
-        body: Center(child: CircularProgressIndicator(color: AppColors.primaryLavender)),
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primaryLavender),
+        ),
       );
     }
     if (_petition == null) {
       return Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
-        body: Center(child: Text('Petition not found', style: TextStyle(color: AppColors.textHigh))),
+        body: Center(
+          child: Text(
+            'Petition not found',
+            style: TextStyle(color: AppColors.textHigh),
+          ),
+        ),
       );
     }
 
@@ -2581,7 +3204,10 @@ ${_petition!.currentSignatures} people have already signed! Help reach ${_petiti
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: Text('Petition Details', style: TextStyle(color: AppColors.textHigh)),
+        title: Text(
+          'Petition Details',
+          style: TextStyle(color: AppColors.textHigh),
+        ),
         backgroundColor: Colors.transparent,
         iconTheme: IconThemeData(color: AppColors.primaryLavender),
         elevation: 0,
@@ -2590,14 +3216,17 @@ ${_petition!.currentSignatures} people have already signed! Help reach ${_petiti
             icon: Icon(Feather.share_2, color: AppColors.primaryLavender),
             onPressed: _showShareOptions,
           ),
-          if (isCreator || _petition!.collaborators.contains(_auth.currentUser?.displayName))
+          if (isCreator ||
+              _petition!.collaborators.contains(_auth.currentUser?.displayName))
             IconButton(
               icon: Icon(Feather.edit_2, color: AppColors.primaryLavender),
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => EnhancedPetitionCreationScreen(existingPetition: _petition),
+                    builder: (context) => EnhancedPetitionCreationScreen(
+                      existingPetition: _petition,
+                    ),
                   ),
                 ).then((_) => _loadPetition());
               },
@@ -2609,7 +3238,8 @@ ${_petition!.currentSignatures} people have already signed! Help reach ${_petiti
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => PetitionManagementDashboard(petition: _petition!),
+                    builder: (context) =>
+                        PetitionManagementDashboard(petition: _petition!),
                   ),
                 );
               },
@@ -2620,7 +3250,8 @@ ${_petition!.currentSignatures} people have already signed! Help reach ${_petiti
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => PetitionAnalyticsScreen(petitionId: widget.petitionId),
+                    builder: (context) =>
+                        PetitionAnalyticsScreen(petitionId: widget.petitionId),
                   ),
                 );
               },
@@ -2648,11 +3279,18 @@ ${_petition!.currentSignatures} people have already signed! Help reach ${_petiti
                   children: [
                     Text(
                       '${_petition!.currentSignatures} signatures',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textHigh),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textHigh,
+                      ),
                     ),
                     Text(
                       'Goal: ${_petition!.goal}',
-                      style: TextStyle(fontSize: 16, color: AppColors.textMedium),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppColors.textMedium,
+                      ),
                     ),
                   ],
                 ),
@@ -2660,11 +3298,13 @@ ${_petition!.currentSignatures} people have already signed! Help reach ${_petiti
                   Padding(
                     padding: EdgeInsets.only(top: 8),
                     child: Text(
-                      _petition!.isExpired 
+                      _petition!.isExpired
                           ? 'This petition has ended'
                           : '${_petition!.daysLeft} days left',
                       style: TextStyle(
-                        color: _petition!.isExpired ? AppColors.error : AppColors.secondaryTeal,
+                        color: _petition!.isExpired
+                            ? AppColors.error
+                            : AppColors.secondaryTeal,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -2684,8 +3324,7 @@ ${_petition!.currentSignatures} people have already signed! Help reach ${_petiti
           ),
           // Tab Content
           Expanded(
-            child: _currentTab == 0 ? _buildStoryTab() :
-            _buildDiscussionTab(),
+            child: _currentTab == 0 ? _buildStoryTab() : _buildDiscussionTab(),
           ),
         ],
       ),
@@ -2696,7 +3335,10 @@ ${_petition!.currentSignatures} people have already signed! Help reach ${_petiti
               color: AppColors.backgroundDeep,
               child: ElevatedButton(
                 onPressed: _openSignatureDialog,
-                child: Text('Sign This Petition', style: TextStyle(color: AppColors.backgroundDeep)),
+                child: Text(
+                  'Sign This Petition',
+                  style: TextStyle(color: AppColors.backgroundDeep),
+                ),
                 style: ElevatedButton.styleFrom(
                   minimumSize: Size(double.infinity, 50),
                   backgroundColor: AppColors.primaryLavender,
@@ -2705,20 +3347,20 @@ ${_petition!.currentSignatures} people have already signed! Help reach ${_petiti
               ),
             )
           : isSigned
-            ? Container(
-                padding: EdgeInsets.all(16),
-                color: AppColors.backgroundDeep,
-                child: Text(
-                  '✓ You have signed this petition',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: AppColors.success,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
+          ? Container(
+              padding: EdgeInsets.all(16),
+              color: AppColors.backgroundDeep,
+              child: Text(
+                '✓ You have signed this petition',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppColors.success,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
                 ),
-              )
-            : null,
+              ),
+            )
+          : null,
     );
   }
 }
@@ -2726,10 +3368,12 @@ ${_petition!.currentSignatures} people have already signed! Help reach ${_petiti
 // Petition Analytics Screen
 class PetitionAnalyticsScreen extends StatefulWidget {
   final String petitionId;
-  const PetitionAnalyticsScreen({Key? key, required this.petitionId}) : super(key: key);
+  const PetitionAnalyticsScreen({Key? key, required this.petitionId})
+    : super(key: key);
 
   @override
-  _PetitionAnalyticsScreenState createState() => _PetitionAnalyticsScreenState();
+  _PetitionAnalyticsScreenState createState() =>
+      _PetitionAnalyticsScreenState();
 }
 
 class _PetitionAnalyticsScreenState extends State<PetitionAnalyticsScreen> {
@@ -2745,7 +3389,10 @@ class _PetitionAnalyticsScreenState extends State<PetitionAnalyticsScreen> {
   }
 
   Future<void> _loadPetition() async {
-    final doc = await _firestore.collection('petitions').doc(widget.petitionId).get();
+    final doc = await _firestore
+        .collection('petitions')
+        .doc(widget.petitionId)
+        .get();
     if (doc.exists) {
       setState(() {
         _petition = Petition.fromDocument(doc);
@@ -2758,12 +3405,27 @@ class _PetitionAnalyticsScreenState extends State<PetitionAnalyticsScreen> {
     setState(() {
       _signatureHistory = [
         SignatureDay(day: DateTime.now().subtract(Duration(days: 6)), count: 5),
-        SignatureDay(day: DateTime.now().subtract(Duration(days: 5)), count: 12),
+        SignatureDay(
+          day: DateTime.now().subtract(Duration(days: 5)),
+          count: 12,
+        ),
         SignatureDay(day: DateTime.now().subtract(Duration(days: 4)), count: 8),
-        SignatureDay(day: DateTime.now().subtract(Duration(days: 3)), count: 20),
-        SignatureDay(day: DateTime.now().subtract(Duration(days: 2)), count: 15),
-        SignatureDay(day: DateTime.now().subtract(Duration(days: 1)), count: 25),
-        SignatureDay(day: DateTime.now(), count: _petition?.currentSignatures ?? 0),
+        SignatureDay(
+          day: DateTime.now().subtract(Duration(days: 3)),
+          count: 20,
+        ),
+        SignatureDay(
+          day: DateTime.now().subtract(Duration(days: 2)),
+          count: 15,
+        ),
+        SignatureDay(
+          day: DateTime.now().subtract(Duration(days: 1)),
+          count: 25,
+        ),
+        SignatureDay(
+          day: DateTime.now(),
+          count: _petition?.currentSignatures ?? 0,
+        ),
       ];
     });
   }
@@ -2778,7 +3440,14 @@ class _PetitionAnalyticsScreenState extends State<PetitionAnalyticsScreen> {
             children: [
               Icon(icon, size: 30, color: AppColors.primaryLavender),
               SizedBox(height: 8),
-              Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textHigh,
+                ),
+              ),
               Text(title, style: TextStyle(color: AppColors.textMedium)),
             ],
           ),
@@ -2789,7 +3458,7 @@ class _PetitionAnalyticsScreenState extends State<PetitionAnalyticsScreen> {
 
   Widget _buildSignatureChart() {
     if (_signatureHistory.isEmpty) return Container();
-    
+
     return Container(
       height: 250,
       padding: EdgeInsets.fromLTRB(10, 20, 20, 10),
@@ -2798,10 +3467,8 @@ class _PetitionAnalyticsScreenState extends State<PetitionAnalyticsScreen> {
           gridData: FlGridData(
             show: true,
             drawVerticalLine: false,
-            getDrawingHorizontalLine: (value) => FlLine(
-              color: AppColors.elevation,
-              strokeWidth: 1,
-            ),
+            getDrawingHorizontalLine: (value) =>
+                FlLine(color: AppColors.elevation, strokeWidth: 1),
           ),
           titlesData: FlTitlesData(
             show: true,
@@ -2819,7 +3486,10 @@ class _PetitionAnalyticsScreenState extends State<PetitionAnalyticsScreen> {
                       padding: const EdgeInsets.only(top: 8.0),
                       child: Text(
                         DateFormat('E').format(_signatureHistory[idx].day),
-                        style: TextStyle(color: AppColors.textDisabled, fontSize: 10),
+                        style: TextStyle(
+                          color: AppColors.textDisabled,
+                          fontSize: 10,
+                        ),
                       ),
                     );
                   }
@@ -2834,7 +3504,10 @@ class _PetitionAnalyticsScreenState extends State<PetitionAnalyticsScreen> {
                 getTitlesWidget: (value, meta) {
                   return Text(
                     value.toInt().toString(),
-                    style: TextStyle(color: AppColors.textDisabled, fontSize: 10),
+                    style: TextStyle(
+                      color: AppColors.textDisabled,
+                      fontSize: 10,
+                    ),
                     textAlign: TextAlign.right,
                   );
                 },
@@ -2845,19 +3518,34 @@ class _PetitionAnalyticsScreenState extends State<PetitionAnalyticsScreen> {
           minX: 0,
           maxX: (_signatureHistory.length - 1).toDouble(),
           minY: 0,
-          maxY: (_signatureHistory.map((e) => e.count.toDouble()).reduce((a, b) => a > b ? a : b) * 1.2),
+          maxY:
+              (_signatureHistory
+                  .map((e) => e.count.toDouble())
+                  .reduce((a, b) => a > b ? a : b) *
+              1.2),
           lineBarsData: [
             LineChartBarData(
-              spots: _signatureHistory.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.count.toDouble())).toList(),
+              spots: _signatureHistory
+                  .asMap()
+                  .entries
+                  .map(
+                    (e) => FlSpot(e.key.toDouble(), e.value.count.toDouble()),
+                  )
+                  .toList(),
               isCurved: true,
-              gradient: LinearGradient(colors: [AppColors.primaryLavender, AppColors.secondaryTeal]),
+              gradient: LinearGradient(
+                colors: [AppColors.primaryLavender, AppColors.secondaryTeal],
+              ),
               barWidth: 4,
               isStrokeCapRound: true,
               dotData: FlDotData(show: true),
               belowBarData: BarAreaData(
                 show: true,
                 gradient: LinearGradient(
-                  colors: [AppColors.primaryLavender.withOpacity(0.3), AppColors.primaryLavender.withOpacity(0)],
+                  colors: [
+                    AppColors.primaryLavender.withOpacity(0.3),
+                    AppColors.primaryLavender.withOpacity(0),
+                  ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
@@ -2871,20 +3559,32 @@ class _PetitionAnalyticsScreenState extends State<PetitionAnalyticsScreen> {
 
   Widget _buildEngagementMetrics() {
     if (_petition == null) return Container();
-    final conversionRate = _petition!.views > 0 
-        ? (_petition!.currentSignatures / _petition!.views * 100) 
+    final conversionRate = _petition!.views > 0
+        ? (_petition!.currentSignatures / _petition!.views * 100)
         : 0;
-    final avgDaily = _petition!.createdAt.toDate().difference(DateTime.now()).inDays.abs();
-    final avgDailySignatures = avgDaily > 0 ? (_petition!.currentSignatures / avgDaily) : _petition!.currentSignatures.toDouble();
+    final avgDaily = _petition!.createdAt
+        .toDate()
+        .difference(DateTime.now())
+        .inDays
+        .abs();
+    final avgDailySignatures = avgDaily > 0
+        ? (_petition!.currentSignatures / avgDaily)
+        : _petition!.currentSignatures.toDouble();
     return Card(
       color: AppColors.surface,
       child: Padding(
         padding: EdgeInsets.all(16),
         child: Column(
           children: [
-            _buildMetricRow('Conversion Rate', '${conversionRate.toStringAsFixed(1)}%'),
+            _buildMetricRow(
+              'Conversion Rate',
+              '${conversionRate.toStringAsFixed(1)}%',
+            ),
             Divider(color: AppColors.elevation),
-            _buildMetricRow('Avg. Daily Signatures', '${avgDailySignatures.toStringAsFixed(1)}'),
+            _buildMetricRow(
+              'Avg. Daily Signatures',
+              '${avgDailySignatures.toStringAsFixed(1)}',
+            ),
             Divider(color: AppColors.elevation),
             _buildMetricRow('Total Views', _petition!.views.toString()),
             Divider(color: AppColors.elevation),
@@ -2892,7 +3592,12 @@ class _PetitionAnalyticsScreenState extends State<PetitionAnalyticsScreen> {
             Divider(color: AppColors.elevation),
             _buildMetricRow('Days Running', avgDaily.toString()),
             Divider(color: AppColors.elevation),
-            _buildMetricRow('Days Remaining', _petition!.daysLeft > 0 ? _petition!.daysLeft.toString() : 'Ended'),
+            _buildMetricRow(
+              'Days Remaining',
+              _petition!.daysLeft > 0
+                  ? _petition!.daysLeft.toString()
+                  : 'Ended',
+            ),
           ],
         ),
       ),
@@ -2908,29 +3613,45 @@ class _PetitionAnalyticsScreenState extends State<PetitionAnalyticsScreen> {
           centerSpaceRadius: 50,
           sections: [
             PieChartSectionData(
-              value: 45, 
-              color: AppColors.primaryLavender, 
-              title: '13-17', 
-              radius: 60, 
-              titleStyle: GoogleFonts.outfit(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+              value: 45,
+              color: AppColors.primaryLavender,
+              title: '13-17',
+              radius: 60,
+              titleStyle: GoogleFonts.outfit(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
               badgeWidget: Icon(Feather.book, color: Colors.white, size: 16),
               badgePositionPercentageOffset: 1.2,
             ),
             PieChartSectionData(
-              value: 35, 
-              color: AppColors.secondaryTeal, 
-              title: '18-25', 
-              radius: 55, 
-              titleStyle: GoogleFonts.outfit(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-              badgeWidget: Icon(Feather.briefcase, color: Colors.white, size: 16),
+              value: 35,
+              color: AppColors.secondaryTeal,
+              title: '18-25',
+              radius: 55,
+              titleStyle: GoogleFonts.outfit(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+              badgeWidget: Icon(
+                Feather.briefcase,
+                color: Colors.white,
+                size: 16,
+              ),
               badgePositionPercentageOffset: 1.2,
             ),
             PieChartSectionData(
-              value: 20, 
-              color: AppColors.accentMustard, 
-              title: '26+', 
-              radius: 50, 
-              titleStyle: GoogleFonts.outfit(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+              value: 20,
+              color: AppColors.accentMustard,
+              title: '26+',
+              radius: 50,
+              titleStyle: GoogleFonts.outfit(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
               badgeWidget: Icon(Feather.home, color: Colors.white, size: 16),
               badgePositionPercentageOffset: 1.2,
             ),
@@ -2959,7 +3680,13 @@ class _PetitionAnalyticsScreenState extends State<PetitionAnalyticsScreen> {
                   if (value.toInt() < titles.length) {
                     return Padding(
                       padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(titles[value.toInt()], style: TextStyle(color: AppColors.textDisabled, fontSize: 10)),
+                      child: Text(
+                        titles[value.toInt()],
+                        style: TextStyle(
+                          color: AppColors.textDisabled,
+                          fontSize: 10,
+                        ),
+                      ),
                     );
                   }
                   return const SizedBox.shrink();
@@ -2973,10 +3700,50 @@ class _PetitionAnalyticsScreenState extends State<PetitionAnalyticsScreen> {
           gridData: FlGridData(show: false),
           borderData: FlBorderData(show: false),
           barGroups: [
-            BarChartGroupData(x: 0, barRods: [BarChartRodData(toY: 40, color: AppColors.primaryLavender, width: 22, borderRadius: BorderRadius.circular(6))]),
-            BarChartGroupData(x: 1, barRods: [BarChartRodData(toY: 75, color: AppColors.secondaryTeal, width: 22, borderRadius: BorderRadius.circular(6))]),
-            BarChartGroupData(x: 2, barRods: [BarChartRodData(toY: 55, color: AppColors.accentMustard, width: 22, borderRadius: BorderRadius.circular(6))]),
-            BarChartGroupData(x: 3, barRods: [BarChartRodData(toY: 30, color: AppColors.error, width: 22, borderRadius: BorderRadius.circular(6))]),
+            BarChartGroupData(
+              x: 0,
+              barRods: [
+                BarChartRodData(
+                  toY: 40,
+                  color: AppColors.primaryLavender,
+                  width: 22,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ],
+            ),
+            BarChartGroupData(
+              x: 1,
+              barRods: [
+                BarChartRodData(
+                  toY: 75,
+                  color: AppColors.secondaryTeal,
+                  width: 22,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ],
+            ),
+            BarChartGroupData(
+              x: 2,
+              barRods: [
+                BarChartRodData(
+                  toY: 55,
+                  color: AppColors.accentMustard,
+                  width: 22,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ],
+            ),
+            BarChartGroupData(
+              x: 3,
+              barRods: [
+                BarChartRodData(
+                  toY: 30,
+                  color: AppColors.error,
+                  width: 22,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -2989,8 +3756,20 @@ class _PetitionAnalyticsScreenState extends State<PetitionAnalyticsScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.textHigh)),
-          Text(value, style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryLavender)),
+          Text(
+            label,
+            style: TextStyle(
+              fontWeight: FontWeight.w500,
+              color: AppColors.textHigh,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: AppColors.primaryLavender,
+            ),
+          ),
         ],
       ),
     );
@@ -3002,13 +3781,18 @@ class _PetitionAnalyticsScreenState extends State<PetitionAnalyticsScreen> {
       return Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(backgroundColor: AppColors.backgroundDeep),
-        body: Center(child: CircularProgressIndicator(color: AppColors.primaryLavender)),
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primaryLavender),
+        ),
       );
     }
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: Text('Petition Analytics', style: TextStyle(color: AppColors.textHigh)),
+        title: Text(
+          'Petition Analytics',
+          style: TextStyle(color: AppColors.textHigh),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: IconThemeData(color: AppColors.primaryLavender),
@@ -3018,25 +3802,53 @@ class _PetitionAnalyticsScreenState extends State<PetitionAnalyticsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Quick Insights', style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
+            Text(
+              'Quick Insights',
+              style: GoogleFonts.outfit(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textHigh,
+              ),
+            ),
             SizedBox(height: 16),
             // Overview Cards
             Row(
               children: [
-                _buildStatCard('Signatures', _petition!.currentSignatures.toString(), Feather.users),
+                _buildStatCard(
+                  'Signatures',
+                  _petition!.currentSignatures.toString(),
+                  Feather.users,
+                ),
                 SizedBox(width: 12),
-                _buildStatCard('Views', _petition!.views.toString(), Feather.eye),
+                _buildStatCard(
+                  'Views',
+                  _petition!.views.toString(),
+                  Feather.eye,
+                ),
                 SizedBox(width: 12),
-                _buildStatCard('Shares', _petition!.shares.toString(), Feather.share_2),
+                _buildStatCard(
+                  'Shares',
+                  _petition!.shares.toString(),
+                  Feather.share_2,
+                ),
               ],
             ),
             SizedBox(height: 32),
-            
-            Text('Signature Velocity', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
+
+            Text(
+              'Signature Velocity',
+              style: GoogleFonts.outfit(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textHigh,
+              ),
+            ),
             SizedBox(height: 16),
             Card(
               color: AppColors.surface,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: _buildSignatureChart(),
@@ -3050,7 +3862,14 @@ class _PetitionAnalyticsScreenState extends State<PetitionAnalyticsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Age Demographic', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
+                      Text(
+                        'Age Demographic',
+                        style: GoogleFonts.outfit(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textHigh,
+                        ),
+                      ),
                       SizedBox(height: 16),
                       _buildDemographicChart(),
                     ],
@@ -3060,16 +3879,32 @@ class _PetitionAnalyticsScreenState extends State<PetitionAnalyticsScreen> {
             ),
             SizedBox(height: 32),
 
-            Text('Traffic Sources', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
+            Text(
+              'Traffic Sources',
+              style: GoogleFonts.outfit(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textHigh,
+              ),
+            ),
             SizedBox(height: 16),
             Card(
               color: AppColors.surface,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
               child: _buildTrafficSourceChart(),
             ),
             SizedBox(height: 32),
 
-            Text('Detailed Engagement', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
+            Text(
+              'Detailed Engagement',
+              style: GoogleFonts.outfit(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textHigh,
+              ),
+            ),
             SizedBox(height: 16),
             _buildEngagementMetrics(),
             SizedBox(height: 40),
@@ -3089,7 +3924,8 @@ class SignatureDay {
 // Enhanced Petitions Screen (Main List)
 class EnhancedPetitionsScreen extends StatefulWidget {
   @override
-  _EnhancedPetitionsScreenState createState() => _EnhancedPetitionsScreenState();
+  _EnhancedPetitionsScreenState createState() =>
+      _EnhancedPetitionsScreenState();
 }
 
 class _EnhancedPetitionsScreenState extends State<EnhancedPetitionsScreen> {
@@ -3108,13 +3944,19 @@ class _EnhancedPetitionsScreenState extends State<EnhancedPetitionsScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: Text('Enhanced Petitions', style: TextStyle(color: AppColors.textHigh)),
+        title: Text(
+          'Enhanced Petitions',
+          style: TextStyle(color: AppColors.textHigh),
+        ),
         backgroundColor: Colors.transparent,
         iconTheme: IconThemeData(color: AppColors.primaryLavender),
         elevation: 0,
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: _firestore.collection('petitions').orderBy('createdAt', descending: true).snapshots(),
+        stream: _firestore
+            .collection('petitions')
+            .orderBy('createdAt', descending: true)
+            .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const GridShimmerSkeleton();
@@ -3124,16 +3966,30 @@ class _EnhancedPetitionsScreenState extends State<EnhancedPetitionsScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Feather.check_square, size: 50, color: AppColors.textDisabled),
+                  Icon(
+                    Feather.check_square,
+                    size: 50,
+                    color: AppColors.textDisabled,
+                  ),
                   SizedBox(height: 16),
-                  Text('No petitions yet', textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: AppColors.textMedium)),
+                  Text(
+                    'No petitions yet',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16, color: AppColors.textMedium),
+                  ),
                   SizedBox(height: 8),
-                  Text('Be the first to create a petition!', textAlign: TextAlign.center, style: TextStyle(color: AppColors.textDisabled)),
+                  Text(
+                    'Be the first to create a petition!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppColors.textDisabled),
+                  ),
                 ],
               ),
             );
           }
-          final petitions = snapshot.data!.docs.map((doc) => Petition.fromDocument(doc)).toList();
+          final petitions = snapshot.data!.docs
+              .map((doc) => Petition.fromDocument(doc))
+              .toList();
           return Padding(
             padding: const EdgeInsets.all(8.0),
             child: GridView.builder(
@@ -3156,7 +4012,9 @@ class _EnhancedPetitionsScreenState extends State<EnhancedPetitionsScreen> {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => EnhancedPetitionCreationScreen()),
+            MaterialPageRoute(
+              builder: (context) => EnhancedPetitionCreationScreen(),
+            ),
           );
         },
         backgroundColor: AppColors.accentMustard,
@@ -3177,7 +4035,8 @@ class _EnhancedPetitionsScreenState extends State<EnhancedPetitionsScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => EnhancedPetitionDetailScreen(petitionId: petition.id),
+              builder: (context) =>
+                  EnhancedPetitionDetailScreen(petitionId: petition.id),
             ),
           );
         },
@@ -3188,18 +4047,25 @@ class _EnhancedPetitionsScreenState extends State<EnhancedPetitionsScreen> {
             // Banner Image
             ClipRRect(
               borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-              child: petition.bannerImageUrl != null && petition.bannerImageUrl!.isNotEmpty
+              child:
+                  petition.bannerImageUrl != null &&
+                      petition.bannerImageUrl!.isNotEmpty
                   ? CachedNetworkImage(
                       imageUrl: petition.bannerImageUrl!,
                       height: 100,
                       fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(color: AppColors.elevation),
-                      errorWidget: (context, url, error) => Icon(Feather.alert_circle, color: AppColors.error),
+                      placeholder: (context, url) =>
+                          Container(color: AppColors.elevation),
+                      errorWidget: (context, url, error) =>
+                          Icon(Feather.alert_circle, color: AppColors.error),
                     )
                   : Container(
                       height: 100,
                       color: AppColors.elevation,
-                      child: Icon(Feather.check_square, color: AppColors.textDisabled),
+                      child: Icon(
+                        Feather.check_square,
+                        color: AppColors.textDisabled,
+                      ),
                     ),
             ),
             // Content
@@ -3213,7 +4079,10 @@ class _EnhancedPetitionsScreenState extends State<EnhancedPetitionsScreen> {
                     children: [
                       if (isSigned)
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.success,
                             borderRadius: BorderRadius.circular(4),
@@ -3229,13 +4098,20 @@ class _EnhancedPetitionsScreenState extends State<EnhancedPetitionsScreen> {
                         ),
                       if (petition.hasDeadline && !isSigned)
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
-                            color: petition.isExpired ? AppColors.error : AppColors.secondaryTeal,
+                            color: petition.isExpired
+                                ? AppColors.error
+                                : AppColors.secondaryTeal,
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            petition.isExpired ? 'ENDED' : '${petition.daysLeft}d',
+                            petition.isExpired
+                                ? 'ENDED'
+                                : '${petition.daysLeft}d',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 10,
@@ -3248,10 +4124,14 @@ class _EnhancedPetitionsScreenState extends State<EnhancedPetitionsScreen> {
                   SizedBox(height: 6),
                   // Title
                   Text(
-                    petition.title.length > 35 
-                        ? '${petition.title.substring(0, 35)}...' 
+                    petition.title.length > 35
+                        ? '${petition.title.substring(0, 35)}...'
                         : petition.title,
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textHigh),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: AppColors.textHigh,
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -3277,11 +4157,18 @@ class _EnhancedPetitionsScreenState extends State<EnhancedPetitionsScreen> {
                     children: [
                       Text(
                         '${petition.currentSignatures}/${petition.goal}',
-                        style: TextStyle(fontSize: 11, color: AppColors.textMedium),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textMedium,
+                        ),
                       ),
                       Text(
                         '${(petition.progress * 100).toInt()}%',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primaryLavender),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primaryLavender,
+                        ),
                       ),
                     ],
                   ),
@@ -3292,11 +4179,17 @@ class _EnhancedPetitionsScreenState extends State<EnhancedPetitionsScreen> {
                     children: [
                       Text(
                         petition.category,
-                        style: TextStyle(fontSize: 10, color: AppColors.textDisabled),
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: AppColors.textDisabled,
+                        ),
                       ),
                       Text(
                         petition.ageRating,
-                        style: TextStyle(fontSize: 10, color: AppColors.textDisabled),
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: AppColors.textDisabled,
+                        ),
                       ),
                     ],
                   ),
@@ -3311,11 +4204,16 @@ class _EnhancedPetitionsScreenState extends State<EnhancedPetitionsScreen> {
 }
 
 // Helper navigation functions
-void showEnhancedPetitionDetails(BuildContext context, Petition petition, bool isSigned) {
+void showEnhancedPetitionDetails(
+  BuildContext context,
+  Petition petition,
+  bool isSigned,
+) {
   Navigator.push(
     context,
     MaterialPageRoute(
-      builder: (context) => EnhancedPetitionDetailScreen(petitionId: petition.id),
+      builder: (context) =>
+          EnhancedPetitionDetailScreen(petitionId: petition.id),
     ),
   );
 }
@@ -3323,9 +4221,7 @@ void showEnhancedPetitionDetails(BuildContext context, Petition petition, bool i
 void showCreateEnhancedPetitionModal(BuildContext context) {
   Navigator.push(
     context,
-    MaterialPageRoute(
-      builder: (context) => EnhancedPetitionCreationScreen(),
-    ),
+    MaterialPageRoute(builder: (context) => EnhancedPetitionCreationScreen()),
   );
 }
 
@@ -3360,7 +4256,9 @@ class _UserPetitionsDashboardState extends State<UserPetitionsDashboard> {
           .where('createdBy', isEqualTo: uid)
           .get();
 
-      final List<Petition> petitions = snapshot.docs.map((doc) => Petition.fromDocument(doc)).toList();
+      final List<Petition> petitions = snapshot.docs
+          .map((doc) => Petition.fromDocument(doc))
+          .toList();
 
       // Also check if user is a collaborator (by username)
       final username = _auth.currentUser?.displayName;
@@ -3369,7 +4267,7 @@ class _UserPetitionsDashboardState extends State<UserPetitionsDashboard> {
             .collection('petitions')
             .where('collaborators', arrayContains: username)
             .get();
-        
+
         for (var doc in collabSnapshot.docs) {
           if (!petitions.any((p) => p.id == doc.id)) {
             petitions.add(Petition.fromDocument(doc));
@@ -3389,53 +4287,69 @@ class _UserPetitionsDashboardState extends State<UserPetitionsDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    int totalSigs = _myPetitions.fold(0, (sum, item) => sum + item.currentSignatures);
+    int totalSigs = _myPetitions.fold(
+      0,
+      (sum, item) => sum + item.currentSignatures,
+    );
     int totalViews = _myPetitions.fold(0, (sum, item) => sum + item.views);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: Text('Causes Management', 
-          style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppColors.textHigh)),
+        title: Text(
+          'Causes Management',
+          style: GoogleFonts.outfit(
+            fontWeight: FontWeight.bold,
+            color: AppColors.textHigh,
+          ),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: IconThemeData(color: AppColors.primaryLavender),
       ),
-      body: _isLoading 
-          ? Center(child: CircularProgressIndicator(color: AppColors.primaryLavender))
+      body: _isLoading
+          ? Center(
+              child: CircularProgressIndicator(
+                color: AppColors.primaryLavender,
+              ),
+            )
           : _myPetitions.isEmpty
-              ? _buildEmptyState()
-              : RefreshIndicator(
-                  onRefresh: _loadUserPetitions,
-                  child: CustomScrollView(
-                    slivers: [
-                      SliverPadding(
-                        padding: EdgeInsets.all(20),
-                        sliver: SliverToBoxAdapter(
-                          child: _buildGlobalSummary(totalSigs, totalViews),
-                        ),
-                      ),
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                          child: Text('Your Petitions', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
-                        ),
-                      ),
-                      SliverPadding(
-                        padding: EdgeInsets.all(20),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              final petition = _myPetitions[index];
-                              return _buildManagementItem(petition);
-                            },
-                            childCount: _myPetitions.length,
-                          ),
-                        ),
-                      ),
-                    ],
+          ? _buildEmptyState()
+          : RefreshIndicator(
+              onRefresh: _loadUserPetitions,
+              child: CustomScrollView(
+                slivers: [
+                  SliverPadding(
+                    padding: EdgeInsets.all(20),
+                    sliver: SliverToBoxAdapter(
+                      child: _buildGlobalSummary(totalSigs, totalViews),
+                    ),
                   ),
-                ),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      child: Text(
+                        'Your Petitions',
+                        style: GoogleFonts.outfit(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textHigh,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SliverPadding(
+                    padding: EdgeInsets.all(20),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        final petition = _myPetitions[index];
+                        return _buildManagementItem(petition);
+                      }, childCount: _myPetitions.length),
+                    ),
+                  ),
+                ],
+              ),
+            ),
     );
   }
 
@@ -3443,23 +4357,48 @@ class _UserPetitionsDashboardState extends State<UserPetitionsDashboard> {
     return Container(
       padding: EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [AppColors.primaryLavender, AppColors.secondaryTeal]),
+        gradient: LinearGradient(
+          colors: [AppColors.primaryLavender, AppColors.secondaryTeal],
+        ),
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: AppColors.primaryLavender.withOpacity(0.3), blurRadius: 20, offset: Offset(0, 10))],
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primaryLavender.withOpacity(0.3),
+            blurRadius: 20,
+            offset: Offset(0, 10),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Global Performance', style: GoogleFonts.outfit(color: AppColors.backgroundDeep.withOpacity(0.7), fontWeight: FontWeight.bold)),
+          Text(
+            'Global Performance',
+            style: GoogleFonts.outfit(
+              color: AppColors.backgroundDeep.withOpacity(0.7),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildGlobalStatItem('Total Signatures', signatures.toString()),
-              Container(width: 1, height: 40, color: AppColors.backgroundDeep.withOpacity(0.2)),
+              Container(
+                width: 1,
+                height: 40,
+                color: AppColors.backgroundDeep.withOpacity(0.2),
+              ),
               _buildGlobalStatItem('Total Reach', views.toString()),
-              Container(width: 1, height: 40, color: AppColors.backgroundDeep.withOpacity(0.2)),
-              _buildGlobalStatItem('Active Petitions', _myPetitions.length.toString()),
+              Container(
+                width: 1,
+                height: 40,
+                color: AppColors.backgroundDeep.withOpacity(0.2),
+              ),
+              _buildGlobalStatItem(
+                'Active Petitions',
+                _myPetitions.length.toString(),
+              ),
             ],
           ),
         ],
@@ -3471,8 +4410,22 @@ class _UserPetitionsDashboardState extends State<UserPetitionsDashboard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(value, style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.backgroundDeep)),
-        Text(label, style: TextStyle(fontSize: 10, color: AppColors.backgroundDeep.withOpacity(0.6), fontWeight: FontWeight.bold)),
+        Text(
+          value,
+          style: GoogleFonts.outfit(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: AppColors.backgroundDeep,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            color: AppColors.backgroundDeep.withOpacity(0.6),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ],
     );
   }
@@ -3484,19 +4437,37 @@ class _UserPetitionsDashboardState extends State<UserPetitionsDashboard> {
         children: [
           Icon(Feather.clipboard, size: 80, color: AppColors.elevation),
           SizedBox(height: 16),
-          Text('No petitions yet', 
-            style: TextStyle(color: AppColors.textMedium, fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(
+            'No petitions yet',
+            style: TextStyle(
+              color: AppColors.textMedium,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           SizedBox(height: 8),
-          Text('Create your first petition to see it here.', 
-            style: TextStyle(color: AppColors.textDisabled)),
+          Text(
+            'Create your first petition to see it here.',
+            style: TextStyle(color: AppColors.textDisabled),
+          ),
           SizedBox(height: 24),
           ElevatedButton(
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => EnhancedPetitionCreationScreen())),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => EnhancedPetitionCreationScreen(),
+              ),
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryLavender,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
-            child: Text('Create Petition', style: TextStyle(color: AppColors.backgroundDeep)),
+            child: Text(
+              'Create Petition',
+              style: TextStyle(color: AppColors.backgroundDeep),
+            ),
           ),
         ],
       ),
@@ -3513,9 +4484,12 @@ class _UserPetitionsDashboardState extends State<UserPetitionsDashboard> {
       ),
       child: InkWell(
         onTap: () {
-          Navigator.push(context, MaterialPageRoute(
-            builder: (_) => PetitionManagementDashboard(petition: petition)
-          )).then((_) => _loadUserPetitions());
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => PetitionManagementDashboard(petition: petition),
+            ),
+          ).then((_) => _loadUserPetitions());
         },
         borderRadius: BorderRadius.circular(20),
         child: Padding(
@@ -3532,7 +4506,10 @@ class _UserPetitionsDashboardState extends State<UserPetitionsDashboard> {
                       width: 60,
                       height: 60,
                       fit: BoxFit.cover,
-                      errorWidget: (_, __, ___) => Container(color: AppColors.elevation, child: Icon(Feather.image)),
+                      errorWidget: (_, __, ___) => Container(
+                        color: AppColors.elevation,
+                        child: Icon(Feather.image),
+                      ),
                     ),
                   ),
                   SizedBox(width: 16),
@@ -3540,15 +4517,31 @@ class _UserPetitionsDashboardState extends State<UserPetitionsDashboard> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(petition.title, 
-                          style: TextStyle(color: AppColors.textHigh, fontWeight: FontWeight.bold, fontSize: 16),
-                          maxLines: 1, overflow: TextOverflow.ellipsis),
-                        Text('${petition.currentSignatures} / ${petition.goal} signatures', 
-                          style: TextStyle(color: AppColors.textDisabled, fontSize: 12)),
+                        Text(
+                          petition.title,
+                          style: TextStyle(
+                            color: AppColors.textHigh,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          '${petition.currentSignatures} / ${petition.goal} signatures',
+                          style: TextStyle(
+                            color: AppColors.textDisabled,
+                            fontSize: 12,
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                  Icon(Feather.chevron_right, size: 16, color: AppColors.textDisabled),
+                  Icon(
+                    Feather.chevron_right,
+                    size: 16,
+                    color: AppColors.textDisabled,
+                  ),
                 ],
               ),
               SizedBox(height: 16),
@@ -3562,10 +4555,22 @@ class _UserPetitionsDashboardState extends State<UserPetitionsDashboard> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                   _buildMiniStat(Feather.eye, '${petition.views}', 'Views'),
-                   _buildMiniStat(Feather.message_square, 'Active', 'Discussion'),
-                   Text(petition.isExpired ? 'Ended' : '${petition.daysLeft}d left', 
-                     style: TextStyle(color: petition.isExpired ? AppColors.error : AppColors.secondaryTeal, fontSize: 12, fontWeight: FontWeight.bold)),
+                  _buildMiniStat(Feather.eye, '${petition.views}', 'Views'),
+                  _buildMiniStat(
+                    Feather.message_square,
+                    'Active',
+                    'Discussion',
+                  ),
+                  Text(
+                    petition.isExpired ? 'Ended' : '${petition.daysLeft}d left',
+                    style: TextStyle(
+                      color: petition.isExpired
+                          ? AppColors.error
+                          : AppColors.secondaryTeal,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -3580,9 +4585,19 @@ class _UserPetitionsDashboardState extends State<UserPetitionsDashboard> {
       children: [
         Icon(icon, size: 14, color: AppColors.primaryLavender),
         SizedBox(width: 4),
-        Text(value, style: TextStyle(color: AppColors.textHigh, fontSize: 12, fontWeight: FontWeight.bold)),
+        Text(
+          value,
+          style: TextStyle(
+            color: AppColors.textHigh,
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         SizedBox(width: 2),
-        Text(label, style: TextStyle(color: AppColors.textDisabled, fontSize: 10)),
+        Text(
+          label,
+          style: TextStyle(color: AppColors.textDisabled, fontSize: 10),
+        ),
       ],
     );
   }
@@ -3591,13 +4606,16 @@ class _UserPetitionsDashboardState extends State<UserPetitionsDashboard> {
 // ========== PETITION MANAGEMENT DASHBOARD ==========
 class PetitionManagementDashboard extends StatefulWidget {
   final Petition petition;
-  const PetitionManagementDashboard({Key? key, required this.petition}) : super(key: key);
+  const PetitionManagementDashboard({Key? key, required this.petition})
+    : super(key: key);
 
   @override
-  _PetitionManagementDashboardState createState() => _PetitionManagementDashboardState();
+  _PetitionManagementDashboardState createState() =>
+      _PetitionManagementDashboardState();
 }
 
-class _PetitionManagementDashboardState extends State<PetitionManagementDashboard> {
+class _PetitionManagementDashboardState
+    extends State<PetitionManagementDashboard> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   late Petition _petition;
@@ -3615,11 +4633,14 @@ class _PetitionManagementDashboardState extends State<PetitionManagementDashboar
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _EditPetitionModal(petition: _petition, onUpdated: (updated) {
-        setState(() {
-          _petition = updated;
-        });
-      }),
+      builder: (context) => _EditPetitionModal(
+        petition: _petition,
+        onUpdated: (updated) {
+          setState(() {
+            _petition = updated;
+          });
+        },
+      ),
     );
   }
 
@@ -3629,7 +4650,10 @@ class _PetitionManagementDashboardState extends State<PetitionManagementDashboar
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: Text('Add Collaborator', style: TextStyle(color: AppColors.textHigh)),
+        title: Text(
+          'Add Collaborator',
+          style: TextStyle(color: AppColors.textHigh),
+        ),
         content: TextField(
           controller: controller,
           decoration: InputDecoration(
@@ -3642,12 +4666,19 @@ class _PetitionManagementDashboardState extends State<PetitionManagementDashboar
           style: TextStyle(color: AppColors.textHigh),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
+          ),
           ElevatedButton(
             onPressed: () async {
               if (controller.text.isNotEmpty) {
-                final newCollabs = List<String>.from(_petition.collaborators)..add(controller.text.trim());
-                await _firestore.collection('petitions').doc(_petition.id).update({'collaborators': newCollabs});
+                final newCollabs = List<String>.from(_petition.collaborators)
+                  ..add(controller.text.trim());
+                await _firestore
+                    .collection('petitions')
+                    .doc(_petition.id)
+                    .update({'collaborators': newCollabs});
                 setState(() {
                   _petition = Petition(
                     id: _petition.id,
@@ -3684,7 +4715,10 @@ class _PetitionManagementDashboardState extends State<PetitionManagementDashboar
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: Text('Manage Petition', style: TextStyle(color: AppColors.textHigh)),
+        title: Text(
+          'Manage Petition',
+          style: TextStyle(color: AppColors.textHigh),
+        ),
         backgroundColor: Colors.transparent,
         iconTheme: IconThemeData(color: AppColors.primaryLavender),
         elevation: 0,
@@ -3709,20 +4743,37 @@ class _PetitionManagementDashboardState extends State<PetitionManagementDashboar
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Goal Progress', style: TextStyle(color: AppColors.textMedium)),
+                          Text(
+                            'Goal Progress',
+                            style: TextStyle(color: AppColors.textMedium),
+                          ),
                           SizedBox(height: 4),
-                          Text('${_petition.currentSignatures} / ${_petition.goal}', 
-                            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
+                          Text(
+                            '${_petition.currentSignatures} / ${_petition.goal}',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textHigh,
+                            ),
+                          ),
                         ],
                       ),
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.primaryLavender.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Text('${(_petition.progress * 100).toInt()}%', 
-                          style: TextStyle(color: AppColors.primaryLavender, fontWeight: FontWeight.bold)),
+                        child: Text(
+                          '${(_petition.progress * 100).toInt()}%',
+                          style: TextStyle(
+                            color: AppColors.primaryLavender,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -3737,80 +4788,153 @@ class _PetitionManagementDashboardState extends State<PetitionManagementDashboar
               ),
             ),
             SizedBox(height: 24),
-            
+
             // Stats Grid
             Row(
               children: [
                 _buildCompactStat('Views', '${_petition.views}', Feather.eye),
                 SizedBox(width: 12),
-                _buildCompactStat('Shares', '${_petition.shares}', Feather.share_2),
+                _buildCompactStat(
+                  'Shares',
+                  '${_petition.shares}',
+                  Feather.share_2,
+                ),
               ],
             ),
             SizedBox(height: 24),
 
-            Text('Quick Actions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
+            Text(
+              'Quick Actions',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textHigh,
+              ),
+            ),
             SizedBox(height: 12),
-            _buildActionItem('Edit Petition Details', Feather.edit_2, _editPetition),
-            _buildActionItem('Manage Collaborators', Feather.user_plus, _addCollaborator),
-            _buildActionItem('View Detailed Analytics', Feather.bar_chart_2, () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => PetitionAnalyticsScreen(petitionId: _petition.id)));
-            }),
-            _buildActionItem('Post Official Announcement', Feather.volume_2, _sendAnnouncement),
-            _buildActionItem('Export Signature Data (CSV)', Feather.download, () {
-               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                 content: Text('Preparing data export... Check your email shortly.'),
-                 backgroundColor: AppColors.secondaryTeal,
-               ));
-            }),
+            _buildActionItem(
+              'Edit Petition Details',
+              Feather.edit_2,
+              _editPetition,
+            ),
+            _buildActionItem(
+              'Manage Collaborators',
+              Feather.user_plus,
+              _addCollaborator,
+            ),
+            _buildActionItem(
+              'View Detailed Analytics',
+              Feather.bar_chart_2,
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        PetitionAnalyticsScreen(petitionId: _petition.id),
+                  ),
+                );
+              },
+            ),
+            _buildActionItem(
+              'Post Official Announcement',
+              Feather.volume_2,
+              _sendAnnouncement,
+            ),
+            _buildActionItem(
+              'Export Signature Data (CSV)',
+              Feather.download,
+              () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Preparing data export... Check your email shortly.',
+                    ),
+                    backgroundColor: AppColors.secondaryTeal,
+                  ),
+                );
+              },
+            ),
             _buildActionItem('Promotion Insights', Feather.trending_up, () {
-               ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Petition is currently trending in ${_petition.category}!')));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Petition is currently trending in ${_petition.category}!',
+                  ),
+                ),
+              );
             }),
 
             SizedBox(height: 24),
-            Text('Collaborators', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
+            Text(
+              'Collaborators',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textHigh,
+              ),
+            ),
             SizedBox(height: 12),
             if (_petition.collaborators.isEmpty)
-              Text('No collaborators added yet.', style: TextStyle(color: AppColors.textDisabled))
+              Text(
+                'No collaborators added yet.',
+                style: TextStyle(color: AppColors.textDisabled),
+              )
             else
               Wrap(
                 spacing: 8,
-                children: _petition.collaborators.map((c) => Chip(
-                  label: Text(c, style: TextStyle(color: AppColors.textHigh)),
-                  backgroundColor: AppColors.elevation,
-                  onDeleted: () async {
-                     final newCollabs = List<String>.from(_petition.collaborators)..remove(c);
-                     await _firestore.collection('petitions').doc(_petition.id).update({'collaborators': newCollabs});
-                     setState(() {
-                       _petition = Petition(
-                         id: _petition.id,
-                         title: _petition.title,
-                         description: _petition.description,
-                         fullStory: _petition.fullStory,
-                         goal: _petition.goal,
-                         currentSignatures: _petition.currentSignatures,
-                         createdBy: _petition.createdBy,
-                         bannerImageUrl: _petition.bannerImageUrl,
-                         ageRating: _petition.ageRating,
-                         hashtags: _petition.hashtags,
-                         signers: _petition.signers,
-                         signaturesWithComments: _petition.signaturesWithComments,
-                         createdAt: _petition.createdAt,
-                         deadline: _petition.deadline,
-                         category: _petition.category,
-                         collaborators: newCollabs,
-                         externalLinks: _petition.externalLinks,
-                       );
-                     });
-                  },
-                  deleteIcon: Icon(Feather.x, size: 16, color: AppColors.error),
-                )).toList(),
+                children: _petition.collaborators
+                    .map(
+                      (c) => Chip(
+                        label: Text(
+                          c,
+                          style: TextStyle(color: AppColors.textHigh),
+                        ),
+                        backgroundColor: AppColors.elevation,
+                        onDeleted: () async {
+                          final newCollabs = List<String>.from(
+                            _petition.collaborators,
+                          )..remove(c);
+                          await _firestore
+                              .collection('petitions')
+                              .doc(_petition.id)
+                              .update({'collaborators': newCollabs});
+                          setState(() {
+                            _petition = Petition(
+                              id: _petition.id,
+                              title: _petition.title,
+                              description: _petition.description,
+                              fullStory: _petition.fullStory,
+                              goal: _petition.goal,
+                              currentSignatures: _petition.currentSignatures,
+                              createdBy: _petition.createdBy,
+                              bannerImageUrl: _petition.bannerImageUrl,
+                              ageRating: _petition.ageRating,
+                              hashtags: _petition.hashtags,
+                              signers: _petition.signers,
+                              signaturesWithComments:
+                                  _petition.signaturesWithComments,
+                              createdAt: _petition.createdAt,
+                              deadline: _petition.deadline,
+                              category: _petition.category,
+                              collaborators: newCollabs,
+                              externalLinks: _petition.externalLinks,
+                            );
+                          });
+                        },
+                        deleteIcon: Icon(
+                          Feather.x,
+                          size: 16,
+                          color: AppColors.error,
+                        ),
+                      ),
+                    )
+                    .toList(),
               ),
           ],
         ),
       ),
     );
   }
-
 
   void _sendAnnouncement() {
     final titleController = TextEditingController();
@@ -3820,7 +4944,12 @@ class _PetitionManagementDashboardState extends State<PetitionManagementDashboar
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        padding: EdgeInsets.only(top: 20, left: 20, right: 20, bottom: MediaQuery.of(context).viewInsets.bottom + 20),
+        padding: EdgeInsets.only(
+          top: 20,
+          left: 20,
+          right: 20,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+        ),
         decoration: BoxDecoration(
           color: AppColors.backgroundDeep,
           borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
@@ -3829,9 +4958,19 @@ class _PetitionManagementDashboardState extends State<PetitionManagementDashboar
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Send Official Update', style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
+            Text(
+              'Send Official Update',
+              style: GoogleFonts.outfit(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textHigh,
+              ),
+            ),
             SizedBox(height: 8),
-            Text('This will notify all signers and appear in the petition story.', style: TextStyle(color: AppColors.textDisabled)),
+            Text(
+              'This will notify all signers and appear in the petition story.',
+              style: TextStyle(color: AppColors.textDisabled),
+            ),
             SizedBox(height: 20),
             TextField(
               controller: titleController,
@@ -3839,7 +4978,10 @@ class _PetitionManagementDashboardState extends State<PetitionManagementDashboar
                 hintText: 'Update Title',
                 filled: true,
                 fillColor: AppColors.surface,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide.none,
+                ),
               ),
               style: TextStyle(color: AppColors.textHigh),
             ),
@@ -3851,33 +4993,54 @@ class _PetitionManagementDashboardState extends State<PetitionManagementDashboar
                 hintText: 'Tell your supporters what\'s happening...',
                 filled: true,
                 fillColor: AppColors.surface,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide.none,
+                ),
               ),
               style: TextStyle(color: AppColors.textHigh),
             ),
             SizedBox(height: 24),
             ElevatedButton(
               onPressed: () async {
-                if (titleController.text.isNotEmpty && bodyController.text.isNotEmpty) {
+                if (titleController.text.isNotEmpty &&
+                    bodyController.text.isNotEmpty) {
                   setState(() => _isLoading = true);
                   try {
-                    await _firestore.collection('petitions').doc(_petition.id).collection('announcements').add({
-                      'title': titleController.text.trim(),
-                      'body': bodyController.text.trim(),
-                      'timestamp': FieldValue.serverTimestamp(),
-                      'authorId': _auth.currentUser?.uid,
-                    });
-                    
+                    await _firestore
+                        .collection('petitions')
+                        .doc(_petition.id)
+                        .collection('announcements')
+                        .add({
+                          'title': titleController.text.trim(),
+                          'body': bodyController.text.trim(),
+                          'timestamp': FieldValue.serverTimestamp(),
+                          'authorId': _auth.currentUser?.uid,
+                        });
+
+                    // Send notifications to all signers
+                    NotificationService().sendPetitionUpdateNotification(
+                      petitionId: _petition.id,
+                      petitionTitle: _petition.title,
+                      updateTitle: titleController.text.trim(),
+                      signerIds: _petition.signers,
+                      bannerImageUrl: _petition.bannerImageUrl,
+                    );
+
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text('Announcement successfully posted!'),
-                      backgroundColor: AppColors.success,
-                    ));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Announcement successfully posted!'),
+                        backgroundColor: AppColors.success,
+                      ),
+                    );
                   } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text('Failed to post announcement: $e'),
-                      backgroundColor: AppColors.error,
-                    ));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Failed to post announcement: $e'),
+                        backgroundColor: AppColors.error,
+                      ),
+                    );
                   } finally {
                     setState(() => _isLoading = false);
                   }
@@ -3886,11 +5049,19 @@ class _PetitionManagementDashboardState extends State<PetitionManagementDashboar
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryLavender,
                 minimumSize: Size(double.infinity, 55),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
               ),
-              child: _isLoading 
-                ? CircularProgressIndicator(color: AppColors.backgroundDeep)
-                : Text('POST ANNOUNCEMENT', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.backgroundDeep)),
+              child: _isLoading
+                  ? CircularProgressIndicator(color: AppColors.backgroundDeep)
+                  : Text(
+                      'POST ANNOUNCEMENT',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.backgroundDeep,
+                      ),
+                    ),
             ),
           ],
         ),
@@ -3911,15 +5082,32 @@ class _PetitionManagementDashboardState extends State<PetitionManagementDashboar
           children: [
             Container(
               padding: EdgeInsets.all(8),
-              decoration: BoxDecoration(color: AppColors.primaryLavender.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+              decoration: BoxDecoration(
+                color: AppColors.primaryLavender.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
               child: Icon(icon, color: AppColors.primaryLavender, size: 20),
             ),
             SizedBox(width: 12),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(value, style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
-                Text(label, style: TextStyle(fontSize: 11, color: AppColors.textDisabled, letterSpacing: 0.5)),
+                Text(
+                  value,
+                  style: GoogleFonts.outfit(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textHigh,
+                  ),
+                ),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textDisabled,
+                    letterSpacing: 0.5,
+                  ),
+                ),
               ],
             ),
           ],
@@ -3945,8 +5133,21 @@ class _PetitionManagementDashboardState extends State<PetitionManagementDashboar
             children: [
               Icon(icon, color: AppColors.primaryLavender, size: 22),
               SizedBox(width: 16),
-              Expanded(child: Text(title, style: TextStyle(color: AppColors.textHigh, fontWeight: FontWeight.w500, fontSize: 15))),
-              Icon(Feather.chevron_right, size: 14, color: AppColors.textDisabled),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: AppColors.textHigh,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+              Icon(
+                Feather.chevron_right,
+                size: 14,
+                color: AppColors.textDisabled,
+              ),
             ],
           ),
         ),
@@ -3985,48 +5186,67 @@ class __EditPetitionModalState extends State<_EditPetitionModal> {
         color: AppColors.backgroundDeep,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      padding: EdgeInsets.all(20).copyWith(bottom: MediaQuery.of(context).viewInsets.bottom + 20),
+      padding: EdgeInsets.all(
+        20,
+      ).copyWith(bottom: MediaQuery.of(context).viewInsets.bottom + 20),
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Edit Petition', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
+            Text(
+              'Edit Petition',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textHigh,
+              ),
+            ),
             SizedBox(height: 20),
             _buildEditField('Title', _titleController),
             _buildEditField('Description', _descController, maxLines: 2),
             _buildEditField('Full Story', _storyController, maxLines: 5),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _isLoading ? null : () async {
-                setState(() => _isLoading = true);
-                await FirebaseFirestore.instance.collection('petitions').doc(widget.petition.id).update({
-                  'title': _titleController.text,
-                  'description': _descController.text,
-                  'fullStory': _storyController.text,
-                });
-                widget.onUpdated(Petition(
-                  id: widget.petition.id,
-                  title: _titleController.text,
-                  description: _descController.text,
-                  fullStory: _storyController.text,
-                  goal: widget.petition.goal,
-                  currentSignatures: widget.petition.currentSignatures,
-                  createdBy: widget.petition.createdBy,
-                  bannerImageUrl: widget.petition.bannerImageUrl,
-                  ageRating: widget.petition.ageRating,
-                  hashtags: widget.petition.hashtags,
-                  signers: widget.petition.signers,
-                  signaturesWithComments: widget.petition.signaturesWithComments,
-                  createdAt: widget.petition.createdAt,
-                  deadline: widget.petition.deadline,
-                  category: widget.petition.category,
-                  collaborators: widget.petition.collaborators,
-                  externalLinks: widget.petition.externalLinks,
-                ));
-                Navigator.pop(context);
-              },
-              child: _isLoading ? CircularProgressIndicator() : Text('Save Changes'),
+              onPressed: _isLoading
+                  ? null
+                  : () async {
+                      setState(() => _isLoading = true);
+                      await FirebaseFirestore.instance
+                          .collection('petitions')
+                          .doc(widget.petition.id)
+                          .update({
+                            'title': _titleController.text,
+                            'description': _descController.text,
+                            'fullStory': _storyController.text,
+                          });
+                      widget.onUpdated(
+                        Petition(
+                          id: widget.petition.id,
+                          title: _titleController.text,
+                          description: _descController.text,
+                          fullStory: _storyController.text,
+                          goal: widget.petition.goal,
+                          currentSignatures: widget.petition.currentSignatures,
+                          createdBy: widget.petition.createdBy,
+                          bannerImageUrl: widget.petition.bannerImageUrl,
+                          ageRating: widget.petition.ageRating,
+                          hashtags: widget.petition.hashtags,
+                          signers: widget.petition.signers,
+                          signaturesWithComments:
+                              widget.petition.signaturesWithComments,
+                          createdAt: widget.petition.createdAt,
+                          deadline: widget.petition.deadline,
+                          category: widget.petition.category,
+                          collaborators: widget.petition.collaborators,
+                          externalLinks: widget.petition.externalLinks,
+                        ),
+                      );
+                      Navigator.pop(context);
+                    },
+              child: _isLoading
+                  ? CircularProgressIndicator()
+                  : Text('Save Changes'),
               style: ElevatedButton.styleFrom(
                 minimumSize: Size(double.infinity, 50),
                 backgroundColor: AppColors.primaryLavender,
@@ -4038,11 +5258,21 @@ class __EditPetitionModalState extends State<_EditPetitionModal> {
     );
   }
 
-  Widget _buildEditField(String label, TextEditingController controller, {int maxLines = 1}) {
+  Widget _buildEditField(
+    String label,
+    TextEditingController controller, {
+    int maxLines = 1,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(color: AppColors.textMedium, fontWeight: FontWeight.bold)),
+        Text(
+          label,
+          style: TextStyle(
+            color: AppColors.textMedium,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         SizedBox(height: 8),
         TextField(
           controller: controller,

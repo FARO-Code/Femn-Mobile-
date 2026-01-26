@@ -141,7 +141,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     ),
                   ],
                   image: DecorationImage(
-                    image: AssetImage("assets/femnlogo.png"),
+                    image: AssetImage("assets/default_avatar.png"),
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -200,7 +200,7 @@ class AuthScreen extends StatelessWidget {
                         ),
                       ],
                       image: DecorationImage(
-                        image: AssetImage("assets/femnlogo.png"),
+                        image: AssetImage("assets/default_avatar.png"),
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -560,7 +560,7 @@ Widget build(BuildContext context) {
                     ),
                   ],
                   image: DecorationImage(
-                    image: AssetImage("assets/femnlogo.png"),
+                    image: AssetImage("assets/default_avatar.png"),
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -2087,7 +2087,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                       ],
                       image: DecorationImage(
-                        image: AssetImage("assets/femnlogo.png"),
+                        image: AssetImage("assets/default_avatar.png"),
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -2311,7 +2311,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ],
                       image: DecorationImage(
-                        image: AssetImage("assets/femnlogo.png"),
+                        image: AssetImage("assets/default_avatar.png"),
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -2516,7 +2516,7 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ],
                   image: DecorationImage(
-                    image: AssetImage("assets/femnlogo.png"),
+                    image: AssetImage("assets/default_avatar.png"),
                     fit: BoxFit.cover,
                   ),
                 ),

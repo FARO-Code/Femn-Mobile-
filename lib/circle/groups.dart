@@ -2698,7 +2698,7 @@ Widget _buildAllTab() {
             ),
             child: ClipOval(
               child: Image.asset(
-                'assets/femnlogo.png',
+                'assets/default_avatar.png',
                 fit: BoxFit.cover,
               ),
             ),
@@ -3038,7 +3038,7 @@ Widget _buildAllTab() {
                                               fit: BoxFit.cover,
                                             )
                                           : Image.asset(
-                                              'assets/femnlogo.png',
+                                              'assets/default_avatar.png',
                                               fit: BoxFit.cover,
                                             ),
                                     ),
@@ -4279,7 +4279,7 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                       backgroundColor: AppColors.elevation,
                       backgroundImage: groupImage.isNotEmpty
                           ? CachedNetworkImageProvider(groupImage)
-                          : AssetImage('assets/femnlogo.png',) as ImageProvider,
+                          : AssetImage('assets/default_avatar.png',) as ImageProvider,
                     ),
                     SizedBox(height: 16),
                     Text(
@@ -5374,7 +5374,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       backgroundColor: AppColors.elevation,
                       backgroundImage: groupImage.isNotEmpty
                           ? CachedNetworkImageProvider(groupImage)
-                          : AssetImage('assets/femnlogo.png',)
+                          : AssetImage('assets/default_avatar.png',)
                               as ImageProvider,
                     ),
                     SizedBox(width: 12),

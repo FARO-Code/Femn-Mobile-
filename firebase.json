@@ -22,8 +22,7 @@
       }
     }
   },
-
-"hosting": {
+  "hosting": {
     "public": "public",
     "ignore": [
       "firebase.json",
@@ -39,18 +38,33 @@
             "value": "application/json"
           }
         ]
+      },
+      {
+        "source": "/.well-known/apple-app-site-association",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ]
+      }
+    ],
+    "redirects": [
+      {
+        "source": "/post/:postId",
+        "destination": "/download.html",
+        "type": 302
       }
     ],
     "rewrites": [
       {
-        "source": "!/.well-known/**", 
+        "source": "/post/**",
         "destination": "/index.html"
       },
       {
-        "source": "**",
+        "source": "!/@(femn_install.apk|*.html|*.js|*.json|*.css|*.png|*.jpg|*.jpeg|*.gif|*.svg|*.ico)",
         "destination": "/index.html"
       }
     ]
   }
 }
-

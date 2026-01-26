@@ -14,6 +14,8 @@
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>
 
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
     <queries>
         <intent>
             <action android:name="android.intent.action.VIEW" />
@@ -35,7 +37,7 @@
     <application
         android:label="femn"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/launcher_icon">
         
         <activity
             android:name="com.yalantis.ucrop.UCropActivity"
@@ -60,11 +62,15 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
 
+            <!-- Deep Linking -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="femn-9cabb.web.app" />
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:host="femn-9cabb.web.app" />
+                <data android:host="femn-9cabb.firebaseapp.com" />
             </intent-filter>
 
         </activity>

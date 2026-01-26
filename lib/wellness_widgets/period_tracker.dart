@@ -443,7 +443,7 @@ class _PeriodTrackerScreenState extends State<PeriodTrackerScreen> with SingleTi
                 ],
               ),
               child: ClipOval(
-                child: Image.asset('assets/femnlogo.png', fit: BoxFit.cover,
+                child: Image.asset('assets/default_avatar.png', fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) => Icon(Feather.circle, color: AppColors.primaryLavender),
                 ),
               ),

@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import 'package:flutter_vector_icons/flutter_vector_icons.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:femn/customization/colors.dart';
-import 'package:femn/customization/fonts.dart';
-import 'package:femn/hub_screens/profile.dart';
+import 'package:flutter_vector_icons/flutter_vector_icons.dart';
+import 'package:femn/widgets/femn_background.dart';
 import '../services/therapy_service.dart';
-import 'therapy_history_screen.dart';
-import 'package:femn/customization/layout.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../models/therapy_models.dart';
 
 class TherapyDiscoveryScreen extends StatefulWidget {
   @override
@@ -16,103 +14,506 @@ class TherapyDiscoveryScreen extends StatefulWidget {
 }
 
 class _TherapyDiscoveryScreenState extends State<TherapyDiscoveryScreen> {
-  final TherapyService _therapyService = TherapyService();
-  
-  // --- Search & Standard Filters ---
-  String? _selectedSituation;
-  String _searchQuery = "";
   final TextEditingController _searchController = TextEditingController();
+  final TherapyService _therapyService = TherapyService();
 
-  final List<String> _situations = [
-    'Anxiety', 'Depression', 'Breakup', 'Loss', 'Trauma', 'Stress', 'Relationships', 'Career', 'Family'
+  String _selectedCategory = 'All';
+  List<String> _selectedSpecializations = [];
+  bool _showAdvancedFilters = false;
+
+  final List<String> _categories = [
+    'All',
+    'Anxiety',
+    'Depression',
+    'Trauma',
+    'Relationships',
+    'Stress',
+    'Grief',
+    'Addiction',
+    'Self-esteem',
   ];
-  // --- Advanced Filtering State ---
-  String _selectedType = 'All';
-  String _selectedLanguage = 'All';
-  String _selectedGender = 'All';
-  String _selectedRegion = 'All'; 
-  String _selectedEthnicity = 'All';
-  String _selectedReligion = 'All';
-  String _selectedAgeRange = 'All';
-  bool _selectedIsLgbtqPlus = false;
-  String? _selectedLivedExperience;
 
-  final List<String> _types = ['All', 'Professional', 'Peer Listener'];
-  final List<String> _languages = ['All', 'English', 'Spanish', 'French', 'Arabic', 'Mandarin', 'Japanese', 'Bengali'];
-  final List<String> _genders = ['All', 'Male', 'Female', 'Non-binary', 'Transgender'];
-  final List<String> _regions = ['All', 'North America', 'Europe', 'Asia', 'West Africa', 'South Africa', 'Middle East'];
-  final List<String> _ethnicities = ['All', 'Asian', 'Black', 'Blasian', 'White', 'Hispanic', 'Middle Eastern', 'Indigenous', 'Other'];
-  final List<String> _religions = ['All', 'Christianity', 'Islam', 'Hinduism', 'Buddhism', 'Sikhism', 'Judaism', 'Agnostic', 'Atheist', 'Spiritual', 'Traditional', 'Other'];
-  final List<String> _ageRanges = ['All', 'Adolescent', 'Young Adult', 'Adult', 'Elderly'];
-  
-  final List<String> _livedExperienceOptions = [
-    'LGBTQ+', 'Autistic / AuDHD', 'Dyslexic', 'Non-verbal', 'Mixed-Race',
-    'Refugee / Asylee experience', 'Caste-oppression informed', 'Colorism-informed',
-    'Anti-colonial / Decolonial framework', 'Racial trauma', 'Indigenous',
-    'Ex-religious / Religious trauma', 'Fat Positive / Health at Every Size (HAES)',
-    'Body Neutrality focused', 'Physically Disabled / Wheelchair user',
-    'Deaf / Hard of Hearing (ASL proficient)', 'Blind / Low Vision informed',
-    'Eating Disorder recovery', 'Post-partum / Maternal mental health',
-    'Infertility / Miscarriage support', 'Menopause / Hormonal health',
-    'Cancer survivor / Oncology-informed', 'Terminal illness / End-of-life care',
-    'Veteran / Military family', 'First Responder (Police, Fire, EMT)',
-    'Medical Professional (Doctors, Nurses)', 'Tech industry / Burnout specialist',
-    'Artist / Creative professional', 'Academic / Higher Ed focus',
-    'Sex Work positive', 'Social Activist / Organizer', 'Foster Care system alum',
-    'Adoption / Adoptee', 'Elder / Geriatric focus', 'Domestic Violence survivor',
-    'Sexual Assault survivor', 'Childhood Emotional Neglect (CEN)',
-    'Narcissistic Abuse recovery', 'Incarceration / Justice-involved',
-    'Homelessness / Housing instability', 'Poverty / Class-straddling mobility',
-    'Relinquishment trauma', 'Cult recovery', 'Intergenerational / Ancestral trauma',
-    'Feminist / Liberation-focused'
+  final List<String> _specializationOptions = [
+    'CBT',
+    'EMDR',
+    'Family Therapy',
+    'Couples Counseling',
+    'Art Therapy',
+    'Trauma-Informed',
+    'LGBTQ+ Affirming',
+    'Mindfulness',
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: SafeArea(
+      body: FemnBackground(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeader(),
-            _buildSearchAndFilter(),
-            _buildCategoryFilter(),
-            Expanded(child: _buildTherapistGrid()),
+            // Custom Header
+            Padding(
+              padding: const EdgeInsets.only(
+                top: 60.0,
+                left: 24,
+                right: 24,
+                bottom: 20,
+              ),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: AppColors.elevation,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 8,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Feather.arrow_left,
+                        color: AppColors.textHigh,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  Text(
+                    'Therapy',
+                    style: TextStyle(
+                      color: AppColors.textHigh,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Spacer(),
+                  GestureDetector(
+                    onTap: () => _showPendingRequests(context),
+                    child: Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: AppColors.elevation,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 8,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Feather.clock,
+                        color: AppColors.primaryLavender,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Search Bar
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 8,
+              ),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: AppColors.elevation,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  style: TextStyle(color: AppColors.textHigh),
+                  decoration: InputDecoration(
+                    hintText: 'Search therapists...',
+                    hintStyle: TextStyle(color: AppColors.textDisabled),
+                    border: InputBorder.none,
+                    icon: Icon(
+                      Feather.search,
+                      color: AppColors.primaryLavender,
+                    ),
+                  ),
+                  onChanged: (val) => setState(() {}),
+                ),
+              ),
+            ),
+
+            // Horizontal Category Filter (Circles Style)
+            Container(
+              height: 60,
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                itemCount: _categories.length,
+                itemBuilder: (context, index) {
+                  final category = _categories[index];
+                  final isSelected = _selectedCategory == category;
+                  return GestureDetector(
+                    onTap: () => setState(() {
+                      _selectedCategory = category;
+                      // When clicking a main category, we might want to clear specific specializations or keep them?
+                      // Keeping them allows for "Anxiety" + "CBT".
+                    }),
+                    child: AnimatedContainer(
+                      duration: Duration(milliseconds: 200),
+                      margin: EdgeInsets.only(right: 12),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.secondaryTeal
+                            : AppColors.elevation,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(
+                              isSelected ? 0.3 : 0.1,
+                            ),
+                            blurRadius: isSelected ? 6 : 4,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          category,
+                          style: TextStyle(
+                            color: isSelected
+                                ? Colors.white
+                                : AppColors.textMedium,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.w500,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+
+            // "I specialise in" Filter (Multi-select)
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 8,
+              ),
+              child: GestureDetector(
+                onTap: () => setState(
+                  () => _showAdvancedFilters = !_showAdvancedFilters,
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      "Filter by Specialization",
+                      style: TextStyle(
+                        color: AppColors.primaryLavender,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Icon(
+                      _showAdvancedFilters
+                          ? Feather.chevron_up
+                          : Feather.chevron_down,
+                      color: AppColors.primaryLavender,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            if (_showAdvancedFilters)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                  vertical: 8,
+                ),
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: AppColors.elevation,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 6,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  padding: EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "I specialise in",
+                        style: TextStyle(
+                          color: AppColors.primaryLavender,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: _specializationOptions.map((option) {
+                          final isSelected = _selectedSpecializations.contains(
+                            option,
+                          );
+                          return FilterChip(
+                            label: Text(
+                              option,
+                              style: TextStyle(
+                                color: isSelected
+                                    ? Colors.white
+                                    : AppColors.textMedium,
+                              ),
+                            ),
+                            selected: isSelected,
+                            onSelected: (v) {
+                              setState(() {
+                                if (v)
+                                  _selectedSpecializations.add(option);
+                                else
+                                  _selectedSpecializations.remove(option);
+                              });
+                            },
+                            selectedColor: AppColors.secondaryTeal,
+                            backgroundColor: AppColors.backgroundDeep,
+                            checkmarkColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              side: BorderSide(
+                                color: isSelected
+                                    ? AppColors.secondaryTeal
+                                    : AppColors.textDisabled,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+            // Therapists List
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: _therapyService.getTherapists(
+                  situation: _selectedCategory == 'All'
+                      ? null
+                      : _selectedCategory,
+                  // We can't easily filter strictly by multiple specializations in Firestore query without composite indexes or client side filtering.
+                  // For now, we will filter client-side for the multi-select.
+                ),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.primaryLavender,
+                      ),
+                    );
+                  }
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return Center(
+                      child: Text(
+                        "No therapists found.",
+                        style: TextStyle(color: AppColors.textMedium),
+                      ),
+                    );
+                  }
+
+                  // Client-side filtering for search text and multi-select specializations
+                  var therapists = snapshot.data!.docs.where((doc) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    final name = (data['fullName'] ?? '')
+                        .toString()
+                        .toLowerCase();
+                    final search = _searchController.text.toLowerCase();
+
+                    // Search Filter
+                    if (search.isNotEmpty && !name.contains(search))
+                      return false;
+
+                    // Specialization Filter (Match ANY or ALL? Usually ANY for filters, or ALL for strict. Let's do partial match overlap)
+                    if (_selectedSpecializations.isNotEmpty) {
+                      final specs = List<String>.from(
+                        data['specialization'] ?? [],
+                      );
+                      // Check if therapist has any of the selected specializations? Or all?
+                      // "I specialise in" X, Y usually means I want someone who knows X OR Y.
+                      // But maybe user wants someone who knows X AND Y.
+                      // Let's go with ANY for now as it's more permissive.
+                      if (!specs.any(
+                        (s) => _selectedSpecializations.contains(s),
+                      ))
+                        return false;
+                    }
+
+                    return true;
+                  }).toList();
+
+                  if (therapists.isEmpty) {
+                    return Center(
+                      child: Text(
+                        "No matching therapists.",
+                        style: TextStyle(color: AppColors.textMedium),
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    padding: EdgeInsets.all(16),
+                    itemCount: therapists.length,
+                    itemBuilder: (context, index) {
+                      final therapistData =
+                          therapists[index].data() as Map<String, dynamic>;
+                      return _buildTherapistCard(
+                        therapistData,
+                        therapists[index].id,
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.primaryLavender,
-        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (c) => TherapyHistoryScreen())),
-        child: Icon(Feather.clock, color: AppColors.backgroundDeep),
-        tooltip: 'History',
       ),
     );
   }
 
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 10, 20, 0), // Reduced top padding
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center, // Align with back button
-        children: [
-          IconButton(
-            icon: Icon(Feather.arrow_left, color: AppColors.textHigh),
-            onPressed: () => Navigator.pop(context),
+  Widget _buildTherapistCard(Map<String, dynamic> data, String id) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 16),
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: Offset(0, 4),
           ),
-          SizedBox(width: 4),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Avatar
+          Container(
+            width: 70,
+            height: 70,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              image: DecorationImage(
+                image:
+                    (data['profileImage'] != null &&
+                        data['profileImage'].isNotEmpty)
+                    ? CachedNetworkImageProvider(data['profileImage'])
+                    : AssetImage('assets/default_avatar.png') as ImageProvider,
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          SizedBox(width: 16),
+          // Info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Find support",
-                  style: primaryVeryBoldTextStyle(fontSize: 24, color: AppColors.textHigh), // Slightly smaller
+                  data['fullName'] ?? 'Therapist',
+                  style: TextStyle(
+                    color: AppColors.textHigh,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
                 ),
+                SizedBox(height: 4),
                 Text(
-                  "Browse specialists or listeners.",
-                  style: primaryTextStyle(fontSize: 14, color: AppColors.textMedium),
+                  (data['specialization'] as List<dynamic>? ?? []).join(', '),
+                  style: TextStyle(
+                    color: AppColors.primaryLavender,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(
+                      Feather.star,
+                      color: AppColors.accentMustard,
+                      size: 14,
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      (data['averageRating'] ?? 0.0).toStringAsFixed(1),
+                      style: TextStyle(
+                        color: AppColors.textHigh,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      '(${data['totalRatings'] ?? 0})',
+                      style: TextStyle(
+                        color: AppColors.textMedium,
+                        fontSize: 12,
+                      ),
+                    ),
+                    Spacer(),
+                    GestureDetector(
+                      onTap: () => _showTherapistDetails(context, data, id),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.secondaryTeal.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          "Book",
+                          style: TextStyle(
+                            color: AppColors.secondaryTeal,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -122,457 +523,485 @@ class _TherapyDiscoveryScreenState extends State<TherapyDiscoveryScreen> {
     );
   }
 
-  Widget _buildSearchAndFilter() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              height: 48, // Fixed height for consistency
-              decoration: BoxDecoration(
-                color: AppColors.elevation,
-                borderRadius: BorderRadius.circular(30), // Curve edges #3
-              ),
-              child: TextField(
-                controller: _searchController,
-                style: primaryTextStyle(color: AppColors.textHigh),
-                textAlignVertical: TextAlignVertical.center, // Center text vertically
-                decoration: InputDecoration(
-                  isDense: true, // Reduces internal padding naturally
-                  hintText: "Search...",
-                  hintStyle: primaryTextStyle(color: AppColors.textDisabled),
-                  prefixIcon: Icon(Feather.search, color: AppColors.textMedium, size: 20),
-                  border: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  enabledBorder: InputBorder.none, 
-                  contentPadding: EdgeInsets.zero, // Important for TextAlignVertical.center
-                  suffixIcon: _searchController.text.isNotEmpty 
-                    ? IconButton(
-                        icon: Icon(Feather.x, size: 16, color: AppColors.textMedium),
-                        onPressed: () {
-                          setState(() {
-                            _searchController.clear();
-                            _searchQuery = "";
-                          });
-                        },
-                      )
-                    : null,
-                ),
-                onChanged: (val) => setState(() => _searchQuery = val),
-              ),
-            ),
-          ),
-          SizedBox(width: 12),
-          GestureDetector(
-            onTap: _showFilterBottomSheet,
-            child: Container(
-              height: 48,
-              width: 48,
-              decoration: BoxDecoration(
-                color: AppColors.elevation,
-                shape: BoxShape.circle,
-                border: (_selectedType != 'All' || _selectedLanguage != 'All' || _selectedRegion != 'All' || _selectedGender != 'All' || _selectedEthnicity != 'All' || _selectedReligion != 'All' || _selectedAgeRange != 'All' || _selectedIsLgbtqPlus || _selectedLivedExperience != null) 
-                    ? Border.all(color: AppColors.accentMustard, width: 2) // Visual indicator if active
-                    : null,
-              ),
-              child: Icon(Feather.sliders, color: AppColors.textHigh, size: 20),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCategoryFilter() {
-    return Container(
-      height: 40, // Reduce overall height #1
-      margin: EdgeInsets.only(bottom: 10),
-      child: ListView.separated(
-        padding: EdgeInsets.symmetric(horizontal: 20),
-        scrollDirection: Axis.horizontal,
-        itemCount: _situations.length + 1,
-        separatorBuilder: (c, i) => SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          if (index == 0) {
-            final isSelected = _selectedSituation == null;
-            return _buildFilterChip("All", isSelected, () {
-              setState(() => _selectedSituation = null);
-            });
-          }
-          final situation = _situations[index - 1];
-          final isSelected = _selectedSituation == situation;
-          return _buildFilterChip(situation, isSelected, () {
-            setState(() => _selectedSituation = isSelected ? null : situation);
-          });
-        },
-      ),
-    );
-  }
-
-  Widget _buildFilterChip(String label, bool isSelected, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: Duration(milliseconds: 200),
-        alignment: Alignment.center,
-        padding: EdgeInsets.symmetric(horizontal: 16), // Reduced padding inside
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primaryLavender : AppColors.surface,
-          borderRadius: BorderRadius.circular(20), // Smaller radius for shorter pill
-          border: Border.all(
-            color: isSelected ? AppColors.primaryLavender : AppColors.elevation,
-            width: 1,
-          ),
-        ),
-        child: Text(
-          label,
-          style: isSelected 
-              ? secondaryVeryBoldTextStyle(fontSize: 13, color: AppColors.backgroundDeep)
-              : secondaryTextStyle(fontSize: 13, color: AppColors.textMedium),
-        ),
-      ),
-    );
-  }
-
-  void _showFilterBottomSheet() {
+  void _showTherapistDetails(
+    BuildContext context,
+    Map<String, dynamic> data,
+    String therapistId,
+  ) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.surface,
-      isScrollControlled: true, // Allow it to be taller if needed
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) {
-        return StatefulBuilder( // Use StatefulBuilder to update sheet state locally
-          builder: (BuildContext context, StateSetter setSheetState) {
-            return Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.elevation, borderRadius: BorderRadius.circular(2)))),
-                  SizedBox(height: 20),
-                  Text("Refine Results", style: primaryVeryBoldTextStyle(fontSize: 20, color: AppColors.textHigh)),
-                  SizedBox(height: 20),
-                  
-                  _buildSheetFilterOption("Type", _types, _selectedType, (val) => setSheetState(() => _selectedType = val)),
-                  SizedBox(height: 16),
-                  _buildSheetFilterOption("Region", _regions, _selectedRegion, (val) => setSheetState(() => _selectedRegion = val)),
-                  SizedBox(height: 16),
-                  _buildSheetFilterOption("Language", _languages, _selectedLanguage, (val) => setSheetState(() => _selectedLanguage = val)),
-                  SizedBox(height: 16),
-                  _buildSheetFilterOption("Gender", _genders, _selectedGender, (val) => setSheetState(() => _selectedGender = val)),
-                  SizedBox(height: 16),
-                  _buildSheetFilterOption("Lived Experience", ['All', ..._livedExperienceOptions], _selectedLivedExperience ?? 'All', (val) => setSheetState(() => _selectedLivedExperience = val == 'All' ? null : val)),
-                  SizedBox(height: 16),
-                  _buildSheetFilterOption("Ethnicity", _ethnicities, _selectedEthnicity, (val) => setSheetState(() => _selectedEthnicity = val)),
-                  SizedBox(height: 16),
-                  _buildSheetFilterOption("Religion", _religions, _selectedReligion, (val) => setSheetState(() => _selectedReligion = val)),
-                  SizedBox(height: 16),
-                  _buildSheetFilterOption("Target Age", _ageRanges, _selectedAgeRange, (val) => setSheetState(() => _selectedAgeRange = val)),
-                  SizedBox(height: 16),
-                  
-                  // LGBTQ+ Filter
-                  GestureDetector(
-                    onTap: () => setSheetState(() => _selectedIsLgbtqPlus = !_selectedIsLgbtqPlus),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: _selectedIsLgbtqPlus ? AppColors.primaryLavender.withOpacity(0.2) : AppColors.elevation,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: _selectedIsLgbtqPlus ? AppColors.primaryLavender : Colors.transparent),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Feather.heart, color: _selectedIsLgbtqPlus ? AppColors.primaryLavender : AppColors.textDisabled, size: 20),
-                          SizedBox(width: 12),
-                          Text("LGBTQ+ Support Only", style: secondaryTextStyle(color: _selectedIsLgbtqPlus ? AppColors.textHigh : AppColors.textMedium)),
-                          Spacer(),
-                          if (_selectedIsLgbtqPlus) Icon(Feather.check, color: AppColors.primaryLavender, size: 16),
-                        ],
+        return DraggableScrollableSheet(
+          initialChildSize: 0.7,
+          minChildSize: 0.5,
+          maxChildSize: 0.9,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: BoxDecoration(
+                color: AppColors.backgroundDeep,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              padding: EdgeInsets.all(24),
+              child: SingleChildScrollView(
+                controller: scrollController,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: AppColors.textDisabled,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
                       ),
                     ),
-                  ),
-                  
-                  SizedBox(height: 30),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextButton(
-                          onPressed: () {
-                             setState(() {
-                               _selectedType = 'All';
-                               _selectedRegion = 'All';
-                               _selectedLanguage = 'All';
-                               _selectedGender = 'All';
-                               _selectedEthnicity = 'All';
-                               _selectedReligion = 'All';
-                               _selectedAgeRange = 'All';
-                               _selectedIsLgbtqPlus = false;
-                               _selectedLivedExperience = null;
-                             });
-                             Navigator.pop(context);
-                          },
-                          child: Text("Reset", style: secondaryTextStyle(color: AppColors.textMedium)),
+                    SizedBox(height: 24),
+                    Center(
+                      child: Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          image: DecorationImage(
+                            image:
+                                (data['profileImage'] != null &&
+                                    data['profileImage'].isNotEmpty)
+                                ? CachedNetworkImageProvider(
+                                    data['profileImage'],
+                                  )
+                                : AssetImage('assets/default_avatar.png')
+                                      as ImageProvider,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
-                      Expanded(
-                        flex: 2,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            setState(() {}); // Trigger rebuild of main screen
-                            Navigator.pop(context);
-                          },
-                          child: Text("Apply Filters"),
+                    ),
+                    SizedBox(height: 16),
+                    Center(
+                      child: Text(
+                        data['fullName'] ?? 'Therapist',
+                        style: TextStyle(
+                          color: AppColors.textHigh,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ],
-                  ),
-                  SizedBox(height: 20),
-                ],
+                    ),
+                    SizedBox(height: 8),
+                    Center(
+                      child: Text(
+                        (data['specialization'] as List<dynamic>? ?? []).join(
+                          ', ',
+                        ),
+                        style: TextStyle(
+                          color: AppColors.primaryLavender,
+                          fontSize: 14,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildStatItem(
+                          Feather.star,
+                          (data['averageRating'] ?? 0.0).toStringAsFixed(1),
+                          "Rating",
+                        ),
+                        _buildStatItem(
+                          Feather.users,
+                          '${data['totalClients'] ?? 0}',
+                          "Clients",
+                        ),
+                        _buildStatItem(
+                          Feather.file_text,
+                          '${data['reportCount'] ?? 0}', // Maybe reports isn't something to brag about?
+                          // The prompt said "report number" - assuming this means something positive or just transparency?
+                          // Could also mean session reports? Let's stick to what's in data.
+                          "Reports",
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 24),
+                    Text(
+                      "About",
+                      style: TextStyle(
+                        color: AppColors.textHigh,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      (data['bio'] is List)
+                          ? (data['bio'] as List).join('\n')
+                          : (data['bio']?.toString() ??
+                                "No bio available. This therapist helps with various mental health challenges."),
+                      style: TextStyle(
+                        color: AppColors.textMedium,
+                        fontSize: 14,
+                        height: 1.5,
+                      ),
+                    ),
+                    SizedBox(height: 24),
+                    Text(
+                      "Availability",
+                      style: TextStyle(
+                        color: AppColors.textHigh,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    // Just a placeholder or data['availability'] if exists
+                    Text(
+                      (data['availability'] is List)
+                          ? (data['availability'] as List).join(', ')
+                          : (data['availability']?.toString() ??
+                                "Mon - Fri, 9:00 AM - 5:00 PM"),
+                      style: TextStyle(
+                        color: AppColors.textMedium,
+                        fontSize: 14,
+                      ),
+                    ),
+                    SizedBox(height: 40),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _showBookingDialog(context, therapistId);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryLavender,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: Text(
+                          "Book Journey",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                  ],
+                ),
               ),
             );
-          }
-        );
-      },
-    );
-  }
-
-  Widget _buildSheetFilterOption(String title, List<String> options, String selected, Function(String) onSelect) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: secondaryVeryBoldTextStyle(fontSize: 14, color: AppColors.textMedium)),
-        SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: options.map((opt) {
-            final isSelected = opt == selected;
-            return GestureDetector(
-              onTap: () => onSelect(opt),
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: isSelected ? AppColors.secondaryTeal : AppColors.elevation,
-                  borderRadius: BorderRadius.circular(12),
-                  border: isSelected ? null : Border.all(color: AppColors.elevation),
-                ),
-                child: Text(
-                  opt, 
-                  style: secondaryTextStyle(
-                    fontSize: 12, 
-                    color: isSelected ? Colors.white : AppColors.textMedium,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal
-                  )
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTherapistGrid() {
-    return StreamBuilder<QuerySnapshot>(
-      stream: _therapyService.getTherapists(
-        situation: _selectedSituation,
-        region: _selectedRegion,
-        ethnicity: _selectedEthnicity,
-        gender: _selectedGender,
-        isLgbtqPlus: _selectedIsLgbtqPlus,
-        religion: _selectedReligion,
-        ageRange: _selectedAgeRange,
-        language: _selectedLanguage,
-        livedExperience: _selectedLivedExperience,
-      ),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
-        }
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return Center(child: Text('No specialist found nearby.', style: primaryTextStyle(color: AppColors.textMedium)));
-        }
-
-        var therapists = snapshot.data!.docs.map((doc) {
-          final data = doc.data() as Map<String, dynamic>;
-          return {'id': doc.id, ...data};
-        }).toList();
-
-        // --- Client-Side Filtering ---
-        if (_searchQuery.isNotEmpty) {
-          final q = _searchQuery.toLowerCase();
-          therapists = therapists.where((t) {
-            final name = (t['fullName'] ?? '').toString().toLowerCase();
-            final specs = (t['specialization'] as List? ?? []).join(' ').toLowerCase();
-            return name.contains(q) || specs.contains(q);
-          }).toList();
-        }
-
-        if (_selectedType != 'All') {
-          therapists = therapists.where((t) {
-             final exp = (t['experienceLevel'] ?? '').toString();
-             if (_selectedType == 'Professional') return exp == 'Certified Therapist';
-             if (_selectedType == 'Peer Listener') return exp == 'Peer Listener';
-             return true;
-          }).toList();
-        }
-        // -----------------------------
-
-        if (therapists.isEmpty) {
-           return Center(
-             child: Column(
-               mainAxisAlignment: MainAxisAlignment.center,
-               children: [
-                 Icon(Feather.filter, size: 40, color: AppColors.textDisabled),
-                 SizedBox(height: 12),
-                 Text('No matching results.', style: primaryTextStyle(color: AppColors.textMedium)),
-                 TextButton(
-                   onPressed: () {
-                     setState(() {
-                       _selectedType = 'All';
-                       _selectedRegion = 'All';
-                       _selectedLanguage = 'All';
-                       _selectedGender = 'All';
-                       _selectedEthnicity = 'All';
-                       _selectedReligion = 'All';
-                       _selectedAgeRange = 'All';
-                       _selectedIsLgbtqPlus = false;
-                       _selectedLivedExperience = null;
-                       _selectedSituation = null;
-                       _searchController.clear();
-                       _searchQuery = "";
-                     });
-                   },
-                   child: Text("Clear Filters", style: secondaryTextStyle(color: AppColors.primaryLavender)),
-                 )
-               ],
-             )
-           );
-        }
-
-        return MasonryGridView.count(
-          padding: EdgeInsets.all(20),
-          crossAxisCount: ResponsiveLayout.getColumnCount(context),
-          mainAxisSpacing: 16,
-          crossAxisSpacing: 16,
-          itemCount: therapists.length,
-          itemBuilder: (context, index) {
-            final therapist = therapists[index];
-            return _buildTherapistCard(therapist['id'], therapist);
           },
         );
       },
     );
   }
 
-  Widget _buildTherapistCard(String id, Map<String, dynamic> data) {
-    return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (c) => ProfileScreen(userId: id))),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 10,
-              offset: Offset(0, 4),
-            ),
-          ],
+  Widget _buildStatItem(IconData icon, String value, String label) {
+    return Column(
+      children: [
+        Icon(icon, color: AppColors.primaryLavender, size: 24),
+        SizedBox(height: 8),
+        Text(
+          value,
+          style: TextStyle(
+            color: AppColors.textHigh,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                  child: Hero(
-                    tag: 'therapist-$id', // nice transition
-                    child: CachedNetworkImage(
-                      imageUrl: data['profileImage'] ?? '',
-                      placeholder: (context, url) => Container(color: AppColors.elevation, height: 160),
-                      errorWidget: (context, url, error) => Container(
-                        height: 160,
-                        color: AppColors.elevation,
-                        child: Icon(Feather.user, size: 40, color: AppColors.textDisabled),
-                      ),
-                      height: 160,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                if (data['isVerified'] == true)
-                  Positioned(
-                    top: 10,
-                    right: 10,
-                    child: Container(
-                      padding: EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryLavender.withOpacity(0.9),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(Feather.check, size: 12, color: Colors.white),
-                    ),
-                  ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.all(14.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(color: AppColors.textMedium, fontSize: 12),
+        ),
+      ],
+    );
+  }
+
+  void _showBookingDialog(BuildContext context, String therapistId) {
+    final TextEditingController _problemController = TextEditingController();
+    bool _isLoading = false;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: AppColors.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              title: Text(
+                "Describe your situation",
+                style: TextStyle(color: AppColors.textHigh),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    data['fullName'] ?? 'Therapist',
-                    style: primaryVeryBoldTextStyle(fontSize: 16, color: AppColors.textHigh),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    "This helps the therapist understand your needs before accepting the request.",
+                    style: TextStyle(color: AppColors.textMedium, fontSize: 12),
                   ),
-                  SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Icon(Icons.star_rounded, size: 16, color: AppColors.accentMustard),
-                      SizedBox(width: 4),
-                      Text(
-                        (data['averageRating'] ?? 0.0).toStringAsFixed(1),
-                        style: secondaryVeryBoldTextStyle(color: AppColors.textHigh, fontSize: 13),
+                  SizedBox(height: 16),
+                  TextField(
+                    controller: _problemController,
+                    maxLines: 4,
+                    style: TextStyle(color: AppColors.textHigh),
+                    decoration: InputDecoration(
+                      hintText: "I'm feeling...",
+                      hintStyle: TextStyle(color: AppColors.textDisabled),
+                      filled: true,
+                      fillColor: AppColors.backgroundDeep,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
                       ),
-                      SizedBox(width: 4),
-                      Text(
-                        "(${data['totalRatings'] ?? 0})",
-                        style: secondaryTextStyle(color: AppColors.textMedium, fontSize: 12),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 12),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: (data['specialization'] as List? ?? [])
-                        .take(2) // Limit to 2 tags to keep card clean
-                        .map<Widget>((s) => Container(
-                              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                              decoration: BoxDecoration(
-                                color: AppColors.elevation,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                s.toString(), 
-                                style: secondaryTextStyle(color: AppColors.secondaryTeal, fontSize: 10, fontWeight: FontWeight.bold),
-                              ),
-                            ))
-                        .toList(),
+                    ),
                   ),
                 ],
               ),
-            ),
-          ],
-        ),
-      ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    "Cancel",
+                    style: TextStyle(color: AppColors.textMedium),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: _isLoading
+                      ? null
+                      : () async {
+                          if (_problemController.text.isEmpty) return;
+
+                          setState(() => _isLoading = true);
+                          final error = await _therapyService.bookTherapist(
+                            therapistId,
+                            SessionType.oneDay, // Defaulting for now
+                            _problemController.text,
+                          );
+
+                          setState(() => _isLoading = false);
+                          Navigator.pop(context); // Close dialog
+
+                          if (error == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Request sent successfully!"),
+                                backgroundColor: AppColors.secondaryTeal,
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(error),
+                                backgroundColor: AppColors.error,
+                              ),
+                            );
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryLavender,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: _isLoading
+                      ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(
+                          "Send Request",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showPendingRequests(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.5,
+          minChildSize: 0.3,
+          maxChildSize: 0.8,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: BoxDecoration(
+                color: AppColors.backgroundDeep,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              padding: EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.textDisabled,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    "Pending Requests",
+                    style: TextStyle(
+                      color: AppColors.textHigh,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  Expanded(
+                    child: StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('therapy_sessions')
+                          .where(
+                            'clientId',
+                            isEqualTo: FirebaseAuth.instance.currentUser!.uid,
+                          )
+                          .where(
+                            'status',
+                            isEqualTo: SessionStatus.pending.index,
+                          )
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.primaryLavender,
+                            ),
+                          );
+                        }
+                        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                          return Center(
+                            child: Text(
+                              "No pending requests.",
+                              style: TextStyle(color: AppColors.textMedium),
+                            ),
+                          );
+                        }
+
+                        return ListView.builder(
+                          controller: scrollController,
+                          itemCount: snapshot.data!.docs.length,
+                          itemBuilder: (context, index) {
+                            final doc = snapshot.data!.docs[index];
+                            final data = doc.data() as Map<String, dynamic>;
+                            final therapistId = data['therapistId'];
+
+                            return FutureBuilder<DocumentSnapshot>(
+                              future: FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(therapistId)
+                                  .get(),
+                              builder: (context, therapistSnapshot) {
+                                if (!therapistSnapshot.hasData)
+                                  return SizedBox.shrink();
+                                final therapist =
+                                    therapistSnapshot.data!.data()
+                                        as Map<String, dynamic>;
+
+                                return Container(
+                                  margin: EdgeInsets.only(bottom: 12),
+                                  padding: EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.surface,
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      CircleAvatar(
+                                        backgroundImage:
+                                            (therapist['profileImage'] !=
+                                                    null &&
+                                                therapist['profileImage']
+                                                    .isNotEmpty)
+                                            ? CachedNetworkImageProvider(
+                                                therapist['profileImage'],
+                                              )
+                                            : AssetImage(
+                                                    'assets/default_avatar.png',
+                                                  )
+                                                  as ImageProvider,
+                                      ),
+                                      SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              therapist['fullName'] ??
+                                                  'Therapist',
+                                              style: TextStyle(
+                                                color: AppColors.textHigh,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            Text(
+                                              "Pending Approval",
+                                              style: TextStyle(
+                                                color: AppColors.accentMustard,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: Icon(
+                                          Feather.trash_2,
+                                          color: AppColors.textDisabled,
+                                          size: 18,
+                                        ),
+                                        onPressed: () async {
+                                          await FirebaseFirestore.instance
+                                              .collection('therapy_sessions')
+                                              .doc(doc.id)
+                                              .delete();
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
-

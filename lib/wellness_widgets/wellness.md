@@ -628,7 +628,7 @@ class _WellnessScreenState extends State<WellnessScreen> {
         color: AppColors.elevation,
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 6, offset: const Offset(0, 2))],
       ),
-      child: ClipOval(child: Image.asset('assets/femnlogo.png', fit: BoxFit.cover)),
+      child: ClipOval(child: Image.asset('assets/default_avatar.png', fit: BoxFit.cover)),
     );
   }
 

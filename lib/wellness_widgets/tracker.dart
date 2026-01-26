@@ -6,6 +6,7 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'package:femn/customization/colors.dart'; // <--- IMPORT COLORS
+import 'package:femn/widgets/femn_background.dart';
 
 import '../circle/petitions.dart';
 import '../circle/polls.dart';
@@ -30,32 +31,77 @@ class _TrackerScreenState extends State<TrackerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent, // Deep background
-      appBar: AppBar(
-        title: Text(
-          'My Trackers',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: AppColors.textHigh,
-          ),
+      backgroundColor: Colors.transparent,
+      body: FemnBackground(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(
+                top: 60.0,
+                left: 24,
+                right: 24,
+                bottom: 20,
+              ),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: AppColors.elevation,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 8,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Feather.arrow_left,
+                        color: AppColors.textHigh,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  Text(
+                    'Journey History',
+                    style: TextStyle(
+                      color: AppColors.textHigh,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: _buildAllTrackedItems(),
+              ),
+            ),
+          ],
         ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: IconThemeData(color: AppColors.primaryLavender),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: _buildAllTrackedItems(),
       ),
     );
   }
 
   // Add this method to your _TrackerScreenState class
-  void showPetitionDetails(BuildContext context, Petition petition, bool isSigned) {
+  void showPetitionDetails(
+    BuildContext context,
+    Petition petition,
+    bool isSigned,
+  ) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => EnhancedPetitionDetailScreen(petitionId: petition.id),
+        builder: (context) =>
+            EnhancedPetitionDetailScreen(petitionId: petition.id),
       ),
     );
   }
@@ -66,7 +112,9 @@ class _TrackerScreenState extends State<TrackerScreen> {
       builder: (context, snapshot) {
         // Handle loading state
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
+          return Center(
+            child: CircularProgressIndicator(color: AppColors.primaryLavender),
+          );
         }
 
         // Handle errors
@@ -83,7 +131,8 @@ class _TrackerScreenState extends State<TrackerScreen> {
           return _buildEmptyState(
             icon: Feather.target,
             title: 'No Tracked Items',
-            subtitle: 'Your created and interacted petitions and polls will appear here',
+            subtitle:
+                'Your created and interacted petitions and polls will appear here',
           );
         }
 
@@ -95,7 +144,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
           itemBuilder: (context, index) {
             final item = allTrackedItems[index];
             final itemType = item.reference.parent.id; // 'petitions' or 'polls'
-            
+
             if (itemType == 'petitions') {
               final petition = Petition.fromDocument(item);
               final isCreated = petition.createdBy == _currentUserId;
@@ -136,7 +185,13 @@ class _TrackerScreenState extends State<TrackerScreen> {
         .snapshots();
 
     // Combine all four streams manually
-    return Rx.combineLatest4<QuerySnapshot, QuerySnapshot, QuerySnapshot, QuerySnapshot, List<DocumentSnapshot>>(
+    return Rx.combineLatest4<
+      QuerySnapshot,
+      QuerySnapshot,
+      QuerySnapshot,
+      QuerySnapshot,
+      List<DocumentSnapshot>
+    >(
       createdPetitionsStream,
       signedPetitionsStream,
       createdPollsStream,
@@ -174,21 +229,24 @@ class _TrackerScreenState extends State<TrackerScreen> {
     );
   }
 
-
   Widget _buildPetitionTrackerCard(Petition petition, bool isCreated) {
-    final progress = petition.goal > 0 ? petition.currentSignatures / petition.goal : 0.0;
+    final progress = petition.goal > 0
+        ? petition.currentSignatures / petition.goal
+        : 0.0;
     final progressPercent = (progress * 100).toInt();
 
     return Card(
       margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       color: AppColors.surface, // Surface Color
       elevation: 2,
       child: InkWell(
         onTap: () {
-          showPetitionDetails(context, petition, petition.signers.contains(_currentUserId));
+          showPetitionDetails(
+            context,
+            petition,
+            petition.signers.contains(_currentUserId),
+          );
         },
         borderRadius: BorderRadius.circular(16),
         child: Padding(
@@ -201,7 +259,9 @@ class _TrackerScreenState extends State<TrackerScreen> {
                 padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   // Lavender for Created, Teal for Signed
-                  color: isCreated ? AppColors.primaryLavender : AppColors.secondaryTeal,
+                  color: isCreated
+                      ? AppColors.primaryLavender
+                      : AppColors.secondaryTeal,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -214,9 +274,10 @@ class _TrackerScreenState extends State<TrackerScreen> {
                 ),
               ),
               SizedBox(height: 8),
-              
+
               // Banner image
-              if (petition.bannerImageUrl != null && petition.bannerImageUrl!.isNotEmpty)
+              if (petition.bannerImageUrl != null &&
+                  petition.bannerImageUrl!.isNotEmpty)
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: CachedNetworkImage(
@@ -224,10 +285,8 @@ class _TrackerScreenState extends State<TrackerScreen> {
                     height: 80,
                     width: double.infinity,
                     fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      color: AppColors.elevation,
-                      height: 80,
-                    ),
+                    placeholder: (context, url) =>
+                        Container(color: AppColors.elevation, height: 80),
                     errorWidget: (context, url, error) => Container(
                       color: AppColors.elevation,
                       height: 80,
@@ -235,13 +294,13 @@ class _TrackerScreenState extends State<TrackerScreen> {
                     ),
                   ),
                 ),
-              
+
               SizedBox(height: 8),
-              
+
               // Title
               Text(
-                petition.title.length > 30 
-                    ? '${petition.title.substring(0, 30)}...' 
+                petition.title.length > 30
+                    ? '${petition.title.substring(0, 30)}...'
                     : petition.title,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
@@ -251,9 +310,9 @@ class _TrackerScreenState extends State<TrackerScreen> {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              
+
               SizedBox(height: 6),
-              
+
               // Progress bar
               LinearProgressIndicator(
                 value: progress,
@@ -262,9 +321,9 @@ class _TrackerScreenState extends State<TrackerScreen> {
                 minHeight: 6,
                 borderRadius: BorderRadius.circular(3),
               ),
-              
+
               SizedBox(height: 6),
-              
+
               // Progress text
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -279,23 +338,17 @@ class _TrackerScreenState extends State<TrackerScreen> {
                   ),
                   Text(
                     '${petition.currentSignatures}/${petition.goal}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textMedium,
-                    ),
+                    style: TextStyle(fontSize: 12, color: AppColors.textMedium),
                   ),
                 ],
               ),
-              
+
               SizedBox(height: 6),
-              
+
               // Days ago
               Text(
                 _getDaysAgo(petition.createdAt),
-                style: TextStyle(
-                  fontSize: 10,
-                  color: AppColors.textDisabled,
-                ),
+                style: TextStyle(fontSize: 10, color: AppColors.textDisabled),
               ),
             ],
           ),
@@ -333,9 +386,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
 
     return Card(
       margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       color: AppColors.surface, // Surface Color
       elevation: 2,
       child: InkWell(
@@ -353,7 +404,11 @@ class _TrackerScreenState extends State<TrackerScreen> {
                 padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   // Lavender (Created), Teal (Voted), Mustard (Tracking)
-                  color: isCreated ? AppColors.primaryLavender : (hasVoted ? AppColors.secondaryTeal : AppColors.accentMustard),
+                  color: isCreated
+                      ? AppColors.primaryLavender
+                      : (hasVoted
+                            ? AppColors.secondaryTeal
+                            : AppColors.accentMustard),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -366,7 +421,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
                 ),
               ),
               SizedBox(height: 8),
-              
+
               // Poll icon or first option image
               Container(
                 height: 80,
@@ -377,13 +432,13 @@ class _TrackerScreenState extends State<TrackerScreen> {
                 ),
                 child: _buildPollImage(options),
               ),
-              
+
               SizedBox(height: 8),
-              
+
               // Question
               Text(
-                question.length > 30 
-                    ? '${question.substring(0, 30)}...' 
+                question.length > 30
+                    ? '${question.substring(0, 30)}...'
                     : question,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
@@ -393,14 +448,18 @@ class _TrackerScreenState extends State<TrackerScreen> {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              
+
               SizedBox(height: 6),
-              
+
               // Votes info
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(Feather.bar_chart_2, size: 16, color: AppColors.primaryLavender),
+                  Icon(
+                    Feather.bar_chart_2,
+                    size: 16,
+                    color: AppColors.primaryLavender,
+                  ),
                   Text(
                     '$totalVotes votes',
                     style: TextStyle(
@@ -411,44 +470,32 @@ class _TrackerScreenState extends State<TrackerScreen> {
                   ),
                 ],
               ),
-              
+
               SizedBox(height: 6),
-              
+
               // Options count
               Text(
                 '${options.length} options',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textMedium,
-                ),
+                style: TextStyle(fontSize: 12, color: AppColors.textMedium),
               ),
-              
+
               SizedBox(height: 6),
-              
+
               // Days info
               if (daysLeft != null && daysLeft > 0)
                 Text(
                   '$daysLeft days left',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: AppColors.textDisabled,
-                  ),
+                  style: TextStyle(fontSize: 10, color: AppColors.textDisabled),
                 )
               else if (daysLeft == 0)
                 Text(
                   'Ended today',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: AppColors.error,
-                  ),
+                  style: TextStyle(fontSize: 10, color: AppColors.error),
                 )
               else
                 Text(
                   _getDaysAgo(createdAt),
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: AppColors.textDisabled,
-                  ),
+                  style: TextStyle(fontSize: 10, color: AppColors.textDisabled),
                 ),
             ],
           ),
@@ -460,7 +507,9 @@ class _TrackerScreenState extends State<TrackerScreen> {
   Widget _buildPollImage(List<dynamic> options) {
     // Try to find the first option with an image
     for (var option in options) {
-      if (option is Map<String, dynamic> && option['imageUrl'] != null && option['imageUrl'].isNotEmpty) {
+      if (option is Map<String, dynamic> &&
+          option['imageUrl'] != null &&
+          option['imageUrl'].isNotEmpty) {
         return ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: CachedNetworkImage(
@@ -468,21 +517,27 @@ class _TrackerScreenState extends State<TrackerScreen> {
             height: 80,
             width: double.infinity,
             fit: BoxFit.cover,
-            placeholder: (context, url) => Container(
-              color: AppColors.elevation,
-            ),
+            placeholder: (context, url) =>
+                Container(color: AppColors.elevation),
             errorWidget: (context, url, error) => Container(
               color: AppColors.elevation,
-              child: Icon(Feather.bar_chart_2, color: AppColors.primaryLavender),
+              child: Icon(
+                Feather.bar_chart_2,
+                color: AppColors.primaryLavender,
+              ),
             ),
           ),
         );
       }
     }
-    
+
     // Fallback to poll icon
     return Center(
-      child: Icon(Feather.bar_chart_2, size: 40, color: AppColors.primaryLavender),
+      child: Icon(
+        Feather.bar_chart_2,
+        size: 40,
+        color: AppColors.primaryLavender,
+      ),
     );
   }
 
@@ -490,7 +545,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
     final now = DateTime.now();
     final created = createdAt.toDate();
     final difference = now.difference(created);
-    
+
     if (difference.inDays == 0) {
       return 'today';
     } else if (difference.inDays == 1) {
@@ -509,11 +564,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            icon,
-            size: 64,
-            color: AppColors.textDisabled,
-          ),
+          Icon(icon, size: 64, color: AppColors.textDisabled),
           SizedBox(height: 16),
           Text(
             title,
@@ -527,9 +578,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
           Text(
             subtitle,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: AppColors.textMedium,
-            ),
+            style: TextStyle(color: AppColors.textMedium),
           ),
         ],
       ),
@@ -559,9 +608,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
           Text(
             message,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: AppColors.textMedium,
-            ),
+            style: TextStyle(color: AppColors.textMedium),
           ),
           SizedBox(height: 16),
           ElevatedButton(

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download Femn | Your Safety. Your Community.</title>
+    <link rel="icon" type="image/png" href="femnlogo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Tailwind & GSAP -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <!-- Firebase SDK (Compatibility Mode) -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                fontFamily: {
+                    sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                },
+                extend: {
+                    colors: {
+                        femn: {
+                            lavender: '#AD80BF',
+                            teal: '#0F6775',
+                            mustard: '#BA8736',
+                            deep: '#120E13',
+                            surface: '#1E1B24',
+                            elevation: '#2D2636',
+                            high: '#E6E1E5',
+                            medium: '#CAC4D0',
+                            disabled: '#49454F',
+                            android: '#3DDC84',
+                        }
+                    },
+                    boxShadow: {
+                        'glow': '0 10px 40px -10px rgba(173, 128, 191, 0.4)',
+                        'glow-android': '0 20px 40px -10px rgba(61, 220, 132, 0.25)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #120E13;
+        }
+
+        .glass-card {
+            background: rgba(30, 27, 36, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .animate-blob {
+            animation: blob 7s infinite;
+        }
+
+        @keyframes blob {
+            0% {
+                transform: translate(0px, 0px) scale(1);
+            }
+
+            33% {
+                transform: translate(30px, -50px) scale(1.1);
+            }
+
+            66% {
+                transform: translate(-20px, 20px) scale(0.9);
+            }
+
+            100% {
+                transform: translate(0px, 0px) scale(1);
+            }
+        }
+
+        .animation-delay-2000 {
+            animation-delay: 2s;
+        }
+
+        .play-store-button {
+            background: #000000;
+            border: 1px solid #333;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .play-store-button:hover {
+            background: #0a0a0a;
+            border-color: #3DDC84;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+
+<body
+    class="bg-femn-deep text-femn-medium antialiased min-h-screen flex flex-col items-center justify-center p-6 sm:p-12 overflow-x-hidden">
+
+    <!-- Animated Background Blobs -->
+    <div class="fixed top-0 left-0 w-full h-full -z-10 pointer-events-none">
+        <div
+            class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-femn-lavender rounded-full mix-blend-screen filter blur-[120px] opacity-10 animate-blob">
+        </div>
+        <div
+            class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-femn-teal rounded-full mix-blend-screen filter blur-[120px] opacity-10 animate-blob animation-delay-2000">
+        </div>
+    </div>
+
+    <!-- Main Content Container -->
+    <div class="max-w-md w-full text-center z-10">
+        <!-- Logo -->
+        <div class="mb-4 flex justify-center content-element">
+            <div
+                class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-femn-lavender to-femn-teal p-0.5 shadow-2xl overflow-hidden rotate-3 hover:rotate-0 transition-transform duration-500">
+                <img src="femnlogo.png" alt="Femn Logo" class="w-full h-full rounded-[14px] object-cover bg-white">
+            </div>
+        </div>
+
+        <!-- Header -->
+        <header class="mb-8 content-element">
+            <h1 class="text-3xl font-extrabold text-femn-high tracking-tight mb-3">
+                Wait a moment...
+            </h1>
+            <p class="text-base text-femn-medium leading-relaxed px-2">
+                You clicked a link but it looks like you don't have the <span
+                    class="text-femn-lavender font-semibold underline decoration-femn-lavender/30 underline-offset-4">Femn</span>
+                app installed yet.
+            </p>
+        </header>
+
+        <!-- What is Femn? -->
+        <div class="mb-8 content-element">
+            <div
+                class="glass-card rounded-2xl p-6 text-left border border-white/5 relative overflow-hidden group shadow-2xl">
+                <div
+                    class="absolute top-0 right-0 w-32 h-32 bg-femn-lavender/10 rounded-full blur-3xl -mr-16 -mt-16 transition-all group-hover:bg-femn-lavender/20">
+                </div>
+                <h2 class="text-xs font-bold text-femn-lavender uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-femn-lavender animate-pulse"></span>
+                    What is Femn?
+                </h2>
+                <p class="text-[13px] text-femn-high/80 leading-relaxed font-medium">
+                    Femn is a holistic ecosystem empowering women and marginalized groups to combat bias. It combines
+                    crowdsourced safety maps, anonymous support groups, and transparent activism tools. Connect, stay
+                    safe, and take action in a space built for us.
+                </p>
+            </div>
+        </div>
+
+        <!-- Download Options -->
+        <div class="space-y-4 content-element">
+            <!-- Android (Google Play Design) -->
+            <a href="femn_install.apk" id="android-download"
+                class="play-store-button flex items-center gap-4 px-6 py-4 rounded-xl w-full shadow-glow-android">
+                <div class="w-10 h-10 flex-shrink-0">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+                        <path
+                            d="M17.523 15.341c-.484 0-.877-.393-.877-.877s.393-.877.877-.877c.484 0 .877.393.877.877s-.393.877-.877.877zm-11.046 0c-.484 0-.877-.393-.877-.877s.393-.877.877-.877c.484 0 .877.393.877.877s-.393.877-.877.877zM12 4.148c-3.34 0-6.136 2.403-6.654 5.595h13.308c-.518-3.192-3.314-5.595-6.654-5.595zM12 0c3.314 0 6 2.687 6 6v.376c2.697 0 4.871 2.174 4.871 4.87v4.507c0 2.696-2.174 4.87-4.871 4.87h-2.251v.75c0 .621-.504 1.125-1.125 1.125h-3.75c-.621 0-1.125-.504-1.125-1.125v-.75H8.25c-2.696 0-4.871-2.174-4.871-4.87V11.246c0-2.696 2.175-4.87 4.871-4.87V6c0-3.313 2.686-6 6-6z"
+                            fill="#3DDC84" />
+                    </svg>
+                </div>
+                <div class="text-left">
+                    <div class="text-[10px] text-white/60 font-bold uppercase tracking-widest leading-none mb-1">Get it
+                        for</div>
+                    <div class="text-xl text-white font-bold leading-none">Android APK</div>
+                </div>
+                <div class="ml-auto opacity-50">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="3">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                </div>
+            </a>
+
+            <!-- Other Platforms (Grid) -->
+            <div class="grid grid-cols-2 gap-3 mb-2">
+                <div
+                    class="glass-card text-femn-medium/40 p-4 rounded-xl flex flex-col items-center gap-2 border border-white/5 opacity-60">
+                    <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                        <path
+                            d="M18.71 19.5C17.88 20.74 17 21.95 15.66 21.97C14.32 22 13.89 21.18 12.37 21.18C10.84 21.18 10.37 21.97 9.1 22C7.74 22.04 6.75 20.69 5.92 19.5C4.21 17.05 2.91 12.5 4.67 9.47C5.55 7.96 7.1 7 8.78 6.97C10.05 6.94 11.25 7.82 12.02 7.82C12.79 7.82 14.24 6.75 15.76 6.9C16.4 6.93 18.18 7.16 19.29 8.79C19.2 8.85 17.13 10.06 17.15 12.51C17.18 15.42 19.66 16.39 19.69 16.4C19.67 16.48 19.28 17.82 18.71 19.5ZM13 3.5C13.73 2.67 14.94 2.04 15.94 2C16.07 3.17 15.6 4.35 14.9 5.19C14.21 6.04 13.07 6.7 11.95 6.61C11.8 5.46 12.36 4.25 13 3.5Z" />
+                    </svg>
+                    <span class="text-[10px] font-bold uppercase tracking-widest leading-none">iOS</span>
+                    <span
+                        class="text-[8px] font-bold uppercase tracking-widest text-femn-disabled bg-white/5 px-2 py-0.5 rounded">Soon</span>
+                </div>
+                <div
+                    class="glass-card text-femn-medium/40 p-4 rounded-xl flex flex-col items-center gap-2 border border-white/5 opacity-60">
+                    <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                        <path
+                            d="M0 3.449L9.75 2.1V11.52H0V3.449ZM0 12.48H9.75V21.9L0 20.551V12.48ZM10.702 1.95L24 0V11.52H10.702V1.95ZM10.702 12.48H24V24L10.702 22.05V12.48Z" />
+                    </svg>
+                    <span class="text-[10px] font-bold uppercase tracking-widest leading-none">Windows</span>
+                    <span
+                        class="text-[8px] font-bold uppercase tracking-widest text-femn-disabled bg-white/5 px-2 py-0.5 rounded">Soon</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Counter Section -->
+        <div class="mt-8 mb-4 content-element">
+            <div class="flex justify-center gap-10">
+                <div class="text-center group">
+                    <div id="page-views"
+                        class="text-2xl font-extrabold text-femn-high transition-transform group-hover:scale-110">0
+                    </div>
+                    <div
+                        class="text-[9px] font-bold uppercase tracking-[0.2em] text-femn-disabled group-hover:text-femn-lavender transition-colors">
+                        Visits</div>
+                </div>
+                <div class="w-px h-10 bg-white/10 self-center"></div>
+                <div class="text-center group">
+                    <div id="download-clicks"
+                        class="text-2xl font-extrabold text-femn-high transition-transform group-hover:scale-110">0
+                    </div>
+                    <div
+                        class="text-[9px] font-bold uppercase tracking-[0.2em] text-femn-disabled group-hover:text-femn-android transition-colors">
+                        Installs</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Info -->
+        <footer class="mt-8 pt-6 border-t border-white/5 content-element">
+            <a href="index.html"
+                class="text-femn-lavender hover:text-femn-high transition-all text-[11px] font-bold uppercase tracking-widest inline-flex items-center gap-2 group">
+                <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l-7 7m7-7H3" />
+                </svg>
+                Explore the Ecosystem
+            </a>
+        </footer>
+    </div>
+
+    <script>
+        // --- Entrance Animation ---
+        gsap.from(".content-element", {
+            y: 20,
+            opacity: 0,
+            duration: 1,
+            stagger: 0.1,
+            ease: "power4.out"
+        });
+
+        // --- Persistent Global Counter (Firestore) ---
+        const firebaseConfig = {
+            apiKey: 'AIzaSyD_JFByqlCyojA76X0odlT-nWnW5eTSW0s',
+            appId: '1:832544989118:web:56a4a2ab798b010bae63ef',
+            projectId: 'femn-9cabb',
+            authDomain: 'femn-9cabb.firebaseapp.com',
+            storageBucket: 'femn-9cabb.firebasestorage.app',
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const statsRef = db.collection('public_metrics').doc('download_page');
+
+        // Function to format numbers (e.g., 1.2k)
+        function formatStatValue(val) {
+            if (val >= 1000000) return (val / 1000000).toFixed(1) + 'm';
+            if (val >= 1000) return (val / 1000).toFixed(1) + 'k';
+            return val;
+        }
+
+        // Real-time listener for counters
+        statsRef.onSnapshot((doc) => {
+            if (doc.exists) {
+                const data = doc.data();
+                document.getElementById('page-views').innerText = formatStatValue(data.visits || 0);
+                document.getElementById('download-clicks').innerText = formatStatValue(data.installs || 0);
+            } else {
+                // Initialize if doesn't exist
+                statsRef.set({ visits: 0, installs: 0 });
+            }
+        });
+
+        // Increment visit count (once per session to prevent spam)
+        if (!sessionStorage.getItem('femn_counted_visit')) {
+            statsRef.update({
+                visits: firebase.firestore.FieldValue.increment(1)
+            }).then(() => {
+                sessionStorage.setItem('femn_counted_visit', 'true');
+            }).catch(e => console.error("Counter Error:", e));
+        }
+
+        // Track Android Clicks
+        document.getElementById('android-download').addEventListener('click', () => {
+            statsRef.update({
+                installs: firebase.firestore.FieldValue.increment(1)
+            }).catch(e => console.error("Click Tracking Error:", e));
+        });
+    </script>
+</body>
+
+</html>

@@ -149,7 +149,7 @@ class _JournalScreenState extends State<JournalScreen> {
                 ],
               ),
               child: ClipOval(
-                child: Image.asset('assets/femnlogo.png', fit: BoxFit.cover,
+                child: Image.asset('assets/default_avatar.png', fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) => Icon(Feather.circle, color: AppColors.primaryLavender),
                 ),
               ),

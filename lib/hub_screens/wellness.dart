@@ -1,7 +1,9 @@
 import 'dart:math';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:femn/customization/colors.dart'; 
+import 'package:femn/customization/colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
@@ -10,15 +12,15 @@ import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 // --- Custom Imports ---
 import 'package:femn/hub_screens/profile.dart';
 import 'package:femn/hub_screens/search.dart';
-import '../wellness_widgets/journal.dart'; 
+import '../wellness_widgets/journal.dart';
 import 'package:femn/wellness_widgets/period_tracker.dart';
-import '../wellness_widgets/tracker.dart'; 
-import '../services/streak_service.dart'; 
-import '../wellness_widgets/twin_finder.dart'; 
-import '../wellness_widgets/leakguard/leakguard.dart'; 
-import '../therapy/screens/therapy_discovery_screen.dart'; 
-import '../therapy/screens/therapist_dashboard.dart'; 
-import '../circle/petitions.dart'; 
+import '../wellness_widgets/tracker.dart';
+import '../services/streak_service.dart';
+import '../wellness_widgets/twin_finder.dart';
+import '../wellness_widgets/leakguard/leakguard.dart';
+import '../therapy/screens/therapy_discovery_screen.dart';
+import '../therapy/screens/therapist_dashboard.dart';
+import '../circle/petitions.dart';
 
 // --- Enums & Models ---
 enum WidgetType {
@@ -34,7 +36,7 @@ enum WidgetType {
   checkInTimer,
   therapy,
   clientDashboard,
-  petitionsDashboard
+  petitionsDashboard,
 }
 
 class GridItem {
@@ -52,11 +54,11 @@ class GridItem {
 
   // Convert object to Map for Firestore
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'type': type.name, // Saves as "journal", "cycle", etc.
-        'cross': crossAxisCount,
-        'main': mainAxisCount,
-      };
+    'id': id,
+    'type': type.name, // Saves as "journal", "cycle", etc.
+    'cross': crossAxisCount,
+    'main': mainAxisCount,
+  };
 
   // Create object from Map from Firestore
   factory GridItem.fromJson(Map<String, dynamic> json) {
@@ -64,8 +66,8 @@ class GridItem {
       id: json['id'],
       // Find the enum value that matches the string name
       type: WidgetType.values.firstWhere(
-        (e) => e.name == json['type'], 
-        orElse: () => WidgetType.journal // Fallback if error
+        (e) => e.name == json['type'],
+        orElse: () => WidgetType.journal, // Fallback if error
       ),
       crossAxisCount: json['cross'] ?? 2,
       mainAxisCount: json['main'] ?? 2,
@@ -79,87 +81,112 @@ class WellnessScreen extends StatefulWidget {
 }
 
 class _WellnessScreenState extends State<WellnessScreen> {
-  List<GridItem> _activeWidgets = []; 
+  List<GridItem> _activeWidgets = [];
   bool _isEditMode = false;
   bool _isLoading = true; // Add loading state
-  final String _uid = FirebaseAuth.instance.currentUser!.uid; // Store UID for easy access
+  final String _uid =
+      FirebaseAuth.instance.currentUser!.uid; // Store UID for easy access
 
   // Define available widgets content
   final Map<WidgetType, Map<String, dynamic>> _widgetDefinitions = {
     WidgetType.journal: {
-      'name': 'Wellness Journal', 
-      'icon': Feather.book, 
-      'desc': 'Track mental health', 
+      'name': 'Wellness Journal',
+      'icon': Feather.book,
+      'desc': 'Track mental health',
       'hasStreak': true,
-      'onTap': (context) => Navigator.push(context, MaterialPageRoute(builder: (c) => JournalScreen()))
+      'onTap': (context) => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (c) => JournalScreen()),
+      ),
     },
     WidgetType.cycle: {
-      'name': 'Cycle', 
-      'icon': Feather.calendar, 
-      'desc': 'Track your flow', 
+      'name': 'Cycle',
+      'icon': Feather.calendar,
+      'desc': 'Track your flow',
       'isCycle': true,
-      'onTap': (context) => Navigator.push(context, MaterialPageRoute(builder: (c) => PeriodTrackerScreen()))
+      'onTap': (context) => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (c) => PeriodTrackerScreen()),
+      ),
     },
     WidgetType.activity: {
-      'name': 'Activity', 
-      'icon': Feather.trending_up, 
+      'name': 'Activity',
+      'icon': Feather.trending_up,
       'desc': 'Petitions & polls',
-      'onTap': (context) => Navigator.push(context, MaterialPageRoute(builder: (c) => TrackerScreen()))
+      'onTap': (context) => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (c) => TrackerScreen()),
+      ),
     },
     WidgetType.twinFinder: {
-      'name': 'Twin Finder', 
-      'icon': Feather.users, 
+      'name': 'Twin Finder',
+      'icon': Feather.users,
       'desc': 'Find personality twin',
-      'onTap': (context) => Navigator.push(context, MaterialPageRoute(builder: (c) => TwinFinderScreen()))
+      'onTap': (context) => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (c) => TwinFinderScreen()),
+      ),
     },
     WidgetType.safetyHeatmaps: {
-      'name': 'Safety Heatmaps', 
-      'icon': Feather.map_pin, 
-      'desc': 'View safety info'
+      'name': 'Safety Heatmaps',
+      'icon': Feather.map_pin,
+      'desc': 'View safety info',
     },
     WidgetType.pinksLevel: {
-      'name': 'Pinks & Level', 
-      'icon': Feather.bar_chart, 
-      'desc': 'Track pink levels'
+      'name': 'Pinks & Level',
+      'icon': Feather.bar_chart,
+      'desc': 'Track pink levels',
     },
     WidgetType.selfDefense: {
-      'name': 'Self-defense', 
-      'icon': Feather.shield, 
-      'desc': 'Learn techniques'
+      'name': 'Self-defense',
+      'icon': Feather.shield,
+      'desc': 'Learn techniques',
     },
     WidgetType.literature: {
-      'name': 'Literature', 
-      'icon': Feather.book_open, 
-      'desc': 'Educational content'
+      'name': 'Literature',
+      'icon': Feather.book_open,
+      'desc': 'Educational content',
     },
     WidgetType.leakGuard: {
-      'name': 'Leak Guard', 
-      'icon': Feather.lock, 
+      'name': 'Leak Guard',
+      'icon': Feather.lock,
       'desc': 'Anti-sextortion tool',
-      'onTap': (context) => Navigator.push(context, MaterialPageRoute(builder: (c) => LeakGuardScreen()))
+      'onTap': (context) => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (c) => LeakGuardScreen()),
+      ),
     },
     WidgetType.checkInTimer: {
-      'name': 'Check-in Timer', 
-      'icon': Feather.clock, 
-      'desc': 'Set reminders'
+      'name': 'Check-in Timer',
+      'icon': Feather.clock,
+      'desc': 'Set reminders',
     },
     WidgetType.therapy: {
       'name': 'Therapy',
       'icon': Feather.heart,
       'desc': 'Professional support',
-      'onTap': (context) => Navigator.push(context, MaterialPageRoute(builder: (c) => TherapyDiscoveryScreen()))
+      'onTap': (context) => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (c) => TherapyDiscoveryScreen()),
+      ),
     },
     WidgetType.clientDashboard: {
       'name': 'Client Dashboard',
       'icon': Feather.grid,
       'desc': 'Manage your clients',
-      'onTap': (context) => Navigator.push(context, MaterialPageRoute(builder: (c) => TherapistDashboard()))
+      'onTap': (context) => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (c) => TherapistDashboard()),
+      ),
     },
     WidgetType.petitionsDashboard: {
       'name': 'Petitions Dashboard',
       'icon': Feather.flag,
       'desc': 'Manage your causes',
-      'onTap': (context) => Navigator.push(context, MaterialPageRoute(builder: (c) => UserPetitionsDashboard()))
+      'onTap': (context) => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (c) => UserPetitionsDashboard()),
+      ),
     },
   };
 
@@ -171,45 +198,82 @@ class _WellnessScreenState extends State<WellnessScreen> {
 
   // --- FIRESTORE PERSISTENCE LOGIC ---
 
-  // 1. Save current list to Firestore
+  // 1. Save current list to Firestore & Local Cache
   Future<void> _saveLayout() async {
     try {
       // Convert list of objects to list of Maps
       final data = _activeWidgets.map((e) => e.toJson()).toList();
-      
-      // Save to users/{uid} under a field called 'wellnessLayout'
+
+      // 1. Save Local
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('wellness_layout_cache', jsonEncode(data));
+
+      // 2. Save Remote
       await FirebaseFirestore.instance.collection('users').doc(_uid).update({
-        'wellnessLayout': data
+        'wellnessLayout': data,
       });
     } catch (e) {
       print("Error saving layout: $e");
     }
   }
 
-  // 2. Load list from Firestore
+  // 2. Load list (Cache First, Then Network)
   Future<void> _loadLayout() async {
+    // A. Try Local Cache FIRST (Instant)
     try {
-      DocumentSnapshot doc = await FirebaseFirestore.instance.collection('users').doc(_uid).get();
-      
+      final prefs = await SharedPreferences.getInstance();
+      final String? cached = prefs.getString('wellness_layout_cache');
+      if (cached != null) {
+        final List<dynamic> decoded = jsonDecode(cached);
+        if (mounted) {
+          setState(() {
+            _activeWidgets = decoded
+                .map((item) => GridItem.fromJson(item))
+                .toList();
+            _isLoading = false; // Show UI immediately
+          });
+        }
+      }
+    } catch (e) {
+      print("Cache error: $e");
+    }
+
+    // B. Fetch from Network (Background Sync)
+    try {
+      DocumentSnapshot doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_uid)
+          .get();
+
       if (doc.exists && doc.data() != null) {
         final data = doc.data() as Map<String, dynamic>;
-        
+
         if (data.containsKey('wellnessLayout')) {
           List<dynamic> savedList = data['wellnessLayout'];
-          
-          setState(() {
-            _activeWidgets = savedList.map((item) => GridItem.fromJson(item)).toList();
-            _isLoading = false;
-          });
+
+          // Update Cache
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('wellness_layout_cache', jsonEncode(savedList));
+
+          if (mounted) {
+            setState(() {
+              _activeWidgets = savedList
+                  .map((item) => GridItem.fromJson(item))
+                  .toList();
+              _isLoading = false;
+            });
+          }
         } else {
-          setState(() => _isLoading = false); // No saved layout yet
+          if (mounted && _activeWidgets.isEmpty)
+            setState(() => _isLoading = false);
         }
       } else {
-        setState(() => _isLoading = false);
+        if (mounted && _activeWidgets.isEmpty)
+          setState(() => _isLoading = false);
       }
     } catch (e) {
       print("Error loading layout: $e");
-      setState(() => _isLoading = false);
+      if (mounted && _activeWidgets.isEmpty) setState(() => _isLoading = false);
     }
   }
 
@@ -222,27 +286,32 @@ class _WellnessScreenState extends State<WellnessScreen> {
     setState(() {
       int cross = 2;
       int main = 2;
-      if (type == WidgetType.journal || type == WidgetType.activity || type == WidgetType.literature || type == WidgetType.pinksLevel) { 
-        cross = 3; 
+      if (type == WidgetType.journal ||
+          type == WidgetType.activity ||
+          type == WidgetType.literature ||
+          type == WidgetType.pinksLevel) {
+        cross = 3;
       }
-      if (type == WidgetType.checkInTimer) { 
-        cross = 5; 
-        main = 2; 
-      } 
-      if (type == WidgetType.cycle) { 
-        cross = 2; 
-        main = 3; 
-      } 
+      if (type == WidgetType.checkInTimer) {
+        cross = 5;
+        main = 2;
+      }
+      if (type == WidgetType.cycle) {
+        cross = 2;
+        main = 3;
+      }
 
-      _activeWidgets.add(GridItem(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        type: type,
-        crossAxisCount: cross,
-        mainAxisCount: main,
-      ));
+      _activeWidgets.add(
+        GridItem(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          type: type,
+          crossAxisCount: cross,
+          mainAxisCount: main,
+        ),
+      );
     });
     _saveLayout(); // <--- SAVE
-    Navigator.pop(context); 
+    Navigator.pop(context);
   }
 
   // --- Logic: Remove Widget (Updated) ---
@@ -259,15 +328,20 @@ class _WellnessScreenState extends State<WellnessScreen> {
     setState(() {
       var item = _activeWidgets[index];
       if (item.crossAxisCount == 2 && item.mainAxisCount == 2) {
-        item.crossAxisCount = 3; item.mainAxisCount = 2; 
+        item.crossAxisCount = 3;
+        item.mainAxisCount = 2;
       } else if (item.crossAxisCount == 3 && item.mainAxisCount == 2) {
-        item.crossAxisCount = 2; item.mainAxisCount = 3; 
+        item.crossAxisCount = 2;
+        item.mainAxisCount = 3;
       } else if (item.crossAxisCount == 2 && item.mainAxisCount == 3) {
-        item.crossAxisCount = 4; item.mainAxisCount = 3; 
+        item.crossAxisCount = 4;
+        item.mainAxisCount = 3;
       } else if (item.crossAxisCount == 4 && item.mainAxisCount == 3) {
-        item.crossAxisCount = 5; item.mainAxisCount = 2; 
+        item.crossAxisCount = 5;
+        item.mainAxisCount = 2;
       } else {
-        item.crossAxisCount = 2; item.mainAxisCount = 2; 
+        item.crossAxisCount = 2;
+        item.mainAxisCount = 2;
       }
     });
     _saveLayout(); // <--- SAVE
@@ -294,7 +368,9 @@ class _WellnessScreenState extends State<WellnessScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) {
         final usedTypes = _activeWidgets.map((e) => e.type).toSet();
-        final available = WidgetType.values.where((t) => !usedTypes.contains(t)).toList();
+        final available = WidgetType.values
+            .where((t) => !usedTypes.contains(t))
+            .toList();
 
         return Container(
           decoration: BoxDecoration(
@@ -306,53 +382,71 @@ class _WellnessScreenState extends State<WellnessScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("Add Widget to Mesh", 
-                style: TextStyle(color: AppColors.textHigh, fontSize: 18, fontWeight: FontWeight.bold)),
+              Text(
+                "Add Widget to Mesh",
+                style: TextStyle(
+                  color: AppColors.textHigh,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               SizedBox(height: 16),
-              available.isEmpty 
-                ? Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Center(child: Text("All widgets added!", 
-                      style: TextStyle(color: AppColors.textDisabled))),
-                  )
-                : Expanded(
-                    child: GridView.builder(
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3, 
-                        crossAxisSpacing: 10, 
-                        mainAxisSpacing: 10
+              available.isEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Center(
+                        child: Text(
+                          "All widgets added!",
+                          style: TextStyle(color: AppColors.textDisabled),
+                        ),
                       ),
-                      itemCount: available.length,
-                      itemBuilder: (context, index) {
-                        final type = available[index];
-                        final def = _widgetDefinitions[type]!;
-                        return GestureDetector(
-                          onTap: () => _addWidget(type),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: AppColors.surface,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: AppColors.elevation)
+                    )
+                  : Expanded(
+                      child: GridView.builder(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                        ),
+                        itemCount: available.length,
+                        itemBuilder: (context, index) {
+                          final type = available[index];
+                          final def = _widgetDefinitions[type]!;
+                          return GestureDetector(
+                            onTap: () => _addWidget(type),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: AppColors.surface,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: AppColors.elevation),
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    def['icon'],
+                                    color: AppColors.primaryLavender,
+                                  ),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    def['name'],
+                                    style: TextStyle(
+                                      color: AppColors.textMedium,
+                                      fontSize: 12,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
                             ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(def['icon'], color: AppColors.primaryLavender),
-                                SizedBox(height: 8),
-                                Text(def['name'], 
-                                  style: TextStyle(color: AppColors.textMedium, fontSize: 12), 
-                                  textAlign: TextAlign.center)
-                              ],
-                            ),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
-                  ),
             ],
           ),
         );
-      }
+      },
     );
   }
 
@@ -385,13 +479,23 @@ class _WellnessScreenState extends State<WellnessScreen> {
                   children: [
                     _buildLogo(),
                     SizedBox(width: 8),
-                    Text('You', 
-                      style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textHigh)),
+                    Text(
+                      'You',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textHigh,
+                      ),
+                    ),
                   ],
                 ),
                 actions: [
-                  _buildCircleButton(Feather.search, 
-                    () => Navigator.push(context, MaterialPageRoute(builder: (c) => SearchScreen()))),
+                  _buildCircleButton(
+                    Feather.search,
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (c) => SearchScreen()),
+                    ),
+                  ),
                   SizedBox(width: 8),
                   _buildUserAvatar(currentUserId),
                   SizedBox(width: 12),
@@ -400,42 +504,52 @@ class _WellnessScreenState extends State<WellnessScreen> {
 
               SliverPadding(
                 padding: EdgeInsets.all(12),
-                sliver: _isLoading 
-                ? SliverFillRemaining(
-                    child: Center(child: CircularProgressIndicator(color: AppColors.primaryLavender)),
-                  )
-                : _activeWidgets.isEmpty 
-                  ? SliverFillRemaining(
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Feather.plus_square, size: 40, color: AppColors.textDisabled),
-                            SizedBox(height: 12),
-                            Text(
-                              "Long press here to add widgets",
-                              style: TextStyle(color: AppColors.textMedium),
-                            ),
-                          ],
+                sliver: _isLoading
+                    ? SliverFillRemaining(
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.primaryLavender,
+                          ),
+                        ),
+                      )
+                    : _activeWidgets.isEmpty
+                    ? SliverFillRemaining(
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Feather.plus_square,
+                                size: 40,
+                                color: AppColors.textDisabled,
+                              ),
+                              SizedBox(height: 12),
+                              Text(
+                                "Long press here to add widgets",
+                                style: TextStyle(color: AppColors.textMedium),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : SliverToBoxAdapter(
+                        child: StaggeredGrid.count(
+                          crossAxisCount: 5,
+                          mainAxisSpacing: 10,
+                          crossAxisSpacing: 10,
+                          children: List.generate(_activeWidgets.length, (
+                            index,
+                          ) {
+                            final item = _activeWidgets[index];
+                            return StaggeredGridTile.count(
+                              key: ValueKey(item.id),
+                              crossAxisCellCount: item.crossAxisCount,
+                              mainAxisCellCount: item.mainAxisCount,
+                              child: _buildEditableWrapper(index, item),
+                            );
+                          }),
                         ),
                       ),
-                    )
-                  : SliverToBoxAdapter(
-                      child: StaggeredGrid.count(
-                        crossAxisCount: 5,
-                        mainAxisSpacing: 10,
-                        crossAxisSpacing: 10,
-                        children: List.generate(_activeWidgets.length, (index) {
-                          final item = _activeWidgets[index];
-                          return StaggeredGridTile.count(
-                            key: ValueKey(item.id),
-                            crossAxisCellCount: item.crossAxisCount,
-                            mainAxisCellCount: item.mainAxisCount,
-                            child: _buildEditableWrapper(index, item),
-                          );
-                        }),
-                      ),
-                    ),
               ),
               SliverToBoxAdapter(child: SizedBox(height: 80)),
             ],
@@ -477,7 +591,11 @@ class _WellnessScreenState extends State<WellnessScreen> {
                 child: CircleAvatar(
                   radius: 16,
                   backgroundColor: AppColors.primaryLavender,
-                  child: Icon(Feather.maximize_2, size: 16, color: Colors.white),
+                  child: Icon(
+                    Feather.maximize_2,
+                    size: 16,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
@@ -495,7 +613,7 @@ class _WellnessScreenState extends State<WellnessScreen> {
                 ),
               ),
             ),
-          
+
           if (_isEditMode)
             Positioned(
               top: 8,
@@ -506,22 +624,32 @@ class _WellnessScreenState extends State<WellnessScreen> {
                     GestureDetector(
                       onTap: () => _moveWidget(index, -1),
                       child: CircleAvatar(
-                        radius: 14, 
-                        backgroundColor: Colors.white24, 
-                        child: Icon(Feather.chevron_left, size: 16, color: Colors.white)),
+                        radius: 14,
+                        backgroundColor: Colors.white24,
+                        child: Icon(
+                          Feather.chevron_left,
+                          size: 16,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   SizedBox(width: 4),
                   if (index < _activeWidgets.length - 1)
                     GestureDetector(
                       onTap: () => _moveWidget(index, 1),
                       child: CircleAvatar(
-                        radius: 14, 
-                        backgroundColor: Colors.white24, 
-                        child: Icon(Feather.chevron_right, size: 16, color: Colors.white)),
+                        radius: 14,
+                        backgroundColor: Colors.white24,
+                        child: Icon(
+                          Feather.chevron_right,
+                          size: 16,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                 ],
               ),
-            )
+            ),
         ],
       ),
     );
@@ -539,9 +667,11 @@ class _WellnessScreenState extends State<WellnessScreen> {
     Widget baseContent = Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(def['icon'], 
-          size: item.mainAxisCount >= 3 ? 55 : 40, 
-          color: AppColors.primaryLavender),
+        Icon(
+          def['icon'],
+          size: item.mainAxisCount >= 3 ? 55 : 40,
+          color: AppColors.primaryLavender,
+        ),
         SizedBox(height: 12),
         Text(
           def['name'],
@@ -556,11 +686,17 @@ class _WellnessScreenState extends State<WellnessScreen> {
         ),
         if (item.mainAxisCount >= 2) ...[
           SizedBox(height: 4),
-          Text(def['desc'], 
-            style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: AppColors.textMedium), 
-            textAlign: TextAlign.center, 
-            maxLines: 2)
-        ]
+          Text(
+            def['desc'],
+            style: TextStyle(
+              fontSize: 11,
+              fontStyle: FontStyle.italic,
+              color: AppColors.textMedium,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+          ),
+        ],
       ],
     );
 
@@ -568,7 +704,10 @@ class _WellnessScreenState extends State<WellnessScreen> {
 
     if (def['hasStreak'] == true) {
       return StreamBuilder<DocumentSnapshot>(
-        stream: FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
+        stream: FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .snapshots(),
         builder: (context, snapshot) {
           int count = 0;
           bool isActive = false;
@@ -582,15 +721,24 @@ class _WellnessScreenState extends State<WellnessScreen> {
               if (diff > 1 && count > 0) isActive = false;
             }
           }
-          return _buildBaseContainer(baseContent, onTap, 
-            streakCount: count, streakActive: isActive);
+          return _buildBaseContainer(
+            baseContent,
+            onTap,
+            streakCount: count,
+            streakActive: isActive,
+          );
         },
       );
     }
 
     if (def['isCycle'] == true) {
       return StreamBuilder<DocumentSnapshot>(
-        stream: FirebaseFirestore.instance.collection('users').doc(uid).collection('cycle_settings').doc('settings').snapshots(),
+        stream: FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('cycle_settings')
+            .doc('settings')
+            .snapshots(),
         builder: (context, snapshot) {
           CyclePhaseData? currentPhase;
           if (snapshot.hasData && snapshot.data!.exists) {
@@ -599,11 +747,17 @@ class _WellnessScreenState extends State<WellnessScreen> {
             final int avgCycle = data['avgCycleLength'] ?? 28;
             final bool isPregnancy = data['isPregnancyMode'] ?? false;
             if (lastPeriod != null && !isPregnancy) {
-              currentPhase = CycleService.getCurrentPhase(lastPeriod.toDate(), avgCycle);
+              currentPhase = CycleService.getCurrentPhase(
+                lastPeriod.toDate(),
+                avgCycle,
+              );
             }
           }
-          return _buildBaseContainer(baseContent, onTap, 
-            cyclePhase: currentPhase);
+          return _buildBaseContainer(
+            baseContent,
+            onTap,
+            cyclePhase: currentPhase,
+          );
         },
       );
     }
@@ -611,8 +765,13 @@ class _WellnessScreenState extends State<WellnessScreen> {
     return _buildBaseContainer(baseContent, onTap);
   }
 
-  Widget _buildBaseContainer(Widget content, VoidCallback? onTap, 
-      {int? streakCount, bool? streakActive, CyclePhaseData? cyclePhase}) {
+  Widget _buildBaseContainer(
+    Widget content,
+    VoidCallback? onTap, {
+    int? streakCount,
+    bool? streakActive,
+    CyclePhaseData? cyclePhase,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -620,39 +779,63 @@ class _WellnessScreenState extends State<WellnessScreen> {
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(24.0),
           border: Border.all(color: AppColors.elevation, width: 1),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 8, offset: const Offset(0, 4))],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Stack(
           children: [
-            Center(child: Padding(padding: const EdgeInsets.all(12.0), child: content)),
-            
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: content,
+              ),
+            ),
+
             if (streakCount != null)
               Positioned(
-                top: 12, 
+                top: 12,
                 right: 12,
                 child: GestureDetector(
-                  onTap: (streakActive == false) ? () => _showRestorationModal(context, streakCount) : null,
+                  onTap: (streakActive == false)
+                      ? () => _showRestorationModal(context, streakCount)
+                      : null,
                   child: Container(
                     padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.elevation, 
+                      color: AppColors.elevation,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: streakActive! ? Colors.orange.withOpacity(0.5) : AppColors.textDisabled.withOpacity(0.3))
+                        color: streakActive!
+                            ? Colors.orange.withOpacity(0.5)
+                            : AppColors.textDisabled.withOpacity(0.3),
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          streakActive ? Feather.zap : Feather.zap, 
-                          size: 16, 
-                          color: streakActive ? Colors.orange : AppColors.textDisabled),
+                          streakActive ? Feather.zap : Feather.zap,
+                          size: 16,
+                          color: streakActive
+                              ? Colors.orange
+                              : AppColors.textDisabled,
+                        ),
                         SizedBox(width: 4),
-                        Text("$streakCount", 
+                        Text(
+                          "$streakCount",
                           style: TextStyle(
-                            color: streakActive ? AppColors.textHigh : AppColors.textDisabled, 
-                            fontWeight: FontWeight.bold, 
-                            fontSize: 12)),
+                            color: streakActive
+                                ? AppColors.textHigh
+                                : AppColors.textDisabled,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -661,29 +844,42 @@ class _WellnessScreenState extends State<WellnessScreen> {
 
             if (cyclePhase != null)
               Positioned(
-                top: 12, 
+                top: 12,
                 right: 12,
                 child: Container(
                   padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: cyclePhase.bgColor, 
+                    color: cyclePhase.bgColor,
                     borderRadius: BorderRadius.circular(20),
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 4, offset: Offset(0,2))]
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(cyclePhase.icon, size: 12, color: cyclePhase.textColor),
+                      Icon(
+                        cyclePhase.icon,
+                        size: 12,
+                        color: cyclePhase.textColor,
+                      ),
                       SizedBox(width: 6),
-                      Text(cyclePhase.seasonName, 
+                      Text(
+                        cyclePhase.seasonName,
                         style: TextStyle(
-                          color: cyclePhase.textColor, 
-                          fontWeight: FontWeight.bold, 
-                          fontSize: 11)),
+                          color: cyclePhase.textColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                        ),
+                      ),
                     ],
                   ),
                 ),
-              )
+              ),
           ],
         ),
       ),
@@ -693,27 +889,37 @@ class _WellnessScreenState extends State<WellnessScreen> {
   // --- Helpers (Logo, Avatar, etc) ---
   Widget _buildLogo() {
     return Container(
-      width: 42, 
+      width: 42,
       height: 42,
       decoration: BoxDecoration(
-        shape: BoxShape.circle, 
+        shape: BoxShape.circle,
         color: AppColors.elevation,
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 6, offset: const Offset(0, 2))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: ClipOval(child: Image.asset('assets/femnlogo.png', fit: BoxFit.cover)),
+      child: ClipOval(
+        child: Image.asset('assets/default_avatar.png', fit: BoxFit.cover),
+      ),
     );
   }
 
   Widget _buildCircleButton(IconData icon, VoidCallback onTap) {
     return Container(
-      width: 42, 
+      width: 42,
       height: 42,
       decoration: BoxDecoration(
-        shape: BoxShape.circle, 
-        color: AppColors.elevation),
+        shape: BoxShape.circle,
+        color: AppColors.elevation,
+      ),
       child: IconButton(
-        icon: Icon(icon, color: AppColors.primaryLavender, size: 22), 
-        onPressed: onTap),
+        icon: Icon(icon, color: AppColors.primaryLavender, size: 22),
+        onPressed: onTap,
+      ),
     );
   }
 
@@ -727,18 +933,23 @@ class _WellnessScreenState extends State<WellnessScreen> {
         }
         return GestureDetector(
           onTap: () => Navigator.push(
-            context, 
-            MaterialPageRoute(builder: (c) => ProfileScreen(userId: uid))),
+            context,
+            MaterialPageRoute(builder: (c) => ProfileScreen(userId: uid)),
+          ),
           child: Container(
-            width: 42, 
+            width: 42,
             height: 42,
             decoration: BoxDecoration(
-              shape: BoxShape.circle, 
-              color: AppColors.elevation),
+              shape: BoxShape.circle,
+              color: AppColors.elevation,
+            ),
             child: ClipOval(
-              child: url.isNotEmpty 
-                ? Image(image: CachedNetworkImageProvider(url), fit: BoxFit.cover)
-                : Image.asset('assets/default_avatar.png', fit: BoxFit.cover),
+              child: url.isNotEmpty
+                  ? Image(
+                      image: CachedNetworkImageProvider(url),
+                      fit: BoxFit.cover,
+                    )
+                  : Image.asset('assets/default_avatar.png', fit: BoxFit.cover),
             ),
           ),
         );
@@ -763,7 +974,11 @@ class _WellnessScreenState extends State<WellnessScreen> {
             SizedBox(height: 16),
             Text(
               "Streak Extinguished!",
-              style: TextStyle(color: AppColors.textHigh, fontSize: 20, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: AppColors.textHigh,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             SizedBox(height: 8),
             Text(
@@ -779,8 +994,8 @@ class _WellnessScreenState extends State<WellnessScreen> {
                     onPressed: () => Navigator.pop(context),
                     child: Text("Let it go"),
                     style: OutlinedButton.styleFrom(
-                       foregroundColor: AppColors.textMedium,
-                       side: BorderSide(color: AppColors.textDisabled)
+                      foregroundColor: AppColors.textMedium,
+                      side: BorderSide(color: AppColors.textDisabled),
                     ),
                   ),
                 ),
@@ -792,12 +1007,20 @@ class _WellnessScreenState extends State<WellnessScreen> {
                       final result = await StreakService.tryRestoreStreak();
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text(result == "Success" ? "Streak Restored! 🔥" : result),
-                          backgroundColor: result == "Success" ? Colors.orange : AppColors.error,
-                        )
+                          content: Text(
+                            result == "Success"
+                                ? "Streak Restored! 🔥"
+                                : result,
+                          ),
+                          backgroundColor: result == "Success"
+                              ? Colors.orange
+                              : AppColors.error,
+                        ),
                       );
                     },
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                    ),
                     child: Text("Restore 🔥"),
                   ),
                 ),
@@ -805,16 +1028,19 @@ class _WellnessScreenState extends State<WellnessScreen> {
             ),
             SizedBox(height: 12),
             FutureBuilder<DocumentSnapshot>(
-              future: FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid).get(),
+              future: FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(FirebaseAuth.instance.currentUser!.uid)
+                  .get(),
               builder: (context, snapshot) {
-                if(!snapshot.hasData) return SizedBox();
+                if (!snapshot.hasData) return SizedBox();
                 int used = snapshot.data!.get('restorationsUsed') ?? 0;
                 return Text(
                   "Restorations used this month: $used/3",
                   style: TextStyle(color: AppColors.textDisabled, fontSize: 12),
                 );
-              }
-            )
+              },
+            ),
           ],
         ),
       ),

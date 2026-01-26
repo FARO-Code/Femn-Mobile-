@@ -1238,7 +1238,7 @@ class _DiscussionChatScreenState extends State<DiscussionChatScreen> {
                       backgroundColor: AppColors.elevation,
                       backgroundImage: discussionImage.isNotEmpty
                           ? CachedNetworkImageProvider(discussionImage)
-                          : AssetImage('assets/femnlogo.png') as ImageProvider,
+                          : AssetImage('assets/default_avatar.png') as ImageProvider,
                     ),
                     SizedBox(width: 12),
                     Expanded(

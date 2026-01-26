@@ -1,12 +1,15 @@
 [
   {
-    "relation": ["delegate_permission/common.handle_all_urls"],
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
     "target": {
       "namespace": "android_app",
       "package_name": "com.blueparticle.femn",
       "sha256_cert_fingerprints": [
         "95:11:05:48:DB:8C:6C:D5:1A:AC:86:1B:9B:5C:2F:98:D1:06:D5:5A:ED:1E:61:81:02:06:80:71:D4:7C:F4:1B",
-        "9A:2A:B4:5F:79:84:25:02:55:A2:A8:08:30:7B:12:CC:28:82:22:87:1D:D0:A9:7E:35:21:CB:F6:7A:A9:48:B3"
+        "9A:2A:B4:5F:79:84:25:02:55:A2:A8:08:30:7B:12:CC:28:82:22:87:1D:D0:A9:7E:35:21:CB:F6:7A:A9:48:B3",
+        "65:A6:2C:9F:55:BF:C0:66:71:30:D3:EE:2B:0D:9A:13:66:B6:C4:53:F3:38:A4:1F:84:B5:80:8E:5C:01:0A:6A"
       ]
     }
   }

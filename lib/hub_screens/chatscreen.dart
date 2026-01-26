@@ -238,7 +238,7 @@ class _ChatScreenState extends State<ChatScreen> {
               backgroundColor: AppColors.elevation,
               backgroundImage: widget.otherUserProfileImage.isNotEmpty
                   ? CachedNetworkImageProvider(widget.otherUserProfileImage)
-                  : const AssetImage('assets/femnlogo.png') as ImageProvider,
+                  : const AssetImage('assets/default_avatar.png') as ImageProvider,
             ),
             const SizedBox(width: 12),
             Expanded(

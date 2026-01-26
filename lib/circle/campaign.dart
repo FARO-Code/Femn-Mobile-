@@ -10,8 +10,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
-import 'petitions.dart'; // <--- ADD THIS
-
+import 'petitions.dart';
+import '../services/notification_service.dart'; // <--- ADD THIS
 
 class CampaignsScreen extends StatefulWidget {
   @override
@@ -30,7 +30,13 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          title: Text('Campaigns', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textHigh)),
+          title: Text(
+            'Campaigns',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: AppColors.textHigh,
+            ),
+          ),
           bottom: TabBar(
             indicatorColor: AppColors.primaryLavender,
             labelColor: AppColors.primaryLavender,
@@ -38,13 +44,7 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
             tabs: _tabs.map((tab) => Tab(text: tab)).toList(),
           ),
         ),
-        body: TabBarView(
-          children: [
-            PollsTab(),
-            PetitionsTab(),
-            EventsTab(),
-          ],
-        ),
+        body: TabBarView(children: [PollsTab(), PetitionsTab(), EventsTab()]),
         floatingActionButton: FloatingActionButton(
           onPressed: () {
             _showCreateBottomSheet(context);
@@ -70,30 +70,74 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Create New', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
+              Text(
+                'Create New',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textHigh,
+                ),
+              ),
               SizedBox(height: 16),
               ListTile(
-                leading: Icon(Feather.bar_chart_2, color: AppColors.primaryLavender),
-                title: Text('Poll', style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.textHigh)),
+                leading: Icon(
+                  Feather.bar_chart_2,
+                  color: AppColors.primaryLavender,
+                ),
+                title: Text(
+                  'Poll',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textHigh,
+                  ),
+                ),
                 onTap: () {
                   Navigator.pop(context);
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => CreatePollScreen()));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => CreatePollScreen()),
+                  );
                 },
               ),
               ListTile(
-                leading: Icon(Feather.file_text, color: AppColors.secondaryTeal),
-                title: Text('Petition', style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.textHigh)),
+                leading: Icon(
+                  Feather.file_text,
+                  color: AppColors.secondaryTeal,
+                ),
+                title: Text(
+                  'Petition',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textHigh,
+                  ),
+                ),
                 onTap: () {
                   Navigator.pop(context);
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => EnhancedPetitionCreationScreen()));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EnhancedPetitionCreationScreen(),
+                    ),
+                  );
                 },
               ),
               ListTile(
                 leading: Icon(Feather.calendar, color: AppColors.accentMustard),
-                title: Text('Event', style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.textHigh)),
+                title: Text(
+                  'Event',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textHigh,
+                  ),
+                ),
                 onTap: () {
                   Navigator.pop(context);
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => CreateEventScreen()));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CreateEventScreen(),
+                    ),
+                  );
                 },
               ),
             ],
@@ -109,7 +153,7 @@ class PollsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
-    
+
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('polls')
@@ -119,23 +163,30 @@ class PollsTab extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return _buildShimmerList();
         }
-        
+
         if (snapshot.hasError) {
-          return Center(child: Text('Error loading polls', style: TextStyle(color: AppColors.error)));
+          return Center(
+            child: Text(
+              'Error loading polls',
+              style: TextStyle(color: AppColors.error),
+            ),
+          );
         }
-        
+
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return _buildEmptyState('No polls yet 👀', Feather.bar_chart_2);
         }
-        
+
         final polls = snapshot.data!.docs;
         return ListView.builder(
           padding: EdgeInsets.all(12),
           itemCount: polls.length,
           itemBuilder: (context, index) {
             final poll = polls[index];
-            final hasVoted = user != null ? (poll['voters'] as List).contains(user.uid) : false;
-            
+            final hasVoted = user != null
+                ? (poll['voters'] as List).contains(user.uid)
+                : false;
+
             return _buildPollCard(poll, context, hasVoted);
           },
         );
@@ -143,7 +194,11 @@ class PollsTab extends StatelessWidget {
     );
   }
 
-  Widget _buildPollCard(DocumentSnapshot poll, BuildContext context, bool hasVoted) {
+  Widget _buildPollCard(
+    DocumentSnapshot poll,
+    BuildContext context,
+    bool hasVoted,
+  ) {
     final pollData = poll.data() as Map<String, dynamic>?;
     final imageUrl = pollData?['imageUrl'] as String?;
     final description = pollData?['description'] as String?;
@@ -163,9 +218,12 @@ class PollsTab extends StatelessWidget {
       elevation: 0,
       child: InkWell(
         onTap: () {
-          Navigator.push(context, MaterialPageRoute(
-            builder: (context) => PollDetailScreen(pollId: poll.id)
-          ));
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PollDetailScreen(pollId: poll.id),
+            ),
+          );
         },
         child: Padding(
           padding: EdgeInsets.all(16),
@@ -185,15 +243,24 @@ class PollsTab extends StatelessWidget {
                       placeholder: (context, url) => Container(
                         height: 150,
                         color: AppColors.elevation,
-                        child: Center(child: CircularProgressIndicator(color: AppColors.primaryLavender)),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.primaryLavender,
+                          ),
+                        ),
                       ),
-                      errorWidget: (context, url, error) => Icon(Feather.alert_circle, color: AppColors.error),
+                      errorWidget: (context, url, error) =>
+                          Icon(Feather.alert_circle, color: AppColors.error),
                     ),
                   ),
                 ),
               Text(
                 question,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.textHigh),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: AppColors.textHigh,
+                ),
               ),
               SizedBox(height: 8),
               Text(
@@ -207,7 +274,9 @@ class PollsTab extends StatelessWidget {
                 final opt = option as Map<String, dynamic>;
                 final text = opt['text'] as String? ?? '';
                 final votes = (opt['votes'] as int?) ?? 0;
-                final percentage = totalVotes > 0 ? (votes / totalVotes * 100) : 0;
+                final percentage = totalVotes > 0
+                    ? (votes / totalVotes * 100)
+                    : 0;
                 return Padding(
                   padding: EdgeInsets.only(bottom: 8),
                   child: Column(
@@ -222,20 +291,31 @@ class PollsTab extends StatelessWidget {
                                 value: percentage / 100,
                                 backgroundColor: AppColors.elevation,
                                 valueColor: AlwaysStoppedAnimation<Color>(
-                                  hasVoted ? AppColors.secondaryTeal : AppColors.textDisabled,
+                                  hasVoted
+                                      ? AppColors.secondaryTeal
+                                      : AppColors.textDisabled,
                                 ),
                                 minHeight: 6,
                               ),
                             ),
                           ),
                           SizedBox(width: 8),
-                          Text('${percentage.toStringAsFixed(1)}%', style: TextStyle(color: AppColors.textMedium, fontSize: 12)),
+                          Text(
+                            '${percentage.toStringAsFixed(1)}%',
+                            style: TextStyle(
+                              color: AppColors.textMedium,
+                              fontSize: 12,
+                            ),
+                          ),
                         ],
                       ),
                       SizedBox(height: 4),
                       Text(
                         text,
-                        style: TextStyle(fontSize: 12, color: AppColors.textMedium),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textMedium,
+                        ),
                       ),
                     ],
                   ),
@@ -244,7 +324,10 @@ class PollsTab extends StatelessWidget {
               if (options.length > 2)
                 Text(
                   '+ ${options.length - 2} more options',
-                  style: TextStyle(color: AppColors.primaryLavender, fontSize: 12),
+                  style: TextStyle(
+                    color: AppColors.primaryLavender,
+                    fontSize: 12,
+                  ),
                 ),
               SizedBox(height: 12),
               Row(
@@ -252,10 +335,17 @@ class PollsTab extends StatelessWidget {
                 children: [
                   Text(
                     '$totalVotes votes • Created by $creatorName',
-                    style: TextStyle(color: AppColors.textDisabled, fontSize: 12),
+                    style: TextStyle(
+                      color: AppColors.textDisabled,
+                      fontSize: 12,
+                    ),
                   ),
                   if (hasVoted)
-                    Icon(Feather.check_circle, color: AppColors.secondaryTeal, size: 16),
+                    Icon(
+                      Feather.check_circle,
+                      color: AppColors.secondaryTeal,
+                      size: 16,
+                    ),
                 ],
               ),
             ],
@@ -271,7 +361,7 @@ class PetitionsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
-    
+
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('petitions')
@@ -281,20 +371,29 @@ class PetitionsTab extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return _buildShimmerList();
         }
-        
+
         if (snapshot.hasError) {
-          return Center(child: Text('Error loading petitions', style: TextStyle(color: AppColors.error)));
+          return Center(
+            child: Text(
+              'Error loading petitions',
+              style: TextStyle(color: AppColors.error),
+            ),
+          );
         }
-        
+
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return _buildEmptyState('No petitions yet 👀', Feather.file_text);
         }
-        
+
         final petitions = snapshot.data!.docs;
-        
+
         // Extract trending (top 5 by signatures)
         final trendingPetitions = List<DocumentSnapshot>.from(petitions);
-        trendingPetitions.sort((a, b) => (b['currentSignatures'] ?? 0).compareTo(a['currentSignatures'] ?? 0));
+        trendingPetitions.sort(
+          (a, b) => (b['currentSignatures'] ?? 0).compareTo(
+            a['currentSignatures'] ?? 0,
+          ),
+        );
         final topTrending = trendingPetitions.take(5).toList();
 
         return ListView(
@@ -305,9 +404,20 @@ class PetitionsTab extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 4, bottom: 12),
                 child: Row(
                   children: [
-                    Icon(Feather.trending_up, color: AppColors.accentMustard, size: 20),
+                    Icon(
+                      Feather.trending_up,
+                      color: AppColors.accentMustard,
+                      size: 20,
+                    ),
                     SizedBox(width: 8),
-                    Text('Trending Now', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
+                    Text(
+                      'Trending Now',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textHigh,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -318,11 +428,18 @@ class PetitionsTab extends StatelessWidget {
                   itemCount: topTrending.length,
                   itemBuilder: (context, index) {
                     final petition = topTrending[index];
-                    final hasSigned = user != null ? (petition['signers'] as List).contains(user.uid) : false;
+                    final hasSigned = user != null
+                        ? (petition['signers'] as List).contains(user.uid)
+                        : false;
                     return Container(
                       width: 280,
                       margin: EdgeInsets.only(right: 12),
-                      child: _buildPetitionCard(petition, context, hasSigned, isMini: true),
+                      child: _buildPetitionCard(
+                        petition,
+                        context,
+                        hasSigned,
+                        isMini: true,
+                      ),
                     );
                   },
                 ),
@@ -330,11 +447,20 @@ class PetitionsTab extends StatelessWidget {
               SizedBox(height: 24),
               Padding(
                 padding: const EdgeInsets.only(left: 4, bottom: 12),
-                child: Text('All Petitions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
+                child: Text(
+                  'All Petitions',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textHigh,
+                  ),
+                ),
               ),
             ],
             ...petitions.map((petition) {
-              final hasSigned = user != null ? (petition['signers'] as List).contains(user.uid) : false;
+              final hasSigned = user != null
+                  ? (petition['signers'] as List).contains(user.uid)
+                  : false;
               return _buildPetitionCard(petition, context, hasSigned);
             }).toList(),
           ],
@@ -343,13 +469,23 @@ class PetitionsTab extends StatelessWidget {
     );
   }
 
-  Widget _buildPetitionCard(DocumentSnapshot petition, BuildContext context, bool hasSigned, {bool isMini = false}) {
+  Widget _buildPetitionCard(
+    DocumentSnapshot petition,
+    BuildContext context,
+    bool hasSigned, {
+    bool isMini = false,
+  }) {
     final petitionData = petition.data() as Map<String, dynamic>?;
-    final imageUrl = petitionData?['bannerImageUrl'] as String? ?? petitionData?['imageUrl'] as String?;
+    final imageUrl =
+        petitionData?['bannerImageUrl'] as String? ??
+        petitionData?['imageUrl'] as String?;
     final title = petitionData?['title'] as String? ?? 'Untitled Petition';
     final description = petitionData?['description'] as String? ?? '';
     final creatorName = petitionData?['creatorName'] as String? ?? 'Unknown';
-    final signatures = (petitionData?['currentSignatures'] as int?) ?? (petitionData?['signatures'] as int?) ?? 0;
+    final signatures =
+        (petitionData?['currentSignatures'] as int?) ??
+        (petitionData?['signatures'] as int?) ??
+        0;
     final goal = (petitionData?['goal'] as int?) ?? 1000;
     final progress = goal > 0 ? signatures / goal : 0;
 
@@ -360,9 +496,13 @@ class PetitionsTab extends StatelessWidget {
       elevation: 0,
       child: InkWell(
         onTap: () {
-          Navigator.push(context, MaterialPageRoute(
-            builder: (context) => EnhancedPetitionDetailScreen(petitionId: petition.id)
-          ));
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  EnhancedPetitionDetailScreen(petitionId: petition.id),
+            ),
+          );
         },
         child: Padding(
           padding: EdgeInsets.all(16),
@@ -375,34 +515,43 @@ class PetitionsTab extends StatelessWidget {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: CachedNetworkImage(
-                    imageUrl: imageUrl,
-                    height: isMini ? 100 : 150,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
+                      imageUrl: imageUrl,
                       height: isMini ? 100 : 150,
-                      color: AppColors.elevation,
-                      child: Center(child: CircularProgressIndicator(color: AppColors.primaryLavender)),
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        height: isMini ? 100 : 150,
+                        color: AppColors.elevation,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.primaryLavender,
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) =>
+                          Icon(Feather.alert_circle, color: AppColors.error),
                     ),
-                    errorWidget: (context, url, error) => Icon(Feather.alert_circle, color: AppColors.error),
                   ),
                 ),
-              ),
-            Text(
-              title,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: isMini ? 14 : 18, color: AppColors.textHigh),
-              maxLines: isMini ? 1 : 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            if (!isMini) ...[
-              SizedBox(height: 8),
               Text(
-                description,
-                style: TextStyle(color: AppColors.textMedium, fontSize: 14),
-                maxLines: 2,
+                title,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: isMini ? 14 : 18,
+                  color: AppColors.textHigh,
+                ),
+                maxLines: isMini ? 1 : 2,
                 overflow: TextOverflow.ellipsis,
               ),
-            ],
+              if (!isMini) ...[
+                SizedBox(height: 8),
+                Text(
+                  description,
+                  style: TextStyle(color: AppColors.textMedium, fontSize: 14),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
               SizedBox(height: 12),
               ClipRRect(
                 borderRadius: BorderRadius.circular(4),
@@ -425,7 +574,11 @@ class PetitionsTab extends StatelessWidget {
                     style: TextStyle(color: AppColors.textMedium, fontSize: 12),
                   ),
                   if (hasSigned)
-                    Icon(Feather.check_circle, color: AppColors.success, size: 16),
+                    Icon(
+                      Feather.check_circle,
+                      color: AppColors.success,
+                      size: 16,
+                    ),
                 ],
               ),
               SizedBox(height: 8),
@@ -446,7 +599,7 @@ class EventsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
-    
+
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('events')
@@ -456,23 +609,30 @@ class EventsTab extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return _buildShimmerList();
         }
-        
+
         if (snapshot.hasError) {
-          return Center(child: Text('Error loading events', style: TextStyle(color: AppColors.error)));
+          return Center(
+            child: Text(
+              'Error loading events',
+              style: TextStyle(color: AppColors.error),
+            ),
+          );
         }
-        
+
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return _buildEmptyState('No events yet 👀', Feather.calendar);
         }
-        
+
         final events = snapshot.data!.docs;
         return ListView.builder(
           padding: EdgeInsets.all(12),
           itemCount: events.length,
           itemBuilder: (context, index) {
             final event = events[index];
-            final isAttending = user != null ? (event['attendees'] as List).contains(user.uid) : false;
-            
+            final isAttending = user != null
+                ? (event['attendees'] as List).contains(user.uid)
+                : false;
+
             return _buildEventCard(event, context, isAttending);
           },
         );
@@ -480,7 +640,11 @@ class EventsTab extends StatelessWidget {
     );
   }
 
-  Widget _buildEventCard(DocumentSnapshot event, BuildContext context, bool isAttending) {
+  Widget _buildEventCard(
+    DocumentSnapshot event,
+    BuildContext context,
+    bool isAttending,
+  ) {
     final eventData = event.data() as Map<String, dynamic>?;
     final imageUrl = eventData?['imageUrl'] as String?;
     final title = eventData?['title'] as String? ?? 'Untitled Event';
@@ -507,9 +671,12 @@ class EventsTab extends StatelessWidget {
       elevation: 0,
       child: InkWell(
         onTap: () {
-          Navigator.push(context, MaterialPageRoute(
-            builder: (context) => EventDetailScreen(eventId: event.id)
-          ));
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => EventDetailScreen(eventId: event.id),
+            ),
+          );
         },
         child: Padding(
           padding: EdgeInsets.all(16),
@@ -529,20 +696,33 @@ class EventsTab extends StatelessWidget {
                       placeholder: (context, url) => Container(
                         height: 150,
                         color: AppColors.elevation,
-                        child: Center(child: CircularProgressIndicator(color: AppColors.primaryLavender)),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.primaryLavender,
+                          ),
+                        ),
                       ),
-                      errorWidget: (context, url, error) => Icon(Feather.alert_circle, color: AppColors.error),
+                      errorWidget: (context, url, error) =>
+                          Icon(Feather.alert_circle, color: AppColors.error),
                     ),
                   ),
                 ),
               Text(
                 title,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.textHigh),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: AppColors.textHigh,
+                ),
               ),
               SizedBox(height: 8),
               Row(
                 children: [
-                  Icon(Feather.calendar, size: 16, color: AppColors.primaryLavender),
+                  Icon(
+                    Feather.calendar,
+                    size: 16,
+                    color: AppColors.primaryLavender,
+                  ),
                   SizedBox(width: 8),
                   Text(
                     DateFormat('MMM d, yyyy • h:mm a').format(date),
@@ -553,12 +733,19 @@ class EventsTab extends StatelessWidget {
               SizedBox(height: 4),
               Row(
                 children: [
-                  Icon(Feather.map_pin, size: 16, color: AppColors.primaryLavender),
+                  Icon(
+                    Feather.map_pin,
+                    size: 16,
+                    color: AppColors.primaryLavender,
+                  ),
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       location,
-                      style: TextStyle(color: AppColors.textMedium, fontSize: 14),
+                      style: TextStyle(
+                        color: AppColors.textMedium,
+                        fontSize: 14,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -577,10 +764,17 @@ class EventsTab extends StatelessWidget {
                 children: [
                   Text(
                     '$attendeesCount attending • Created by $creatorName',
-                    style: TextStyle(color: AppColors.textDisabled, fontSize: 12),
+                    style: TextStyle(
+                      color: AppColors.textDisabled,
+                      fontSize: 12,
+                    ),
                   ),
                   if (isAttending)
-                    Icon(Feather.check_circle, color: AppColors.success, size: 16),
+                    Icon(
+                      Feather.check_circle,
+                      color: AppColors.success,
+                      size: 16,
+                    ),
                 ],
               ),
             ],
@@ -601,14 +795,17 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _questionController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-  final List<TextEditingController> _optionControllers = [TextEditingController(), TextEditingController()];
+  final List<TextEditingController> _optionControllers = [
+    TextEditingController(),
+    TextEditingController(),
+  ];
   File? _image;
   bool _isLoading = false;
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    
+
     if (pickedFile != null) {
       setState(() {
         _image = File(pickedFile.path);
@@ -618,35 +815,34 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
 
   Future<String> _uploadImage() async {
     if (_image == null) return '';
-    
+
     final storageRef = FirebaseStorage.instance
         .ref()
         .child('poll_images')
         .child('${DateTime.now().millisecondsSinceEpoch}.jpg');
-    
+
     await storageRef.putFile(_image!);
     return await storageRef.getDownloadURL();
   }
 
   Future<void> _createPoll() async {
     if (!_formKey.currentState!.validate()) return;
-    
-    setState(() { _isLoading = true; });
-    
+
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('User not authenticated');
-      
+
       final imageUrl = await _uploadImage();
-      
+
       final pollData = {
         'question': _questionController.text,
         'description': _descriptionController.text,
         'options': _optionControllers
-            .map<Map<String, dynamic>>((c) => {
-                  'text': c.text,
-                  'votes': 0,
-                })
+            .map<Map<String, dynamic>>((c) => {'text': c.text, 'votes': 0})
             .where((option) => (option['text'] as String).isNotEmpty)
             .toList(),
         'creatorId': user.uid,
@@ -657,15 +853,28 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
         'collaborators': [],
       };
 
-      
-      await FirebaseFirestore.instance.collection('polls').add(pollData);
+      final docRef = await FirebaseFirestore.instance
+          .collection('polls')
+          .add(pollData);
+
+      // Send notifications to followers
+      NotificationService().sendPollCreatedNotification(
+        creatorId: user.uid,
+        creatorUsername: pollData['creatorName'] as String,
+        pollId: docRef.id,
+        pollQuestion: pollData['question'] as String,
+        imageUrl: pollData['imageUrl'] as String?,
+      );
+
       Navigator.pop(context);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error creating poll: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error creating poll: $e')));
     } finally {
-      setState(() { _isLoading = false; });
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -685,7 +894,11 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
         ],
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: AppColors.primaryLavender))
+          ? Center(
+              child: CircularProgressIndicator(
+                color: AppColors.primaryLavender,
+              ),
+            )
           : SingleChildScrollView(
               padding: EdgeInsets.all(16),
               child: Form(
@@ -709,25 +922,53 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                             : Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Feather.image, size: 40, color: AppColors.textDisabled),
-                                  Text('Add Image', style: TextStyle(color: AppColors.textMedium)),
+                                  Icon(
+                                    Feather.image,
+                                    size: 40,
+                                    color: AppColors.textDisabled,
+                                  ),
+                                  Text(
+                                    'Add Image',
+                                    style: TextStyle(
+                                      color: AppColors.textMedium,
+                                    ),
+                                  ),
                                 ],
                               ),
                       ),
                     ),
                     SizedBox(height: 16),
-                    _buildTextField(controller: _questionController, label: 'Question'),
+                    _buildTextField(
+                      controller: _questionController,
+                      label: 'Question',
+                    ),
                     SizedBox(height: 16),
-                    _buildTextField(controller: _descriptionController, label: 'Description (optional)', maxLines: 3),
+                    _buildTextField(
+                      controller: _descriptionController,
+                      label: 'Description (optional)',
+                      maxLines: 3,
+                    ),
                     SizedBox(height: 16),
-                    Text('Options', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textHigh)),
-                    ..._optionControllers.map((controller) => Padding(
-                      padding: EdgeInsets.only(top: 8),
-                      child: _buildTextField(
-                        controller: controller,
-                        label: 'Option ${_optionControllers.indexOf(controller) + 1}',
+                    Text(
+                      'Options',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textHigh,
                       ),
-                    )).toList(),
+                    ),
+                    ..._optionControllers
+                        .map(
+                          (controller) => Padding(
+                            padding: EdgeInsets.only(top: 8),
+                            child: _buildTextField(
+                              controller: controller,
+                              label:
+                                  'Option ${_optionControllers.indexOf(controller) + 1}',
+                            ),
+                          ),
+                        )
+                        .toList(),
                     SizedBox(height: 8),
                     TextButton(
                       onPressed: () {
@@ -735,7 +976,10 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                           _optionControllers.add(TextEditingController());
                         });
                       },
-                      child: Text('+ Add Option', style: TextStyle(color: AppColors.secondaryTeal)),
+                      child: Text(
+                        '+ Add Option',
+                        style: TextStyle(color: AppColors.secondaryTeal),
+                      ),
                     ),
                   ],
                 ),
@@ -755,14 +999,16 @@ class _CreatePetitionScreenState extends State<CreatePetitionScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-  final TextEditingController _goalController = TextEditingController(text: '1000');
+  final TextEditingController _goalController = TextEditingController(
+    text: '1000',
+  );
   File? _image;
   bool _isLoading = false;
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    
+
     if (pickedFile != null) {
       setState(() {
         _image = File(pickedFile.path);
@@ -772,27 +1018,29 @@ class _CreatePetitionScreenState extends State<CreatePetitionScreen> {
 
   Future<String> _uploadImage() async {
     if (_image == null) return '';
-    
+
     final storageRef = FirebaseStorage.instance
         .ref()
         .child('petition_images')
         .child('${DateTime.now().millisecondsSinceEpoch}.jpg');
-    
+
     await storageRef.putFile(_image!);
     return await storageRef.getDownloadURL();
   }
 
   Future<void> _createPetition() async {
     if (!_formKey.currentState!.validate()) return;
-    
-    setState(() { _isLoading = true; });
-    
+
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('User not authenticated');
-      
+
       final imageUrl = await _uploadImage();
-      
+
       final petitionData = {
         'title': _titleController.text,
         'description': _descriptionController.text,
@@ -805,15 +1053,29 @@ class _CreatePetitionScreenState extends State<CreatePetitionScreen> {
         'imageUrl': imageUrl,
         'collaborators': [],
       };
-      
-      await FirebaseFirestore.instance.collection('petitions').add(petitionData);
+
+      final docRef = await FirebaseFirestore.instance
+          .collection('petitions')
+          .add(petitionData);
+
+      // Send notifications to followers
+      NotificationService().sendPetitionCreatedNotification(
+        creatorId: user.uid,
+        creatorUsername: petitionData['creatorName'] as String,
+        petitionId: docRef.id,
+        petitionTitle: petitionData['title'] as String,
+        bannerImageUrl: petitionData['imageUrl'] as String?,
+      );
+
       Navigator.pop(context);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error creating petition: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error creating petition: $e')));
     } finally {
-      setState(() { _isLoading = false; });
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -822,7 +1084,10 @@ class _CreatePetitionScreenState extends State<CreatePetitionScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundDeep,
       appBar: AppBar(
-        title: Text('Create Petition', style: TextStyle(color: AppColors.textHigh)),
+        title: Text(
+          'Create Petition',
+          style: TextStyle(color: AppColors.textHigh),
+        ),
         backgroundColor: AppColors.backgroundDeep,
         iconTheme: IconThemeData(color: AppColors.primaryLavender),
         actions: [
@@ -833,7 +1098,11 @@ class _CreatePetitionScreenState extends State<CreatePetitionScreen> {
         ],
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: AppColors.primaryLavender))
+          ? Center(
+              child: CircularProgressIndicator(
+                color: AppColors.primaryLavender,
+              ),
+            )
           : SingleChildScrollView(
               padding: EdgeInsets.all(16),
               child: Form(
@@ -857,21 +1126,37 @@ class _CreatePetitionScreenState extends State<CreatePetitionScreen> {
                             : Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Feather.image, size: 40, color: AppColors.textDisabled),
-                                  Text('Add Image', style: TextStyle(color: AppColors.textMedium)),
+                                  Icon(
+                                    Feather.image,
+                                    size: 40,
+                                    color: AppColors.textDisabled,
+                                  ),
+                                  Text(
+                                    'Add Image',
+                                    style: TextStyle(
+                                      color: AppColors.textMedium,
+                                    ),
+                                  ),
                                 ],
                               ),
                       ),
                     ),
                     SizedBox(height: 16),
-                    _buildTextField(controller: _titleController, label: 'Title'),
-                    SizedBox(height: 16),
-                    _buildTextField(controller: _descriptionController, label: 'Description', maxLines: 5),
+                    _buildTextField(
+                      controller: _titleController,
+                      label: 'Title',
+                    ),
                     SizedBox(height: 16),
                     _buildTextField(
-                      controller: _goalController, 
-                      label: 'Signature Goal', 
-                      keyboardType: TextInputType.number
+                      controller: _descriptionController,
+                      label: 'Description',
+                      maxLines: 5,
+                    ),
+                    SizedBox(height: 16),
+                    _buildTextField(
+                      controller: _goalController,
+                      label: 'Signature Goal',
+                      keyboardType: TextInputType.number,
                     ),
                   ],
                 ),
@@ -900,7 +1185,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    
+
     if (pickedFile != null) {
       setState(() {
         _image = File(pickedFile.path);
@@ -910,12 +1195,12 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
   Future<String> _uploadImage() async {
     if (_image == null) return '';
-    
+
     final storageRef = FirebaseStorage.instance
         .ref()
         .child('event_images')
         .child('${DateTime.now().millisecondsSinceEpoch}.jpg');
-    
+
     await storageRef.putFile(_image!);
     return await storageRef.getDownloadURL();
   }
@@ -940,7 +1225,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         );
       },
     );
-    
+
     if (date != null) {
       final time = await showTimePicker(
         context: context,
@@ -959,7 +1244,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
           );
         },
       );
-      
+
       if (time != null) {
         setState(() {
           _selectedDate = date;
@@ -972,20 +1257,22 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   Future<void> _createEvent() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedDate == null || _selectedTime == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please select date and time')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Please select date and time')));
       return;
     }
-    
-    setState(() { _isLoading = true; });
-    
+
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('User not authenticated');
-      
+
       final imageUrl = await _uploadImage();
-      
+
       final eventDateTime = DateTime(
         _selectedDate!.year,
         _selectedDate!.month,
@@ -993,7 +1280,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         _selectedTime!.hour,
         _selectedTime!.minute,
       );
-      
+
       final eventData = {
         'title': _titleController.text,
         'description': _descriptionController.text,
@@ -1006,15 +1293,17 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         'imageUrl': imageUrl,
         'collaborators': [],
       };
-      
+
       await FirebaseFirestore.instance.collection('events').add(eventData);
       Navigator.pop(context);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error creating event: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error creating event: $e')));
     } finally {
-      setState(() { _isLoading = false; });
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -1023,7 +1312,10 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundDeep,
       appBar: AppBar(
-        title: Text('Create Event', style: TextStyle(color: AppColors.textHigh)),
+        title: Text(
+          'Create Event',
+          style: TextStyle(color: AppColors.textHigh),
+        ),
         backgroundColor: AppColors.backgroundDeep,
         iconTheme: IconThemeData(color: AppColors.primaryLavender),
         actions: [
@@ -1034,7 +1326,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         ],
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: AppColors.primaryLavender))
+          ? Center(
+              child: CircularProgressIndicator(
+                color: AppColors.primaryLavender,
+              ),
+            )
           : SingleChildScrollView(
               padding: EdgeInsets.all(16),
               child: Form(
@@ -1058,18 +1354,37 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                             : Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Feather.image, size: 40, color: AppColors.textDisabled),
-                                  Text('Add Image', style: TextStyle(color: AppColors.textMedium)),
+                                  Icon(
+                                    Feather.image,
+                                    size: 40,
+                                    color: AppColors.textDisabled,
+                                  ),
+                                  Text(
+                                    'Add Image',
+                                    style: TextStyle(
+                                      color: AppColors.textMedium,
+                                    ),
+                                  ),
                                 ],
                               ),
                       ),
                     ),
                     SizedBox(height: 16),
-                    _buildTextField(controller: _titleController, label: 'Title'),
+                    _buildTextField(
+                      controller: _titleController,
+                      label: 'Title',
+                    ),
                     SizedBox(height: 16),
-                    _buildTextField(controller: _descriptionController, label: 'Description', maxLines: 3),
+                    _buildTextField(
+                      controller: _descriptionController,
+                      label: 'Description',
+                      maxLines: 3,
+                    ),
                     SizedBox(height: 16),
-                    _buildTextField(controller: _locationController, label: 'Location'),
+                    _buildTextField(
+                      controller: _locationController,
+                      label: 'Location',
+                    ),
                     SizedBox(height: 16),
                     Container(
                       decoration: BoxDecoration(
@@ -1078,12 +1393,15 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                       ),
                       child: ListTile(
                         title: Text(
-                          _selectedDate == null 
-                            ? 'Select Date and Time' 
-                            : '${DateFormat('MMM d, yyyy').format(_selectedDate!)} at ${_selectedTime!.format(context)}',
+                          _selectedDate == null
+                              ? 'Select Date and Time'
+                              : '${DateFormat('MMM d, yyyy').format(_selectedDate!)} at ${_selectedTime!.format(context)}',
                           style: TextStyle(color: AppColors.textHigh),
                         ),
-                        trailing: Icon(Feather.calendar, color: AppColors.primaryLavender),
+                        trailing: Icon(
+                          Feather.calendar,
+                          color: AppColors.primaryLavender,
+                        ),
                         onTap: _selectDateTime,
                       ),
                     ),
@@ -1145,7 +1463,9 @@ class _PollDetailScreenState extends State<PollDetailScreen> {
     final user = _auth.currentUser;
     if (user == null) return;
 
-    setState(() { _isLoading = true; });
+    setState(() {
+      _isLoading = true;
+    });
 
     try {
       final pollDoc = _firestore.collection('polls').doc(widget.pollId);
@@ -1159,22 +1479,24 @@ class _PollDetailScreenState extends State<PollDetailScreen> {
         }
 
         final options = List<Map<String, dynamic>>.from(poll['options']);
-        options[int.parse(optionIndex)]['votes'] = (options[int.parse(optionIndex)]['votes'] as int) + 1;
+        options[int.parse(optionIndex)]['votes'] =
+            (options[int.parse(optionIndex)]['votes'] as int) + 1;
         voters.add(user.uid);
 
-        transaction.update(pollDoc, {
-          'options': options,
-          'voters': voters,
-        });
+        transaction.update(pollDoc, {'options': options, 'voters': voters});
       });
 
-      setState(() { _selectedOption = optionIndex; });
+      setState(() {
+        _selectedOption = optionIndex;
+      });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error voting: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error voting: $e')));
     } finally {
-      setState(() { _isLoading = false; });
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -1183,7 +1505,10 @@ class _PollDetailScreenState extends State<PollDetailScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundDeep,
       appBar: AppBar(
-        title: Text('Poll Details', style: TextStyle(color: AppColors.textHigh)),
+        title: Text(
+          'Poll Details',
+          style: TextStyle(color: AppColors.textHigh),
+        ),
         backgroundColor: AppColors.backgroundDeep,
         iconTheme: IconThemeData(color: AppColors.primaryLavender),
       ),
@@ -1191,18 +1516,32 @@ class _PollDetailScreenState extends State<PollDetailScreen> {
         stream: _firestore.collection('polls').doc(widget.pollId).snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
+            return Center(
+              child: CircularProgressIndicator(
+                color: AppColors.primaryLavender,
+              ),
+            );
           }
-          
+
           if (!snapshot.hasData || !snapshot.data!.exists) {
-            return Center(child: Text('Poll not found', style: TextStyle(color: AppColors.textHigh)));
+            return Center(
+              child: Text(
+                'Poll not found',
+                style: TextStyle(color: AppColors.textHigh),
+              ),
+            );
           }
-          
+
           final poll = snapshot.data!;
           final options = List<Map<String, dynamic>>.from(poll['options']);
-          final totalVotes = options.fold<int>(0, (sum, option) => sum + (option['votes'] as int));
-          final hasVoted = (poll['voters'] as List).contains(_auth.currentUser?.uid);
-          
+          final totalVotes = options.fold<int>(
+            0,
+            (sum, option) => sum + (option['votes'] as int),
+          );
+          final hasVoted = (poll['voters'] as List).contains(
+            _auth.currentUser?.uid,
+          );
+
           return SingleChildScrollView(
             padding: EdgeInsets.all(16),
             child: Column(
@@ -1221,47 +1560,63 @@ class _PollDetailScreenState extends State<PollDetailScreen> {
                       ),
                     ),
                   ),
-                
+
                 Text(
                   poll['question'],
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textHigh),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textHigh,
+                  ),
                 ),
-                
+
                 SizedBox(height: 8),
-                
-                if (poll['description'] != null && poll['description'].isNotEmpty)
+
+                if (poll['description'] != null &&
+                    poll['description'].isNotEmpty)
                   Text(
                     poll['description'],
                     style: TextStyle(fontSize: 16, color: AppColors.textMedium),
                   ),
-                
+
                 SizedBox(height: 16),
-                
+
                 ...options.asMap().entries.map((entry) {
                   final index = entry.key;
                   final option = entry.value;
                   final votes = option['votes'] as int;
-                  final percentage = totalVotes > 0 ? (votes / totalVotes * 100) : 0;
-                  
+                  final percentage = totalVotes > 0
+                      ? (votes / totalVotes * 100)
+                      : 0;
+
                   return Card(
                     color: AppColors.surface,
                     margin: EdgeInsets.only(bottom: 8),
                     child: ListTile(
-                      title: Text(option['text'], style: TextStyle(color: AppColors.textHigh)),
+                      title: Text(
+                        option['text'],
+                        style: TextStyle(color: AppColors.textHigh),
+                      ),
                       subtitle: hasVoted || _selectedOption != null
                           ? ClipRRect(
                               borderRadius: BorderRadius.circular(4),
                               child: LinearProgressIndicator(
                                 value: percentage / 100,
                                 backgroundColor: AppColors.elevation,
-                                valueColor: AlwaysStoppedAnimation<Color>(AppColors.secondaryTeal),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  AppColors.secondaryTeal,
+                                ),
                               ),
                             )
                           : null,
                       trailing: hasVoted || _selectedOption != null
-                          ? Text('${percentage.toStringAsFixed(1)}% ($votes votes)', style: TextStyle(color: AppColors.textMedium))
+                          ? Text(
+                              '${percentage.toStringAsFixed(1)}% ($votes votes)',
+                              style: TextStyle(color: AppColors.textMedium),
+                            )
                           : null,
-                      onTap: (!hasVoted && _selectedOption == null && !_isLoading)
+                      onTap:
+                          (!hasVoted && _selectedOption == null && !_isLoading)
                           ? () => _vote(index.toString())
                           : null,
                       selected: _selectedOption == index.toString(),
@@ -1271,9 +1626,9 @@ class _PollDetailScreenState extends State<PollDetailScreen> {
                     ),
                   );
                 }).toList(),
-                
+
                 SizedBox(height: 16),
-                
+
                 Text(
                   'Total votes: $totalVotes • Created by ${poll['creatorName']}',
                   style: TextStyle(color: AppColors.textDisabled),
@@ -1290,7 +1645,8 @@ class _PollDetailScreenState extends State<PollDetailScreen> {
 class PetitionDetailScreen extends StatefulWidget {
   final String petitionId;
 
-  const PetitionDetailScreen({Key? key, required this.petitionId}) : super(key: key);
+  const PetitionDetailScreen({Key? key, required this.petitionId})
+    : super(key: key);
 
   @override
   _PetitionDetailScreenState createState() => _PetitionDetailScreenState();
@@ -1305,10 +1661,14 @@ class _PetitionDetailScreenState extends State<PetitionDetailScreen> {
     final user = _auth.currentUser;
     if (user == null) return;
 
-    setState(() { _isLoading = true; });
+    setState(() {
+      _isLoading = true;
+    });
 
     try {
-      final petitionDoc = _firestore.collection('petitions').doc(widget.petitionId);
+      final petitionDoc = _firestore
+          .collection('petitions')
+          .doc(widget.petitionId);
       await _firestore.runTransaction((transaction) async {
         final petition = await transaction.get(petitionDoc);
         if (!petition.exists) throw Exception('Petition not found');
@@ -1324,11 +1684,13 @@ class _PetitionDetailScreenState extends State<PetitionDetailScreen> {
         });
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error signing: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error signing: $e')));
     } finally {
-      setState(() { _isLoading = false; });
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -1337,33 +1699,51 @@ class _PetitionDetailScreenState extends State<PetitionDetailScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundDeep,
       appBar: AppBar(
-        title: Text('Petition Details', style: TextStyle(color: AppColors.textHigh)),
+        title: Text(
+          'Petition Details',
+          style: TextStyle(color: AppColors.textHigh),
+        ),
         backgroundColor: AppColors.backgroundDeep,
         iconTheme: IconThemeData(color: AppColors.primaryLavender),
       ),
       body: StreamBuilder<DocumentSnapshot>(
-        stream: _firestore.collection('petitions').doc(widget.petitionId).snapshots(),
+        stream: _firestore
+            .collection('petitions')
+            .doc(widget.petitionId)
+            .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
+            return Center(
+              child: CircularProgressIndicator(
+                color: AppColors.primaryLavender,
+              ),
+            );
           }
-          
+
           if (!snapshot.hasData || !snapshot.data!.exists) {
-            return Center(child: Text('Petition not found', style: TextStyle(color: AppColors.textHigh)));
+            return Center(
+              child: Text(
+                'Petition not found',
+                style: TextStyle(color: AppColors.textHigh),
+              ),
+            );
           }
-          
+
           final petition = snapshot.data!;
           final signatures = petition['signatures'] as int;
           final goal = petition['goal'] as int;
           final progress = signatures / goal;
-          final hasSigned = (petition['signers'] as List).contains(_auth.currentUser?.uid);
-          
+          final hasSigned = (petition['signers'] as List).contains(
+            _auth.currentUser?.uid,
+          );
+
           return SingleChildScrollView(
             padding: EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (petition['imageUrl'] != null && petition['imageUrl'].isNotEmpty)
+                if (petition['imageUrl'] != null &&
+                    petition['imageUrl'].isNotEmpty)
                   Padding(
                     padding: EdgeInsets.only(bottom: 16),
                     child: ClipRRect(
@@ -1376,48 +1756,67 @@ class _PetitionDetailScreenState extends State<PetitionDetailScreen> {
                       ),
                     ),
                   ),
-                
+
                 Text(
                   petition['title'],
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textHigh),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textHigh,
+                  ),
                 ),
-                
+
                 SizedBox(height: 16),
-                
+
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
                     value: progress.clamp(0.0, 1.0),
                     backgroundColor: AppColors.elevation,
-                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.secondaryTeal),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      AppColors.secondaryTeal,
+                    ),
                     minHeight: 10,
                   ),
                 ),
-                
+
                 SizedBox(height: 8),
-                
+
                 Text(
                   '$signatures of $goal signatures',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textHigh),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textHigh,
+                  ),
                 ),
-                
+
                 SizedBox(height: 16),
-                
+
                 Text(
                   petition['description'],
-                  style: TextStyle(fontSize: 16, height: 1.5, color: AppColors.textMedium),
+                  style: TextStyle(
+                    fontSize: 16,
+                    height: 1.5,
+                    color: AppColors.textMedium,
+                  ),
                 ),
-                
+
                 SizedBox(height: 24),
-                
+
                 if (!hasSigned)
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _signPetition,
                       child: _isLoading
-                          ? CircularProgressIndicator(color: AppColors.backgroundDeep)
-                          : Text('Sign This Petition', style: TextStyle(color: AppColors.backgroundDeep)),
+                          ? CircularProgressIndicator(
+                              color: AppColors.backgroundDeep,
+                            )
+                          : Text(
+                              'Sign This Petition',
+                              style: TextStyle(color: AppColors.backgroundDeep),
+                            ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryLavender,
                         padding: EdgeInsets.symmetric(vertical: 16),
@@ -1427,7 +1826,7 @@ class _PetitionDetailScreenState extends State<PetitionDetailScreen> {
                       ),
                     ),
                   ),
-                
+
                 if (hasSigned)
                   SizedBox(
                     width: double.infinity,
@@ -1438,7 +1837,10 @@ class _PetitionDetailScreenState extends State<PetitionDetailScreen> {
                         children: [
                           Icon(Feather.check_circle, color: AppColors.success),
                           SizedBox(width: 8),
-                          Text('Already Signed', style: TextStyle(color: AppColors.success)),
+                          Text(
+                            'Already Signed',
+                            style: TextStyle(color: AppColors.success),
+                          ),
                         ],
                       ),
                       style: OutlinedButton.styleFrom(
@@ -1450,9 +1852,9 @@ class _PetitionDetailScreenState extends State<PetitionDetailScreen> {
                       ),
                     ),
                   ),
-                
+
                 SizedBox(height: 16),
-                
+
                 Text(
                   'Created by ${petition['creatorName']}',
                   style: TextStyle(color: AppColors.textDisabled),
@@ -1484,12 +1886,14 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     final user = _auth.currentUser;
     if (user == null) return;
 
-    setState(() { _isLoading = true; });
+    setState(() {
+      _isLoading = true;
+    });
 
     try {
       final eventDoc = _firestore.collection('events').doc(widget.eventId);
       final event = await eventDoc.get();
-      
+
       if (!event.exists) throw Exception('Event not found');
 
       final attendees = List<String>.from(event['attendees'] ?? []);
@@ -1501,11 +1905,13 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             : FieldValue.arrayUnion([user.uid]),
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error updating attendance: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error updating attendance: $e')));
     } finally {
-      setState(() { _isLoading = false; });
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -1514,7 +1920,10 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundDeep,
       appBar: AppBar(
-        title: Text('Event Details', style: TextStyle(color: AppColors.textHigh)),
+        title: Text(
+          'Event Details',
+          style: TextStyle(color: AppColors.textHigh),
+        ),
         backgroundColor: AppColors.backgroundDeep,
         iconTheme: IconThemeData(color: AppColors.primaryLavender),
       ),
@@ -1522,18 +1931,31 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         stream: _firestore.collection('events').doc(widget.eventId).snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator(color: AppColors.primaryLavender));
+            return Center(
+              child: CircularProgressIndicator(
+                color: AppColors.primaryLavender,
+              ),
+            );
           }
-          
+
           if (!snapshot.hasData || !snapshot.data!.exists) {
-            return Center(child: Text('Event not found', style: TextStyle(color: AppColors.textHigh)));
+            return Center(
+              child: Text(
+                'Event not found',
+                style: TextStyle(color: AppColors.textHigh),
+              ),
+            );
           }
-          
+
           final event = snapshot.data!;
-          final date = event['date'] != null ? (event['date'] as Timestamp).toDate() : DateTime.now();
+          final date = event['date'] != null
+              ? (event['date'] as Timestamp).toDate()
+              : DateTime.now();
           final attendees = (event['attendees'] as List).length;
-          final isAttending = (event['attendees'] as List).contains(_auth.currentUser?.uid);
-          
+          final isAttending = (event['attendees'] as List).contains(
+            _auth.currentUser?.uid,
+          );
+
           return SingleChildScrollView(
             padding: EdgeInsets.all(16),
             child: Column(
@@ -1552,27 +1974,34 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       ),
                     ),
                   ),
-                
+
                 Text(
                   event['title'],
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textHigh),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textHigh,
+                  ),
                 ),
-                
+
                 SizedBox(height: 16),
-                
+
                 Row(
                   children: [
                     Icon(Feather.calendar, color: AppColors.primaryLavender),
                     SizedBox(width: 12),
                     Text(
                       DateFormat('MMM d, yyyy • h:mm a').format(date),
-                      style: TextStyle(fontSize: 16, color: AppColors.textMedium),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppColors.textMedium,
+                      ),
                     ),
                   ],
                 ),
-                
+
                 SizedBox(height: 12),
-                
+
                 Row(
                   children: [
                     Icon(Feather.map_pin, color: AppColors.primaryLavender),
@@ -1580,21 +2009,28 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     Expanded(
                       child: Text(
                         event['location'],
-                        style: TextStyle(fontSize: 16, color: AppColors.textMedium),
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: AppColors.textMedium,
+                        ),
                       ),
                     ),
                   ],
                 ),
-                
+
                 SizedBox(height: 16),
-                
+
                 Text(
                   event['description'] ?? '',
-                  style: TextStyle(fontSize: 16, height: 1.5, color: AppColors.textMedium),
+                  style: TextStyle(
+                    fontSize: 16,
+                    height: 1.5,
+                    color: AppColors.textMedium,
+                  ),
                 ),
-                
+
                 SizedBox(height: 24),
-                
+
                 Row(
                   children: [
                     Icon(Feather.users, color: AppColors.secondaryTeal),
@@ -1605,31 +2041,39 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     ),
                   ],
                 ),
-                
+
                 SizedBox(height: 24),
-                
+
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _toggleAttendance,
                     child: _isLoading
-                        ? CircularProgressIndicator(color: AppColors.backgroundDeep)
+                        ? CircularProgressIndicator(
+                            color: AppColors.backgroundDeep,
+                          )
                         : Text(
                             isAttending ? 'Cancel Attendance' : 'Attend Event',
-                            style: TextStyle(color: isAttending ? AppColors.textHigh : AppColors.backgroundDeep),
+                            style: TextStyle(
+                              color: isAttending
+                                  ? AppColors.textHigh
+                                  : AppColors.backgroundDeep,
+                            ),
                           ),
                     style: ElevatedButton.styleFrom(
                       padding: EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      backgroundColor: isAttending ? AppColors.elevation : AppColors.primaryLavender,
+                      backgroundColor: isAttending
+                          ? AppColors.elevation
+                          : AppColors.primaryLavender,
                     ),
                   ),
                 ),
-                
+
                 SizedBox(height: 16),
-                
+
                 Text(
                   'Created by ${event['creatorName']}',
                   style: TextStyle(color: AppColors.textDisabled),
@@ -1643,7 +2087,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   }
 }
 
-
 Widget _buildShimmerList() {
   return ListView.builder(
     padding: EdgeInsets.all(12),
@@ -1654,7 +2097,9 @@ Widget _buildShimmerList() {
         highlightColor: AppColors.surface,
         child: Card(
           margin: EdgeInsets.symmetric(vertical: 8),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           child: Container(
             height: 180,
             decoration: BoxDecoration(

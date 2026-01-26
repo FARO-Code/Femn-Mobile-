@@ -1,0 +1,1427 @@
+[
+    {
+        "id": "q1",
+        "text": "When you walk into a crowded room, what do you notice first?",
+        "category": "Perception",
+        "optionA": {
+            "text": "The atmosphere, the 'vibe', and how everyone seems to be feeling collectively.",
+            "functions": {
+                "Fe": 2,
+                "Ni": 1
+            }
+        },
+        "optionB": {
+            "text": "The physical layout, the specific people present, and the sensory details (noise, temp).",
+            "functions": {
+                "Se": 2,
+                "Si": 1
+            }
+        }
+    },
+    {
+        "id": "q2",
+        "text": "You have a major decision to make. How do you proceed?",
+        "category": "Judging",
+        "optionA": {
+            "text": "I list the pros and cons to see what makes the most logical sense efficiently.",
+            "functions": {
+                "Te": 2,
+                "Ti": 1
+            }
+        },
+        "optionB": {
+            "text": "I check in with my gut feeling and whether the choice aligns with my personal values.",
+            "functions": {
+                "Fi": 2,
+                "Ni": 1
+            }
+        }
+    },
+    {
+        "id": "q3",
+        "text": "You are learning a new skill. You prefer to...",
+        "category": "Learning",
+        "optionA": {
+            "text": "Dive in and experiment with the tools immediately to see how they react.",
+            "functions": {
+                "Se": 2,
+                "Te": 1
+            }
+        },
+        "optionB": {
+            "text": "Read the theory and understand the underlying principles before touching anything.",
+            "functions": {
+                "Ti": 2,
+                "Ni": 1
+            }
+        }
+    },
+    {
+        "id": "q4",
+        "text": "A friend comes to you with a problem. Your first instinct is to...",
+        "category": "Feeling",
+        "optionA": {
+            "text": "Offer practical solutions and a plan to fix it.",
+            "functions": {
+                "Te": 2,
+                "Ti": 1
+            }
+        },
+        "optionB": {
+            "text": "Validate their emotions and help them feel heard.",
+            "functions": {
+                "Fe": 2,
+                "Fi": 1
+            }
+        }
+    },
+    {
+        "id": "q5",
+        "text": "How do you handle deadlines?",
+        "category": "Structure",
+        "optionA": {
+            "text": "I plan backwards from the date and finish early to avoid stress.",
+            "functions": {
+                "Te": 2,
+                "Si": 1
+            }
+        },
+        "optionB": {
+            "text": "I work best under pressure right at the end; the adrenaline helps.",
+            "functions": {
+                "Pe": 2,
+                "Ni": 1
+            }
+        }
+    },
+    {
+        "id": "q6",
+        "text": "In a debate, you are more likely to...",
+        "category": "Thinking",
+        "optionA": {
+            "text": "Point out inconsistencies in the other person's logic accurately.",
+            "functions": {
+                "Ti": 2,
+                "Te": 1
+            }
+        },
+        "optionB": {
+            "text": "Consider how the argument affects the harmony of the group.",
+            "functions": {
+                "Fe": 2,
+                "Fi": 1
+            }
+        }
+    },
+    {
+        "id": "q7",
+        "text": "You are telling a story. You tend to...",
+        "category": "Communication",
+        "optionA": {
+            "text": "Include all the specific details, dates, and exactly what happened sequentially.",
+            "functions": {
+                "Si": 2,
+                "Te": 1
+            }
+        },
+        "optionB": {
+            "text": "Focus on the overall meaning, the themes, and jump around to connect ideas.",
+            "functions": {
+                "Ni": 2,
+                "Ne": 1
+            }
+        }
+    },
+    {
+        "id": "q8",
+        "text": "When planning a vacation, you prefer...",
+        "category": "Lifestyle",
+        "optionA": {
+            "text": "A loose itinerary where we can explore whatever catches our eye in the moment.",
+            "functions": {
+                "Se": 2,
+                "Ne": 1
+            }
+        },
+        "optionB": {
+            "text": "A well-researched schedule so we don't miss the important sites.",
+            "functions": {
+                "Si": 2,
+                "Te": 1
+            }
+        }
+    },
+    {
+        "id": "q9",
+        "text": "You see a rule that doesn't make sense. You...",
+        "category": "Judging",
+        "optionA": {
+            "text": "Follow it anyway because it maintains order and respects authority.",
+            "functions": {
+                "Si": 2,
+                "Fe": 1
+            }
+        },
+        "optionB": {
+            "text": "Question it or ignore it if it violates my internal sense of logic.",
+            "functions": {
+                "Ti": 2,
+                "Fi": 1
+            }
+        }
+    },
+    {
+        "id": "q10",
+        "text": "Abstract art makes you feel...",
+        "category": "Perception",
+        "optionA": {
+            "text": "Intrigued by the possible hidden meanings and symbols.",
+            "functions": {
+                "Ni": 2,
+                "Ne": 1
+            }
+        },
+        "optionB": {
+            "text": "Frustrated or indifferent; I prefer art that depicts reality accurately.",
+            "functions": {
+                "Se": 2,
+                "Si": 1
+            }
+        }
+    },
+    {
+        "id": "q11",
+        "text": "When you are stressed, you...",
+        "category": "Reaction",
+        "optionA": {
+            "text": "Become indulgent (eating, shopping, binging) to escape.",
+            "functions": {
+                "Se": 2,
+                "Si": 1
+            }
+        },
+        "optionB": {
+            "text": "Withdraw to over-analyze everything and imagine worst-case scenarios.",
+            "functions": {
+                "Ni": 2,
+                "Ti": 1
+            }
+        }
+    },
+    {
+        "id": "q12",
+        "text": "Your memory feels more like...",
+        "category": "Memory",
+        "optionA": {
+            "text": "A detailed archive of specific events and sensory details.",
+            "functions": {
+                "Si": 2,
+                "Se": 1
+            }
+        },
+        "optionB": {
+            "text": "A web of concepts and impressions where specific details are blurry.",
+            "functions": {
+                "Ni": 2,
+                "Ne": 1
+            }
+        }
+    },
+    {
+        "id": "q13",
+        "text": "In a group project, you naturally take on the role of...",
+        "category": "Work",
+        "optionA": {
+            "text": "The organizer who assigns tasks and keeps everyone on track.",
+            "functions": {
+                "Te": 2,
+                "Fe": 1
+            }
+        },
+        "optionB": {
+            "text": "The innovator who comes up with the big idea and unique angle.",
+            "functions": {
+                "Ne": 2,
+                "Ni": 1
+            }
+        }
+    },
+    {
+        "id": "q14",
+        "text": "You judge your own success based on...",
+        "category": "Values",
+        "optionA": {
+            "text": "External achievements, recognition, and measurable results.",
+            "functions": {
+                "Te": 2,
+                "Fe": 1
+            }
+        },
+        "optionB": {
+            "text": "Internal consistency, authenticity, and living by my code.",
+            "functions": {
+                "Fi": 2,
+                "Ti": 1
+            }
+        }
+    },
+    {
+        "id": "q15",
+        "text": "When someone discusses a theory, you interrupt to ask...",
+        "category": "Thinking",
+        "optionA": {
+            "text": "'Does that actually work in practice?'",
+            "functions": {
+                "Te": 2,
+                "Se": 1
+            }
+        },
+        "optionB": {
+            "text": "'Is that definition logically consistent?'",
+            "functions": {
+                "Ti": 2,
+                "Ni": 1
+            }
+        }
+    },
+    {
+        "id": "q16",
+        "text": "The future feels like...",
+        "category": "Perception",
+        "optionA": {
+            "text": "A singular path that I can foresee if I focus.",
+            "functions": {
+                "Ni": 2,
+                "Si": 0
+            }
+        },
+        "optionB": {
+            "text": "An explosion of endless possibilities to explore.",
+            "functions": {
+                "Ne": 2,
+                "Se": 0
+            }
+        }
+    },
+    {
+        "id": "q17",
+        "text": "Traditions are...",
+        "category": "Values",
+        "optionA": {
+            "text": "Important for stability and connecting us to our past.",
+            "functions": {
+                "Si": 2,
+                "Fe": 1
+            }
+        },
+        "optionB": {
+            "text": "Often outdated and holding us back from progress.",
+            "functions": {
+                "Ne": 2,
+                "Ti": 1
+            }
+        }
+    },
+    {
+        "id": "q18",
+        "text": "You are at a party. You spend most time...",
+        "category": "Social",
+        "optionA": {
+            "text": "Dancing, playing games, or engaging with the actionable energy.",
+            "functions": {
+                "Se": 2,
+                "Fe": 1
+            }
+        },
+        "optionB": {
+            "text": "Finding one person to have a deep conversation in the corner.",
+            "functions": {
+                "Ni": 2,
+                "Fi": 1
+            }
+        }
+    },
+    {
+        "id": "q19",
+        "text": "When organizing your room, you prioritize...",
+        "category": "Lifestyle",
+        "optionA": {
+            "text": "Efficiency and accessibility; everything has a functional place.",
+            "functions": {
+                "Te": 2,
+                "Si": 1
+            }
+        },
+        "optionB": {
+            "text": "Aesthetics and mood; it needs to 'feel' right even if it's messy.",
+            "functions": {
+                "Fi": 2,
+                "Se": 1
+            }
+        }
+    },
+    {
+        "id": "q20",
+        "text": "A logical flaw in a movie plot...",
+        "category": "Thinking",
+        "optionA": {
+            "text": "Ruins the movie for me because it doesn't make sense.",
+            "functions": {
+                "Ti": 2,
+                "Te": 1
+            }
+        },
+        "optionB": {
+            "text": "Does not bother me if the emotional journey was impactful.",
+            "functions": {
+                "Fi": 2,
+                "Fe": 1
+            }
+        }
+    },
+    {
+        "id": "q21",
+        "text": "You prefer instructions that are...",
+        "category": "Learning",
+        "optionA": {
+            "text": "Step-by-step, detailed, and proven to work.",
+            "functions": {
+                "Si": 2,
+                "Te": 1
+            }
+        },
+        "optionB": {
+            "text": "General guidelines that allow me to improvise my own way.",
+            "functions": {
+                "Ne": 2,
+                "Se": 1
+            }
+        }
+    },
+    {
+        "id": "q22",
+        "text": "Emotions are...",
+        "category": "Feeling",
+        "optionA": {
+            "text": "Data that tells me what is important to me personally.",
+            "functions": {
+                "Fi": 2,
+                "Ni": 1
+            }
+        },
+        "optionB": {
+            "text": "A shared atmosphere that I need to manage for everyone's sake.",
+            "functions": {
+                "Fe": 2,
+                "Se": 1
+            }
+        }
+    },
+    {
+        "id": "q23",
+        "text": "When buying a gadget, you look for...",
+        "category": "Decisions",
+        "optionA": {
+            "text": "Top-tier specs, performance data, and reliability ratings.",
+            "functions": {
+                "Te": 2,
+                "Ti": 1
+            }
+        },
+        "optionB": {
+            "text": "How it looks, feels, and the experience of using it.",
+            "functions": {
+                "Se": 2,
+                "Fi": 1
+            }
+        }
+    },
+    {
+        "id": "q24",
+        "text": "Brainstorming is...",
+        "category": "Thinking",
+        "optionA": {
+            "text": "Exhausting; let's just pick one good idea and execute it.",
+            "functions": {
+                "Ni": 2,
+                "Te": 1
+            }
+        },
+        "optionB": {
+            "text": "Energizing; I love generating 50 ideas even if we use none.",
+            "functions": {
+                "Ne": 2,
+                "Ti": 1
+            }
+        }
+    },
+    {
+        "id": "q25",
+        "text": "You feel most appreciated when...",
+        "category": "Feeling",
+        "optionA": {
+            "text": "Someone acknowledges your competence and achievements.",
+            "functions": {
+                "Te": 2,
+                "Ti": 1
+            }
+        },
+        "optionB": {
+            "text": "Someone understands your unique feelings and authenticity.",
+            "functions": {
+                "Fi": 2,
+                "Ni": 1
+            }
+        }
+    },
+    {
+        "id": "q26",
+        "text": "In a crisis, you...",
+        "category": "Reaction",
+        "optionA": {
+            "text": "Act immediately on instinct to manage the physical situation.",
+            "functions": {
+                "Se": 2,
+                "Te": 1
+            }
+        },
+        "optionB": {
+            "text": "Freeze to analyze the underlying cause before acting.",
+            "functions": {
+                "Ti": 2,
+                "Ni": 1
+            }
+        }
+    },
+    {
+        "id": "q27",
+        "text": "Routine is...",
+        "category": "Lifestyle",
+        "optionA": {
+            "text": "Comforting and helps me be effective.",
+            "functions": {
+                "Si": 2,
+                "Te": 1
+            }
+        },
+        "optionB": {
+            "text": "Stifling and feels like a trap.",
+            "functions": {
+                "Ne": 2,
+                "Se": 1
+            }
+        }
+    },
+    {
+        "id": "q28",
+        "text": "You tend to trust...",
+        "category": "Trust",
+        "optionA": {
+            "text": "Whatever has stood the test of time.",
+            "functions": {
+                "Si": 2,
+                "Fe": 1
+            }
+        },
+        "optionB": {
+            "text": "Whatever creates the newest, most innovative possibility.",
+            "functions": {
+                "Ne": 2,
+                "Ti": 1
+            }
+        }
+    },
+    {
+        "id": "q29",
+        "text": "When you are angry, you...",
+        "category": "Emotion",
+        "optionA": {
+            "text": "Explode outwardly but get over it quickly.",
+            "functions": {
+                "Se": 2,
+                "Fe": 1
+            }
+        },
+        "optionB": {
+            "text": "Seethe inwardly and hold a grudge for a long time.",
+            "functions": {
+                "Fi": 2,
+                "Si": 1
+            }
+        }
+    },
+    {
+        "id": "q30",
+        "text": "Your inner monologue is mostly...",
+        "category": "Thinking",
+        "optionA": {
+            "text": "Analyzing how things work and taking apart concepts.",
+            "functions": {
+                "Ti": 2,
+                "Ni": 1
+            }
+        },
+        "optionB": {
+            "text": "Planning what needs to be done next in the real world.",
+            "functions": {
+                "Te": 2,
+                "Se": 1
+            }
+        }
+    },
+    {
+        "id": "q31",
+        "text": "Do you focus more on...",
+        "category": "Perception",
+        "optionA": {
+            "text": "What is (Reality).",
+            "functions": {
+                "Se": 2,
+                "Si": 1
+            }
+        },
+        "optionB": {
+            "text": "What could be (Potential).",
+            "functions": {
+                "Ne": 2,
+                "Ni": 1
+            }
+        }
+    },
+    {
+        "id": "q32",
+        "text": "Efficiency is...",
+        "category": "Judging",
+        "optionA": {
+            "text": "The ultimate goal; waste is the enemy.",
+            "functions": {
+                "Te": 2,
+                "Si": 1
+            }
+        },
+        "optionB": {
+            "text": "Secondary to understanding the problem fully and deeply.",
+            "functions": {
+                "Ti": 2,
+                "Ni": 1
+            }
+        }
+    },
+    {
+        "id": "q33",
+        "text": "You are more persuaded by...",
+        "category": "Influence",
+        "optionA": {
+            "text": "Passionate appeals to shared humanity and values.",
+            "functions": {
+                "Fe": 2,
+                "Fi": 1
+            }
+        },
+        "optionB": {
+            "text": "Cold, hard facts and statistical evidence.",
+            "functions": {
+                "Te": 2,
+                "Ti": 1
+            }
+        }
+    },
+    {
+        "id": "q34",
+        "text": "When you look at a tree, you see...",
+        "category": "Perception",
+        "optionA": {
+            "text": "The texture of the bark, the shade of green, the movement of leaves.",
+            "functions": {
+                "Se": 2,
+                "Si": 1
+            }
+        },
+        "optionB": {
+            "text": "A symbol of growth, or a metaphor for life's endurance.",
+            "functions": {
+                "Ni": 2,
+                "Ne": 1
+            }
+        }
+    },
+    {
+        "id": "q35",
+        "text": "Social harmony is...",
+        "category": "Social",
+        "optionA": {
+            "text": "Worth sacrificing some truth to maintain.",
+            "functions": {
+                "Fe": 2,
+                "Si": 1
+            }
+        },
+        "optionB": {
+            "text": "Less important than being brutally honest.",
+            "functions": {
+                "Ti": 2,
+                "Te": 1
+            }
+        }
+    },
+    {
+        "id": "q36",
+        "text": "You usually finish tasks...",
+        "category": "Structure",
+        "optionA": {
+            "text": "Way before the deadline.",
+            "functions": {
+                "Te": 2,
+                "Si": 1
+            }
+        },
+        "optionB": {
+            "text": "Right whenever the inspiration strikes.",
+            "functions": {
+                "Ne": 2,
+                "Pe": 1
+            }
+        }
+    },
+    {
+        "id": "q37",
+        "text": "Complex systems...",
+        "category": "Thinking",
+        "optionA": {
+            "text": "Delight me; I want to know exactly how every gear fits.",
+            "functions": {
+                "Ti": 2,
+                "Ni": 1
+            }
+        },
+        "optionB": {
+            "text": "Interest me only if they produce a useful output.",
+            "functions": {
+                "Te": 2,
+                "Se": 1
+            }
+        }
+    },
+    {
+        "id": "q38",
+        "text": "When meeting a stranger, you...",
+        "category": "Social",
+        "optionA": {
+            "text": "Can instantly read their emotional state and intent.",
+            "functions": {
+                "Fe": 2,
+                "Ni": 1
+            }
+        },
+        "optionB": {
+            "text": "Notice their clothes, posture, and physical cues first.",
+            "functions": {
+                "Se": 2,
+                "Si": 1
+            }
+        }
+    },
+    {
+        "id": "q39",
+        "text": "Change is...",
+        "category": "Lifestyle",
+        "optionA": {
+            "text": "Threatening and exhausting.",
+            "functions": {
+                "Si": 2,
+                "Fi": 1
+            }
+        },
+        "optionB": {
+            "text": "Exciting and necessary.",
+            "functions": {
+                "Ne": 2,
+                "Se": 1
+            }
+        }
+    },
+    {
+        "id": "q40",
+        "text": "Justice means...",
+        "category": "Values",
+        "optionA": {
+            "text": "Applying the same rules to everyone impartially.",
+            "functions": {
+                "Te": 2,
+                "Ti": 1
+            }
+        },
+        "optionB": {
+            "text": "Considering the unique circumstances of each individual.",
+            "functions": {
+                "Fe": 2,
+                "Fi": 1
+            }
+        }
+    },
+    {
+        "id": "q41",
+        "text": "You prefer movies that...",
+        "category": "Entertainment",
+        "optionA": {
+            "text": "Are visually spectacular and action-packed.",
+            "functions": {
+                "Se": 2,
+                "Pe": 1
+            }
+        },
+        "optionB": {
+            "text": "Have complex, non-linear plots that make you think.",
+            "functions": {
+                "Ni": 2,
+                "Ti": 1
+            }
+        }
+    },
+    {
+        "id": "q42",
+        "text": "When explaining a concept, you use...",
+        "category": "Communication",
+        "optionA": {
+            "text": "Metaphors and analogies.",
+            "functions": {
+                "Ni": 2,
+                "Ne": 1
+            }
+        },
+        "optionB": {
+            "text": "Examples and real-world statistics.",
+            "functions": {
+                "Te": 2,
+                "Si": 1
+            }
+        }
+    },
+    {
+        "id": "q43",
+        "text": "Your energy comes from...",
+        "category": "Social",
+        "optionA": {
+            "text": "Interacting with the world around you.",
+            "functions": {
+                "Fe": 2,
+                "Se": 1
+            }
+        },
+        "optionB": {
+            "text": "Reflecting on your inner world.",
+            "functions": {
+                "Ni": 2,
+                "Fi": 1
+            }
+        }
+    },
+    {
+        "id": "q44",
+        "text": "You are most annoyed by...",
+        "category": "Reaction",
+        "optionA": {
+            "text": "People who are incompetent and slow.",
+            "functions": {
+                "Te": 2,
+                "Se": 1
+            }
+        },
+        "optionB": {
+            "text": "People who are fake and inauthentic.",
+            "functions": {
+                "Fi": 2,
+                "Ni": 1
+            }
+        }
+    },
+    {
+        "id": "q45",
+        "text": "Nostalgia is...",
+        "category": "Memory",
+        "optionA": {
+            "text": "A frequent state of mind for me.",
+            "functions": {
+                "Si": 2,
+                "Fi": 1
+            }
+        },
+        "optionB": {
+            "text": "Rare; I rarely look back.",
+            "functions": {
+                "Se": 2,
+                "Te": 1
+            }
+        }
+    },
+    {
+        "id": "q46",
+        "text": "When stuck on a problem, you...",
+        "category": "Thinking",
+        "optionA": {
+            "text": "Talk it out with others to find a solution.",
+            "functions": {
+                "Fe": 2,
+                "Te": 1
+            }
+        },
+        "optionB": {
+            "text": "Withdraw to think it through alone.",
+            "functions": {
+                "Ti": 2,
+                "Ni": 1
+            }
+        }
+    },
+    {
+        "id": "q47",
+        "text": "A 'good life' is defined by...",
+        "category": "Values",
+        "optionA": {
+            "text": "Impact, legacy, and what you built.",
+            "functions": {
+                "Te": 2,
+                "Ni": 1
+            }
+        },
+        "optionB": {
+            "text": "Relationships, harmony, and helping others.",
+            "functions": {
+                "Fe": 2,
+                "Fi": 1
+            }
+        }
+    },
+    {
+        "id": "q48",
+        "text": "You prefer to work...",
+        "category": "Work",
+        "optionA": {
+            "text": "In bursts of high energy followed by rest.",
+            "functions": {
+                "Pe": 2,
+                "Ne": 1
+            }
+        },
+        "optionB": {
+            "text": "Steady and consistent until it's done.",
+            "functions": {
+                "Si": 2,
+                "Te": 1
+            }
+        }
+    },
+    {
+        "id": "q49",
+        "text": "Facts are...",
+        "category": "Thinking",
+        "optionA": {
+            "text": "Absolute and indisputable.",
+            "functions": {
+                "Te": 2,
+                "Si": 1
+            }
+        },
+        "optionB": {
+            "text": "Context-dependent and open to interpretation.",
+            "functions": {
+                "Ni": 2,
+                "Ti": 1
+            }
+        }
+    },
+    {
+        "id": "q50",
+        "text": "You value...",
+        "category": "Values",
+        "optionA": {
+            "text": "Deep, specialized knowledge in one area.",
+            "functions": {
+                "Ti": 2,
+                "Si": 1
+            }
+        },
+        "optionB": {
+            "text": "Broad, interconnected knowledge across many areas.",
+            "functions": {
+                "Ne": 2,
+                "Ni": 1
+            }
+        }
+    },
+    {
+        "id": "q51",
+        "text": "When you have a 'gut feeling', it usually comes from...",
+        "category": "Perception",
+        "optionA": {
+            "text": "A sudden flash of insight out of nowhere.",
+            "functions": {
+                "Ni": 2,
+                "Ne": 1
+            }
+        },
+        "optionB": {
+            "text": "A physical sensation in my body.",
+            "functions": {
+                "Se": 2,
+                "Si": 1
+            }
+        }
+    },
+    {
+        "id": "q52",
+        "text": "Conflict is...",
+        "category": "Social",
+        "optionA": {
+            "text": "Stressful and should be avoided.",
+            "functions": {
+                "Fe": 2,
+                "Si": 1
+            }
+        },
+        "optionB": {
+            "text": "A useful way to get to the truth.",
+            "functions": {
+                "Te": 2,
+                "Se": 1
+            }
+        }
+    },
+    {
+        "id": "q53",
+        "text": "You feel most alive when...",
+        "category": "Lifestyle",
+        "optionA": {
+            "text": "Engaging in extreme sports or physical challenges.",
+            "functions": {
+                "Se": 2,
+                "Pe": 1
+            }
+        },
+        "optionB": {
+            "text": "Debating abstract concepts and theories.",
+            "functions": {
+                "Ne": 2,
+                "Ti": 1
+            }
+        }
+    },
+    {
+        "id": "q54",
+        "text": "Your desk is...",
+        "category": "Structure",
+        "optionA": {
+            "text": "Clean, minimal, and organized.",
+            "functions": {
+                "Te": 2,
+                "Si": 1
+            }
+        },
+        "optionB": {
+            "text": "Cluttered, but I know where everything is.",
+            "functions": {
+                "Ne": 2,
+                "Ti": 1
+            }
+        }
+    },
+    {
+        "id": "q55",
+        "text": "Loyalty is...",
+        "category": "Values",
+        "optionA": {
+            "text": "To my group, my family, and my community.",
+            "functions": {
+                "Fe": 2,
+                "Si": 1
+            }
+        },
+        "optionB": {
+            "text": "To my principles and my own truth.",
+            "functions": {
+                "Fi": 2,
+                "Ti": 1
+            }
+        }
+    },
+    {
+        "id": "q56",
+        "text": "When listening to music, you focus on...",
+        "category": "Perception",
+        "optionA": {
+            "text": "The lyrics and the personal meaning they hold.",
+            "functions": {
+                "Fi": 2,
+                "Ni": 1
+            }
+        },
+        "optionB": {
+            "text": "The beat, the instrumentation, and the sound.",
+            "functions": {
+                "Se": 2,
+                "Ti": 1
+            }
+        }
+    },
+    {
+        "id": "q57",
+        "text": "Planning ahead...",
+        "category": "Structure",
+        "optionA": {
+            "text": "Is essential to avoid chaos.",
+            "functions": {
+                "Ni": 2,
+                "Te": 1
+            }
+        },
+        "optionB": {
+            "text": "Takes the fun out of spontaneity.",
+            "functions": {
+                "Se": 2,
+                "Ne": 1
+            }
+        }
+    },
+    {
+        "id": "q58",
+        "text": "You respond better to...",
+        "category": "Influence",
+        "optionA": {
+            "text": "Constructive criticism.",
+            "functions": {
+                "Te": 2,
+                "Ti": 1
+            }
+        },
+        "optionB": {
+            "text": "Validating encouragement.",
+            "functions": {
+                "Fe": 2,
+                "Fi": 1
+            }
+        }
+    },
+    {
+        "id": "q59",
+        "text": "The past...",
+        "category": "Memory",
+        "optionA": {
+            "text": "Repeats itself; we should learn from history.",
+            "functions": {
+                "Si": 2,
+                "Ni": 1
+            }
+        },
+        "optionB": {
+            "text": "Is gone; focus on the now.",
+            "functions": {
+                "Se": 2,
+                "Ne": 1
+            }
+        }
+    },
+    {
+        "id": "q60",
+        "text": "When you have a theory, you...",
+        "category": "Thinking",
+        "optionA": {
+            "text": "Look for outside evidence to prove it.",
+            "functions": {
+                "Te": 2,
+                "Se": 1
+            }
+        },
+        "optionB": {
+            "text": "Check if it is internally consistent with what you know.",
+            "functions": {
+                "Ti": 2,
+                "Ni": 1
+            }
+        }
+    },
+    {
+        "id": "q61",
+        "text": "Your fashion style is...",
+        "category": "Lifestyle",
+        "optionA": {
+            "text": "Expressive of my unique identity.",
+            "functions": {
+                "Fi": 2,
+                "Se": 1
+            }
+        },
+        "optionB": {
+            "text": "Functional or appropriate for the occasion.",
+            "functions": {
+                "Fe": 2,
+                "Si": 1
+            }
+        }
+    },
+    {
+        "id": "q62",
+        "text": "In a team, you are the...",
+        "category": "Social",
+        "optionA": {
+            "text": "Heart; keeping morale high.",
+            "functions": {
+                "Fe": 2,
+                "Ex": 1
+            }
+        },
+        "optionB": {
+            "text": "Brain; solving the hard technical problems.",
+            "functions": {
+                "Ti": 2,
+                "Ix": 1
+            }
+        }
+    },
+    {
+        "id": "q63",
+        "text": "You prefer...",
+        "category": "Learning",
+        "optionA": {
+            "text": "Fiction and Fantasy.",
+            "functions": {
+                "Ne": 2,
+                "Ni": 1
+            }
+        },
+        "optionB": {
+            "text": "Non-fiction and Biographies.",
+            "functions": {
+                "Te": 2,
+                "Si": 1
+            }
+        }
+    },
+    {
+        "id": "q64",
+        "text": "When someone is crying...",
+        "category": "Feeling",
+        "optionA": {
+            "text": "You tear up yourself almost immediately.",
+            "functions": {
+                "Fe": 2,
+                "Fi": 1
+            }
+        },
+        "optionB": {
+            "text": "You feel awkward and don't know what to do.",
+            "functions": {
+                "Ti": 2,
+                "Te": 1
+            }
+        }
+    },
+    {
+        "id": "q65",
+        "text": "Details are...",
+        "category": "Perception",
+        "optionA": {
+            "text": "Crucial; the devil is in the details.",
+            "functions": {
+                "Si": 2,
+                "Se": 1
+            }
+        },
+        "optionB": {
+            "text": "Boring; I prefer the big picture.",
+            "functions": {
+                "Ni": 2,
+                "Ne": 1
+            }
+        }
+    },
+    {
+        "id": "q66",
+        "text": "You make lists...",
+        "category": "Structure",
+        "optionA": {
+            "text": "Constantly for everything.",
+            "functions": {
+                "Te": 2,
+                "Si": 1
+            }
+        },
+        "optionB": {
+            "text": "Rarely, usually in my head.",
+            "functions": {
+                "Ti": 2,
+                "Ni": 1
+            }
+        }
+    },
+    {
+        "id": "q67",
+        "text": "Authority...",
+        "category": "Values",
+        "optionA": {
+            "text": "Should be challenged if it's wrong.",
+            "functions": {
+                "Ne": 2,
+                "Ti": 1
+            }
+        },
+        "optionB": {
+            "text": "Should be respected for order.",
+            "functions": {
+                "Si": 2,
+                "Je": 1
+            }
+        }
+    },
+    {
+        "id": "q68",
+        "text": "When you enter a store...",
+        "category": "Perception",
+        "optionA": {
+            "text": "I know exactly what I want and go get it.",
+            "functions": {
+                "Ni": 2,
+                "Te": 1
+            }
+        },
+        "optionB": {
+            "text": "I browse to see what options are available.",
+            "functions": {
+                "Se": 2,
+                "Ne": 1
+            }
+        }
+    },
+    {
+        "id": "q69",
+        "text": "Success is...",
+        "category": "Values",
+        "optionA": {
+            "text": "Being true to myself.",
+            "functions": {
+                "Fi": 2,
+                "Ni": 1
+            }
+        },
+        "optionB": {
+            "text": "Being useful to society.",
+            "functions": {
+                "Fe": 2,
+                "Te": 1
+            }
+        }
+    },
+    {
+        "id": "q70",
+        "text": "When arguing...",
+        "category": "Thinking",
+        "optionA": {
+            "text": "I want to win.",
+            "functions": {
+                "Te": 2,
+                "Se": 1
+            }
+        },
+        "optionB": {
+            "text": "I want to understand.",
+            "functions": {
+                "Ti": 2,
+                "Ni": 1
+            }
+        }
+    },
+    {
+        "id": "q71",
+        "text": "Metaphysical topics...",
+        "category": "Thinking",
+        "optionA": {
+            "text": "Fascinate me deeply.",
+            "functions": {
+                "Ni": 2,
+                "Ne": 1
+            }
+        },
+        "optionB": {
+            "text": "Seem pointless and grounded in nothing.",
+            "functions": {
+                "Se": 2,
+                "Te": 1
+            }
+        }
+    },
+    {
+        "id": "q72",
+        "text": "When you see a puzzle...",
+        "category": "Thinking",
+        "optionA": {
+            "text": "I want to solve it.",
+            "functions": {
+                "Ti": 2,
+                "Ni": 1
+            }
+        },
+        "optionB": {
+            "text": "I wonder who made it.",
+            "functions": {
+                "Fe": 2,
+                "Ne": 1
+            }
+        }
+    },
+    {
+        "id": "q73",
+        "text": "Your room decor is...",
+        "category": "Lifestyle",
+        "optionA": {
+            "text": "Eclectic and full of interesting items.",
+            "functions": {
+                "Ne": 2,
+                "Se": 1
+            }
+        },
+        "optionB": {
+            "text": "Minimalist and clean.",
+            "functions": {
+                "Ni": 2,
+                "Si": 1
+            }
+        }
+    },
+    {
+        "id": "q74",
+        "text": "In a new city...",
+        "category": "Perception",
+        "optionA": {
+            "text": "I use a map.",
+            "functions": {
+                "Ti": 2,
+                "Si": 1
+            }
+        },
+        "optionB": {
+            "text": "I wander around.",
+            "functions": {
+                "Se": 2,
+                "Ne": 1
+            }
+        }
+    },
+    {
+        "id": "q75",
+        "text": "The meaning of life is...",
+        "category": "Values",
+        "optionA": {
+            "text": "Whatever I decide it is.",
+            "functions": {
+                "Fi": 2,
+                "Ni": 1
+            }
+        },
+        "optionB": {
+            "text": "Found in connection with others.",
+            "functions": {
+                "Fe": 2,
+                "Si": 1
+            }
+        }
+    }
+]
