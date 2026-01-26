@@ -43,3 +43,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Ignore the specific installer
+public/femn_install.apk
+
+# Recommended: Ignore all APK build files
+*.apk
