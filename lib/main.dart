@@ -231,6 +231,10 @@ class _HomeScreenState extends State<HomeScreen> {
   late AppLinks _appLinks;
   StreamSubscription<Uri>? _linkSubscription;
 
+  // --- UI STATE ---
+  Timer? _hideLabelTimer;
+  bool _isLabelVisible = true; // Labels start visible
+
   final List<Widget> _screens = [
     FeedScreen(),
     GroupsScreen(),
@@ -243,12 +247,22 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _initDeepLinks(); // <--- Initialize Listener on Startup
+    _startLabelTimer(); // Start timer for initial view
   }
 
   @override
   void dispose() {
     _linkSubscription?.cancel(); // <--- Clean up when screen closes
+    _hideLabelTimer?.cancel();
     super.dispose();
+  }
+
+  void _startLabelTimer() {
+    _hideLabelTimer?.cancel();
+    setState(() => _isLabelVisible = true);
+    _hideLabelTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) setState(() => _isLabelVisible = false);
+    });
   }
 
   // --- DEEP LINKING LOGIC ---
@@ -378,6 +392,25 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 _buildNavItem(Feather.home, "Home", 0),
                 _buildNavItem(Feather.hexagon, "Circle", 1),
+                
+                // --- CREATE BUTTON ---
+                GestureDetector(
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => AddPostScreen()),
+                  ),
+                  child: Container(
+                    margin: EdgeInsets.symmetric(horizontal: 4),
+                    padding: EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.primaryLavender,
+                      // REMOVED GLOW: boxShadow: [...]
+                    ),
+                    child: Icon(Feather.plus, color: Colors.black, size: 24),
+                  ),
+                ),
+
                 _buildNavItem(Feather.user, "You", 2),
                 // _buildNavItem(Feather.flag, "Campaigns", 3), // Optional: Uncomment if you want 5 items
                 _buildNavItem(Feather.message_circle, "Inbox", 4),
@@ -392,14 +425,17 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildNavItem(IconData icon, String label, int index) {
     final bool isSelected = _currentIndex == index;
     return GestureDetector(
-      onTap: () => setState(() => _currentIndex = index),
+      onTap: () {
+        setState(() => _currentIndex = index);
+        _startLabelTimer(); // Reset timer on tap
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeInOut,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           // Use Teal for selected state background, heavily transparent
-          color: isSelected
+          color: isSelected && _isLabelVisible
               ? AppColors.secondaryTeal.withOpacity(0.3)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(30),
@@ -417,7 +453,7 @@ class _HomeScreenState extends State<HomeScreen> {
             AnimatedSize(
               duration: const Duration(milliseconds: 250),
               curve: Curves.easeInOut,
-              child: isSelected
+              child: isSelected && _isLabelVisible
                   ? Padding(
                       padding: const EdgeInsets.only(left: 8),
                       child: Text(

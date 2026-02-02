@@ -18,6 +18,7 @@ import 'package:video_thumbnail/video_thumbnail.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:femn/feed/feed_service.dart';
 import 'package:femn/feed/upload_service.dart';
+import 'package:femn/feed/text_post_editor.dart';
 
 class AddPostScreen extends StatefulWidget {
   @override
@@ -201,6 +202,14 @@ class _AddPostScreenState extends State<AddPostScreen> {
       MaterialPageRoute(builder: (context) => CustomCameraScreen()),
     );
     if (result != null) _processSelectedFile(result);
+  }
+
+  Future<void> _openTextEditor() async {
+    final File? result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => TextPostEditor()),
+    );
+     if (result != null) _processSelectedFile(result);
   }
 
   void _processSelectedFile(File file) async {
@@ -430,14 +439,14 @@ class _AddPostScreenState extends State<AddPostScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Feather.upload_cloud, color: AppColors.backgroundDeep, size: 32),
-                            SizedBox(height: 8),
+                            Icon(Feather.upload_cloud, color: AppColors.backgroundDeep, size: 28),
+                            SizedBox(height: 4),
                             Text(
                               "Upload",
                               style: TextStyle(
                                 color: AppColors.backgroundDeep,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 16
+                                fontSize: 13
                               ),
                             )
                           ],
@@ -448,27 +457,54 @@ class _AddPostScreenState extends State<AddPostScreen> {
                 ),
                 Expanded(
                   child: Material(
-                    color: AppColors.elevation, 
+                    color: AppColors.elevation,
                     child: InkWell(
                       onTap: _openCustomCamera,
                       child: Container(
                         height: double.infinity,
                         decoration: BoxDecoration(
                           border: Border(
-                            left: BorderSide(color: AppColors.backgroundDeep, width: 1)
+                            left: BorderSide(color: AppColors.backgroundDeep, width: 1),
+                            right: BorderSide(color: AppColors.backgroundDeep, width: 1)
                           )
                         ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Feather.camera, color: AppColors.primaryLavender, size: 32),
-                            SizedBox(height: 8),
+                            Icon(Feather.camera, color: AppColors.primaryLavender, size: 28),
+                            SizedBox(height: 4),
                             Text(
-                              "Capture",
+                              "Camera",
                               style: TextStyle(
                                 color: AppColors.primaryLavender,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 16
+                                fontSize: 13
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Material(
+                    color: AppColors.accentMustard, // Distinct color for Text
+                    child: InkWell(
+                      onTap: _openTextEditor,
+                      child: Container(
+                        height: double.infinity,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Feather.type, color: AppColors.backgroundDeep, size: 28),
+                            SizedBox(height: 4),
+                            Text(
+                              "Text",
+                              style: TextStyle(
+                                color: AppColors.backgroundDeep,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13
                               ),
                             )
                           ],

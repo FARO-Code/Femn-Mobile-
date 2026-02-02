@@ -201,6 +201,8 @@ class _PostGridWithPreviewState extends State<PostGridWithPreview> {
       final postsStream = firestore
           .collection('posts')
           .where('userId', isEqualTo: widget.userId)
+          .orderBy('timestamp', descending: true) // Ensure ordering before limit
+          .limit(30) // OPTIMIZATION: Limit to latest 30
           .snapshots()
           .map(
             (s) => s.docs
@@ -217,6 +219,7 @@ class _PostGridWithPreviewState extends State<PostGridWithPreview> {
       final pollsStream = firestore
           .collection('polls')
           .where('createdBy', isEqualTo: widget.userId)
+          .limit(10) // OPTIMIZATION
           .snapshots()
           .map(
             (s) => s.docs
@@ -233,6 +236,7 @@ class _PostGridWithPreviewState extends State<PostGridWithPreview> {
       final groupsStream = firestore
           .collection('groups')
           .where('createdBy', isEqualTo: widget.userId)
+          .limit(10) // OPTIMIZATION
           .snapshots()
           .map(
             (s) => s.docs.map((d) {
@@ -249,6 +253,7 @@ class _PostGridWithPreviewState extends State<PostGridWithPreview> {
       final petitionsStream = firestore
           .collection('petitions')
           .where('createdBy', isEqualTo: widget.userId)
+          .limit(10) // OPTIMIZATION
           .snapshots()
           .map(
             (s) => s.docs
@@ -311,6 +316,7 @@ class _PostGridWithPreviewState extends State<PostGridWithPreview> {
       return firestore
           .collection('posts')
           .where('likes', arrayContains: widget.userId)
+          .limit(30) // OPTIMIZATION
           .snapshots()
           .map(
             (s) => s.docs
@@ -326,6 +332,7 @@ class _PostGridWithPreviewState extends State<PostGridWithPreview> {
     } else if (widget.tabType == ProfileTabType.polls) {
       return firestore
           .collection('polls')
+          .limit(50) // OPTIMIZATION: Limit fetch, though client side filtering follows. 
           .snapshots()
           .map(
             (s) => s.docs
@@ -350,6 +357,7 @@ class _PostGridWithPreviewState extends State<PostGridWithPreview> {
       return firestore
           .collection('petitions')
           .where('signers', arrayContains: widget.userId)
+          .limit(20) // OPTIMIZATION
           .snapshots()
           .map(
             (s) => s.docs
@@ -499,6 +507,7 @@ class _PostGridWithPreviewState extends State<PostGridWithPreview> {
               ? CachedNetworkImage(
                   imageUrl: postData['mediaUrl'],
                   fit: BoxFit.cover,
+                  memCacheWidth: 500, // OPTIMIZATION: resize in memory
                   placeholder: (context, url) =>
                       Container(color: AppColors.elevation),
                   errorWidget: (context, url, error) =>
@@ -637,6 +646,7 @@ class _PostGridWithPreviewState extends State<PostGridWithPreview> {
                           ? CachedNetworkImage(
                               imageUrl: imageUrl,
                               fit: BoxFit.cover,
+                              memCacheWidth: 400, // OPTIMIZATION
                               placeholder: (context, url) => Shimmer.fromColors(
                                 baseColor: AppColors.elevation,
                                 highlightColor: AppColors.surface.withOpacity(
@@ -1814,7 +1824,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         MaterialPageRoute(builder: (context) => AddPostScreen()),
       ),
       child: AspectRatio(
-        aspectRatio: 9 / 16,
+        aspectRatio: 1.0,
         child: Container(
           decoration: BoxDecoration(
             color: AppColors.elevation,

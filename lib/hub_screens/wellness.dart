@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -12,6 +11,7 @@ import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 // --- Custom Imports ---
 import 'package:femn/hub_screens/profile.dart';
 import 'package:femn/hub_screens/search.dart';
+import 'package:femn/widgets/femn_background.dart';
 import '../wellness_widgets/journal.dart';
 import 'package:femn/wellness_widgets/period_tracker.dart';
 import '../wellness_widgets/tracker.dart';
@@ -208,10 +208,10 @@ class _WellnessScreenState extends State<WellnessScreen> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('wellness_layout_cache', jsonEncode(data));
 
-      // 2. Save Remote
-      await FirebaseFirestore.instance.collection('users').doc(_uid).update({
+      // 2. Save Remote - Use set with merge to be safe
+      await FirebaseFirestore.instance.collection('users').doc(_uid).set({
         'wellnessLayout': data,
-      });
+      }, SetOptions(merge: true));
     } catch (e) {
       print("Error saving layout: $e");
     }
@@ -327,24 +327,25 @@ class _WellnessScreenState extends State<WellnessScreen> {
   void _resizeWidget(int index) {
     setState(() {
       var item = _activeWidgets[index];
+      // Logic: Cycle through sensible grid sizes based on current size
       if (item.crossAxisCount == 2 && item.mainAxisCount == 2) {
         item.crossAxisCount = 3;
         item.mainAxisCount = 2;
       } else if (item.crossAxisCount == 3 && item.mainAxisCount == 2) {
-        item.crossAxisCount = 2;
-        item.mainAxisCount = 3;
-      } else if (item.crossAxisCount == 2 && item.mainAxisCount == 3) {
-        item.crossAxisCount = 4;
-        item.mainAxisCount = 3;
-      } else if (item.crossAxisCount == 4 && item.mainAxisCount == 3) {
-        item.crossAxisCount = 5;
+        item.crossAxisCount = 5; // Full width (approx)
         item.mainAxisCount = 2;
+      } else if (item.crossAxisCount == 5 && item.mainAxisCount == 2) {
+        item.crossAxisCount = 2;
+        item.mainAxisCount = 3; // Vertical tall
+      } else if (item.crossAxisCount == 2 && item.mainAxisCount == 3) {
+        item.crossAxisCount = 3;
+        item.mainAxisCount = 3; // Big square
       } else {
         item.crossAxisCount = 2;
         item.mainAxisCount = 2;
       }
     });
-    _saveLayout(); // <--- SAVE
+    _saveLayout();
   }
 
   // --- Logic: Reorder (Updated) ---
@@ -456,103 +457,111 @@ class _WellnessScreenState extends State<WellnessScreen> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: GestureDetector(
-        onTap: () {
-          if (_isEditMode) setState(() => _isEditMode = false);
-        },
-        onLongPress: () {
-          if (!_isEditMode) _showAddWidgetMenu();
-        },
-        child: RefreshIndicator(
-          onRefresh: _onRefresh,
-          color: AppColors.primaryLavender,
-          backgroundColor: Colors.transparent,
-          child: CustomScrollView(
-            physics: AlwaysScrollableScrollPhysics(),
-            slivers: [
-              SliverAppBar(
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                pinned: true,
-                automaticallyImplyLeading: false,
-                title: Row(
-                  children: [
-                    _buildLogo(),
-                    SizedBox(width: 8),
-                    Text(
-                      'You',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textHigh,
+      body: FemnBackground(
+        child: GestureDetector(
+          onTap: () {
+            if (_isEditMode) setState(() => _isEditMode = false);
+          },
+          onLongPress: () {
+            if (!_isEditMode) _showAddWidgetMenu();
+          },
+          child: RefreshIndicator(
+            onRefresh: _onRefresh,
+            color: AppColors.primaryLavender,
+            backgroundColor: Colors.transparent,
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverAppBar(
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  pinned: true,
+                  automaticallyImplyLeading: false,
+                  title: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Wellness Mesh',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 22,
+                          color: AppColors.textHigh,
+                        ),
+                      ),
+                      Text(
+                        'Optimize your vitality',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textMedium,
+                        ),
+                      ),
+                    ],
+                  ),
+                  actions: [
+                    _buildCircleButton(
+                      Feather.search,
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (c) => SearchScreen()),
                       ),
                     ),
+                    const SizedBox(width: 8),
+                    _buildUserAvatar(currentUserId),
+                    const SizedBox(width: 12),
                   ],
                 ),
-                actions: [
-                  _buildCircleButton(
-                    Feather.search,
-                    () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (c) => SearchScreen()),
-                    ),
-                  ),
-                  SizedBox(width: 8),
-                  _buildUserAvatar(currentUserId),
-                  SizedBox(width: 12),
-                ],
-              ),
-
-              SliverPadding(
-                padding: EdgeInsets.all(12),
-                sliver: _isLoading
-                    ? SliverFillRemaining(
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: AppColors.primaryLavender,
+                SliverPadding(
+                  padding: const EdgeInsets.all(12),
+                  sliver: _isLoading
+                      ? const SliverFillRemaining(
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.primaryLavender,
+                            ),
                           ),
-                        ),
-                      )
-                    : _activeWidgets.isEmpty
-                    ? SliverFillRemaining(
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Feather.plus_square,
-                                size: 40,
-                                color: AppColors.textDisabled,
+                        )
+                      : _activeWidgets.isEmpty
+                          ? SliverFillRemaining(
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(
+                                      Feather.plus_square,
+                                      size: 40,
+                                      color: AppColors.textDisabled,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    const Text(
+                                      "Long press here to add widgets",
+                                      style: TextStyle(color: AppColors.textMedium),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              SizedBox(height: 12),
-                              Text(
-                                "Long press here to add widgets",
-                                style: TextStyle(color: AppColors.textMedium),
+                            )
+                          : SliverToBoxAdapter(
+                              child: StaggeredGrid.count(
+                                crossAxisCount: 5,
+                                mainAxisSpacing: 10,
+                                crossAxisSpacing: 10,
+                                children: List.generate(_activeWidgets.length, (
+                                  index,
+                                ) {
+                                  final item = _activeWidgets[index];
+                                  return StaggeredGridTile.count(
+                                    key: ValueKey(item.id),
+                                    crossAxisCellCount: item.crossAxisCount,
+                                    mainAxisCellCount: item.mainAxisCount,
+                                    child: _buildEditableWrapper(index, item),
+                                  );
+                                }),
                               ),
-                            ],
-                          ),
-                        ),
-                      )
-                    : SliverToBoxAdapter(
-                        child: StaggeredGrid.count(
-                          crossAxisCount: 5,
-                          mainAxisSpacing: 10,
-                          crossAxisSpacing: 10,
-                          children: List.generate(_activeWidgets.length, (
-                            index,
-                          ) {
-                            final item = _activeWidgets[index];
-                            return StaggeredGridTile.count(
-                              key: ValueKey(item.id),
-                              crossAxisCellCount: item.crossAxisCount,
-                              mainAxisCellCount: item.mainAxisCount,
-                              child: _buildEditableWrapper(index, item),
-                            );
-                          }),
-                        ),
-                      ),
-              ),
-              SliverToBoxAdapter(child: SizedBox(height: 80)),
-            ],
+                            ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 80)),
+              ],
+            ),
           ),
         ),
       ),
@@ -774,64 +783,137 @@ class _WellnessScreenState extends State<WellnessScreen> {
   }) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
         decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(24.0),
-          border: Border.all(color: AppColors.elevation, width: 1),
+          color: AppColors.surface.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(28.0),
+          border: Border.all(
+            color: cyclePhase != null
+                ? cyclePhase.bgColor.withOpacity(0.3)
+                : (streakActive == true
+                    ? Colors.orange.withOpacity(0.3)
+                    : AppColors.elevation),
+            width: 1.5,
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.15),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+              color: (cyclePhase != null
+                      ? cyclePhase.bgColor
+                      : (streakActive == true
+                          ? Colors.orange
+                          : Colors.black))
+                  .withOpacity(0.1),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
             ),
           ],
         ),
-        child: Stack(
-          children: [
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: content,
-              ),
-            ),
-
-            if (streakCount != null)
-              Positioned(
-                top: 12,
-                right: 12,
-                child: GestureDetector(
-                  onTap: (streakActive == false)
-                      ? () => _showRestorationModal(context, streakCount)
-                      : null,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28.0),
+          child: Stack(
+            children: [
+              // Subtle background gradient for "active" states
+              if (streakActive == true || cyclePhase != null)
+                Positioned.fill(
                   child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.elevation,
-                      borderRadius: BorderRadius.circular(12),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          (cyclePhase != null
+                                  ? cyclePhase.bgColor
+                                  : Colors.orange)
+                              .withOpacity(0.05),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: content,
+                ),
+              ),
+
+              if (streakCount != null)
+                Positioned(
+                  top: 14,
+                  right: 14,
+                  child: GestureDetector(
+                    onTap: (streakActive == false)
+                        ? () => _showRestorationModal(context, streakCount)
+                        : null,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: streakActive == true
+                            ? Colors.orange.withOpacity(0.15)
+                            : AppColors.elevation.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: streakActive == true
+                              ? Colors.orange.withOpacity(0.5)
+                              : AppColors.textDisabled.withOpacity(0.2),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Feather.zap,
+                            size: 14,
+                            color: streakActive == true
+                                ? Colors.orange
+                                : AppColors.textDisabled,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            "$streakCount",
+                            style: TextStyle(
+                              color: streakActive == true
+                                  ? AppColors.textHigh
+                                  : AppColors.textDisabled,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+              if (cyclePhase != null)
+                Positioned(
+                  top: 14,
+                  right: 14,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: cyclePhase.bgColor.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: streakActive!
-                            ? Colors.orange.withOpacity(0.5)
-                            : AppColors.textDisabled.withOpacity(0.3),
+                        color: cyclePhase.bgColor.withOpacity(0.5),
                       ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          streakActive ? Feather.zap : Feather.zap,
-                          size: 16,
-                          color: streakActive
-                              ? Colors.orange
-                              : AppColors.textDisabled,
+                          cyclePhase.icon,
+                          size: 14,
+                          color: cyclePhase.textColor,
                         ),
-                        SizedBox(width: 4),
+                        const SizedBox(width: 6),
                         Text(
-                          "$streakCount",
+                          cyclePhase.seasonName,
                           style: TextStyle(
-                            color: streakActive
-                                ? AppColors.textHigh
-                                : AppColors.textDisabled,
+                            color: cyclePhase.textColor,
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
                           ),
@@ -840,70 +922,9 @@ class _WellnessScreenState extends State<WellnessScreen> {
                     ),
                   ),
                 ),
-              ),
-
-            if (cyclePhase != null)
-              Positioned(
-                top: 12,
-                right: 12,
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: cyclePhase.bgColor,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 4,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        cyclePhase.icon,
-                        size: 12,
-                        color: cyclePhase.textColor,
-                      ),
-                      SizedBox(width: 6),
-                      Text(
-                        cyclePhase.seasonName,
-                        style: TextStyle(
-                          color: cyclePhase.textColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // --- Helpers (Logo, Avatar, etc) ---
-  Widget _buildLogo() {
-    return Container(
-      width: 42,
-      height: 42,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: AppColors.elevation,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
+            ],
           ),
-        ],
-      ),
-      child: ClipOval(
-        child: Image.asset('assets/default_avatar.png', fit: BoxFit.cover),
+        ),
       ),
     );
   }
@@ -1002,9 +1023,13 @@ class _WellnessScreenState extends State<WellnessScreen> {
                 SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                    ),
                     onPressed: () async {
                       Navigator.pop(context);
                       final result = await StreakService.tryRestoreStreak();
+                      if (!mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
@@ -1018,10 +1043,7 @@ class _WellnessScreenState extends State<WellnessScreen> {
                         ),
                       );
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
-                    ),
-                    child: Text("Restore 🔥"),
+                    child: const Text("Restore 🔥"),
                   ),
                 ),
               ],
