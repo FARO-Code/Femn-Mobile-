@@ -32,6 +32,7 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:image/image.dart' as img;
 import 'package:femn/services/notification_service.dart';
+import 'package:femn/services/daily_quote_service.dart';
 
 // Feed Screen with pull-to-refresh and infinite scroll
 
@@ -69,60 +70,12 @@ class _FeedScreenState extends State<FeedScreen> {
 
   bool _showQuote = false;
 
+
+
   Map<String, String> _todaysQuoteContent = {};
 
-  final List<Map<String, String>> _dailyQuotes = [
-    {"quote": "Deeds, not words.", "author": "Emmeline Pankhurst"},
+  // Quotes are now managed in DailyQuoteService
 
-    {
-      "quote": "Feminism is the radical notion that women are people.",
-      "author": "Marie Shear",
-    },
-
-    {
-      "quote": "Well-behaved women seldom make history.",
-      "author": "Laurel Thatcher Ulrich",
-    },
-
-    {
-      "quote":
-          "If they don't give you a seat at the table, bring a folding chair.",
-      "author": "Shirley Chisholm",
-    },
-
-    {
-      "quote":
-          "My silences had not protected me. Your silence will not protect you.",
-      "author": "Audre Lorde",
-    },
-
-    {
-      "quote": "Women belong in all places where decisions are being made.",
-      "author": "Ruth Bader Ginsburg",
-    },
-
-    {
-      "quote": "We cannot all succeed when half of us are held back.",
-      "author": "Malala Yousafzai",
-    },
-
-    {
-      "quote":
-          "The most common way people give up their power is by thinking they don't have any.",
-      "author": "Alice Walker",
-    },
-
-    {
-      "quote":
-          "I am not free while any woman is unfree, even when her shackles are very different from my own.",
-      "author": "Audre Lorde",
-    },
-
-    {
-      "quote": "No pride for some of us without liberation for all of us.",
-      "author": "Marsha P. Johnson",
-    },
-  ];
 
   // --- VIDEO SEQUENCE LOGIC ---
 
@@ -150,6 +103,7 @@ class _FeedScreenState extends State<FeedScreen> {
 
     _fetchFollowingList();
     _checkDailyQuote();
+    DailyQuoteService.updateWidget(); // Sync with widget
     _loadTrendingPetitions();
 
     // 1. Initial Load
@@ -535,9 +489,8 @@ class _FeedScreenState extends State<FeedScreen> {
         "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
 
     if (lastDismissedDate != todayDate) {
-      final int quoteIndex = now.day % _dailyQuotes.length;
       setState(() {
-        _todaysQuoteContent = _dailyQuotes[quoteIndex];
+        _todaysQuoteContent = DailyQuoteService.getTodaysQuote();
         _showQuote = true;
       });
     } else {

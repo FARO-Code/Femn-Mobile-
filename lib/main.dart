@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'auth/auth.dart';
 import 'hub_screens/post.dart';
+import 'hub_screens/petition_widget_picker.dart'; // <--- IMPORT THIS
 import 'circle/campaign.dart'; // Ensure filename matches (campaign.dart or campaigns.dart)
 import 'auth/auth_provider.dart';
 import 'customization/fonts.dart';
@@ -23,7 +24,10 @@ import 'firebase_options.dart';
 import 'package:femn/widgets/femn_background.dart';
 
 import 'services/notification_service.dart'; // <--- Notification Service
+import 'services/notification_service.dart'; // <--- Notification Service
 import 'services/navigation_service.dart'; // <--- ADD THIS
+import 'services/daily_quote_service.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,7 +45,9 @@ void main() async {
   );
 
   // Initialize Notifications
+  // Initialize Notifications
   NotificationService().initialize();
+  DailyQuoteService.updateWidget(); // Update Home Screen Widget
 }
 
 class MyApp extends StatelessWidget {
@@ -213,6 +219,9 @@ class MyApp extends StatelessWidget {
           );
         },
       ),
+      routes: {
+        '/petition_widget_picker': (context) => PetitionWidgetPicker(),
+      },
       debugShowCheckedModeBanner: false,
     );
   }
@@ -287,6 +296,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _handleLink(Uri uri) async {
     print("Link received: $uri");
+
+    if (uri.toString().contains('petition_widget_picker')) {
+      if (mounted) {
+        Navigator.of(context).pushNamed('/petition_widget_picker');
+      }
+      return;
+    }
 
     if (uri.pathSegments.contains('post')) {
       final String postId = uri.pathSegments.last;

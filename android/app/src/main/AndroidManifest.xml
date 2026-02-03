@@ -35,7 +35,7 @@
         </intent>
     </queries>
     <application
-        android:label="femn"
+        android:label="Femn"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         
@@ -71,9 +71,32 @@
                 <data android:scheme="https" />
                 <data android:host="femn-9cabb.web.app" />
                 <data android:host="femn-9cabb.firebaseapp.com" />
+                <data android:scheme="femn" />
             </intent-filter>
 
         </activity>
+
+        <receiver android:name=".DailyQuoteWidgetProvider" 
+            android:exported="true"
+            android:label="Daily Quote"
+            android:icon="@drawable/ic_widget_quote">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider"
+                android:resource="@xml/daily_quote_widget_info" />
+        </receiver>
+
+        <receiver android:name=".PetitionWidgetProvider" 
+            android:exported="true"
+            android:label="Petition Tracker"
+            android:icon="@drawable/ic_widget_petition">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider"
+                android:resource="@xml/petition_widget_info" />
+        </receiver>
 
         <meta-data
             android:name="flutterEmbedding"

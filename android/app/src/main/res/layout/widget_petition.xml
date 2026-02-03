@@ -1,0 +1,75 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_background"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/widget_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="2"
+                android:text="Tap to Select Petition"
+                android:textColor="#E6E1E5"
+                android:textSize="16sp" />
+
+            <ProgressBar
+                android:id="@+id/widget_progress_bar"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="6dp"
+                android:layout_below="@id/widget_title"
+                android:layout_marginTop="12dp"
+                android:max="100"
+                android:progress="0"
+                android:progressDrawable="@drawable/custom_progress_drawable" />
+
+            <TextView
+                android:id="@+id/widget_count"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/widget_progress_bar"
+                android:layout_marginTop="8dp"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif-light"
+                android:gravity="end"
+                android:maxLines="1"
+                android:text="-- / -- signatures"
+                android:textColor="#AD80BF"
+                android:textSize="12sp" />
+        </RelativeLayout>
+
+        <FrameLayout
+            android:id="@+id/widget_image_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/widget_image_rounded"
+            android:clipToOutline="true"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/widget_banner_image"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/widget_background" />
+
+        </FrameLayout>
+
+    </LinearLayout>
+
+</RelativeLayout>
