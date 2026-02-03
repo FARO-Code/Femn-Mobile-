@@ -85,36 +85,7 @@ class PostUploadService extends ChangeNotifier {
         notifyListeners();
       });
 
-      await task;
-      String mediaUrl = await storageRef.getDownloadURL();
-      uploadedStoragePath = storageRef.fullPath;
-
-      // 3. Upload Thumbnail (Reuse the one we generated if possible)
-      String thumbnailUrl = '';
-      if (mediaType == 'video') {
-        File? thumbToUpload = currentThumbnail; 
-        
-        if (thumbToUpload == null) {
-          final String? thumbPath = await VideoThumbnail.thumbnailFile(
-            video: file.path,
-            thumbnailPath: (await getTemporaryDirectory()).path,
-            imageFormat: ImageFormat.JPEG,
-            quality: 75,
-          );
-          if (thumbPath != null) thumbToUpload = File(thumbPath);
-        }
-
-        if (thumbToUpload != null) {
-          Reference thumbRef = FirebaseStorage.instance.ref('posts/thumbnails/$mediaId.jpg');
-          await thumbRef.putFile(thumbToUpload);
-          thumbnailUrl = await thumbRef.getDownloadURL();
-        }
-      }
-
-      progress = 0.7; 
-      notifyListeners();
-
-      // 4. AI Gatekeeper
+      // 4. AI Gatekeeper (Start in Parallel)
       final feedService = FeedService();
       
       // Use the thumbnail for AI analysis if video (saves bandwidth)
@@ -122,11 +93,49 @@ class PostUploadService extends ChangeNotifier {
           ? currentThumbnail! 
           : file;
 
-      final aiData = await feedService.analyzeContent(
+      // Start AI Analysis immediately
+      Future<Map<String, dynamic>> analysisFuture = feedService.analyzeContent(
         caption: caption,
         mediaType: mediaType,
         file: fileToAnalyze,
       );
+
+      // 3. Upload Thumbnail (Start in Parallel if Video)
+      Future<String> thumbnailUploadFuture = Future.value('');
+      if (mediaType == 'video') {
+         thumbnailUploadFuture = (() async {
+            try {
+                File? thumbToUpload = currentThumbnail; 
+                if (thumbToUpload == null) {
+                  final String? thumbPath = await VideoThumbnail.thumbnailFile(
+                    video: file.path,
+                    thumbnailPath: (await getTemporaryDirectory()).path,
+                    imageFormat: ImageFormat.JPEG,
+                    quality: 75,
+                  );
+                  if (thumbPath != null) thumbToUpload = File(thumbPath);
+                }
+
+                if (thumbToUpload != null) {
+                  Reference thumbRef = FirebaseStorage.instance.ref('posts/thumbnails/$mediaId.jpg');
+                  await thumbRef.putFile(thumbToUpload);
+                  return await thumbRef.getDownloadURL();
+                }
+            } catch (e) {
+                print("Thumbnail upload failed: $e");
+            }
+            return '';
+         })();
+      }
+
+      // Wait for Main Upload
+      await task;
+      String mediaUrl = await storageRef.getDownloadURL();
+      uploadedStoragePath = storageRef.fullPath;
+      
+      // Wait for parallel tasks to complete
+      final aiData = await analysisFuture;
+      String thumbnailUrl = await thumbnailUploadFuture;
 
       progress = 0.9; 
       notifyListeners();

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:femn/auth/auth.dart';
@@ -50,9 +51,7 @@ class AccountBadge extends StatelessWidget {
         label = isVerified ? 'Verified Therapist' : 'Therapist';
         break;
       default:
-        icon = Feather.user;
-        color = AppColors.textMedium;
-        label = 'Personal';
+        return const SizedBox.shrink();
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -77,6 +76,76 @@ class AccountBadge extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+// ======== FemnFollowButton Widget ========
+class FemnFollowButton extends StatelessWidget {
+  final String targetUserId;
+  const FemnFollowButton({super.key, required this.targetUserId});
+
+  @override
+  Widget build(BuildContext context) {
+    final currentUserId = FirebaseAuth.instance.currentUser!.uid;
+    if (targetUserId == currentUserId) return const SizedBox.shrink();
+
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance.collection('users').doc(currentUserId).snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const SizedBox.shrink();
+        final data = snapshot.data!.data() as Map<String, dynamic>? ?? {};
+        final following = List<String>.from(data['following'] ?? []);
+        final isFollowing = following.contains(targetUserId);
+
+        return ElevatedButton(
+          onPressed: () => _toggleFollow(context, targetUserId, isFollowing),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: isFollowing ? AppColors.elevation : AppColors.primaryLavender,
+            foregroundColor: isFollowing ? AppColors.textMedium : AppColors.backgroundDeep,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+            minimumSize: const Size(100, 36),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            elevation: 0,
+          ),
+          child: Text(
+            isFollowing ? 'Unfollow' : 'Follow',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _toggleFollow(BuildContext context, String userId, bool isFollowing) async {
+    final currentUserId = FirebaseAuth.instance.currentUser!.uid;
+    try {
+      final batch = FirebaseFirestore.instance.batch();
+      final currentUserRef = FirebaseFirestore.instance.collection('users').doc(currentUserId);
+      final targetUserRef = FirebaseFirestore.instance.collection('users').doc(userId);
+
+      if (isFollowing) {
+        batch.update(currentUserRef, {'following': FieldValue.arrayRemove([userId])});
+        batch.update(targetUserRef, {'followers': FieldValue.arrayRemove([currentUserId])});
+      } else {
+        batch.update(currentUserRef, {'following': FieldValue.arrayUnion([userId])});
+        batch.update(targetUserRef, {'followers': FieldValue.arrayUnion([currentUserId])});
+      }
+
+      await batch.commit();
+
+      if (!isFollowing) {
+        final currentUserDoc = await currentUserRef.get();
+        final followerUsername = currentUserDoc.data()?['username'] ?? 'Someone';
+        await NotificationService().sendFollowNotification(
+          followedUserId: userId,
+          followerUsername: followerUsername,
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
   }
 }
 
@@ -1106,14 +1175,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   CircleAvatar(
                     radius: 50,
                     backgroundColor: AppColors.elevation,
-                    backgroundImage:
-                        (userData['profileImage'] ?? userData['logo'] ?? '')
-                            .isNotEmpty
-                        ? CachedNetworkImageProvider(
-                            userData['profileImage'] ?? userData['logo'] ?? '',
-                          )
-                        : const AssetImage('assets/default_avatar.png')
-                              as ImageProvider,
+                    backgroundImage: _profileImageFile != null
+                        ? FileImage(_profileImageFile!) as ImageProvider
+                        : (userData['profileImage'] ?? userData['logo'] ?? '')
+                                .isNotEmpty
+                            ? CachedNetworkImageProvider(
+                                userData['profileImage'] ??
+                                    userData['logo'] ??
+                                    '',
+                              )
+                            : const AssetImage('assets/default_avatar.png')
+                                  as ImageProvider,
                   ),
                   if (_isEditing)
                     Container(
@@ -1154,11 +1226,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
           ],
         ),
-        const SizedBox(height: 8),
-        AccountBadge(
-          accountType: userData['accountType'] ?? 'personal',
-          isVerified: userData['isVerified'] ?? false,
-        ),
+        if ((userData['accountType'] ?? 'personal') != 'personal') ...[
+          const SizedBox(height: 8),
+          AccountBadge(
+            accountType: userData['accountType'] ?? 'personal',
+            isVerified: userData['isVerified'] ?? false,
+          ),
+        ],
         const SizedBox(height: 8),
 
         // --- PERSONALITY TYPE DISPLAY ---
@@ -1567,9 +1641,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _pickProfileImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    
     if (pickedFile != null) {
-      setState(() => _profileImageFile = File(pickedFile.path));
-      await _uploadProfileImage();
+      final croppedFile = await ImageCropper().cropImage(
+        sourcePath: pickedFile.path,
+        maxWidth: 1080,
+        maxHeight: 1080,
+        compressQuality: 80,
+        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Edit Profile Picture',
+            toolbarColor: AppColors.backgroundDeep,
+            toolbarWidgetColor: AppColors.primaryLavender,
+            initAspectRatio: CropAspectRatioPreset.square,
+            lockAspectRatio: true,
+            activeControlsWidgetColor: AppColors.primaryLavender,
+            backgroundColor: AppColors.backgroundDeep,
+            dimmedLayerColor: Colors.black.withOpacity(0.5),
+            cropFrameColor: AppColors.primaryLavender,
+            cropGridColor: Colors.transparent,
+            hideBottomControls: true,
+            showCropGrid: false,
+          ),
+          IOSUiSettings(
+            title: 'Edit Profile Picture',
+            aspectRatioLockEnabled: true,
+            resetAspectRatioEnabled: false,
+            doneButtonTitle: 'Done',
+            cancelButtonTitle: 'Cancel',
+            rotateButtonsHidden: true,
+            aspectRatioPickerButtonHidden: true,
+          ),
+        ],
+      );
+
+      if (croppedFile != null) {
+        // INSTANTLY Update State
+        setState(() => _profileImageFile = File(croppedFile.path));
+        
+        // Then Upload
+        await _uploadProfileImage();
+      }
     }
   }
 
@@ -1980,89 +2093,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           // Removed ProfileStatsWidget from here to move it between @ and bio
                           if (!_isOwnProfile) const SizedBox(height: 16),
                           if (!_isOwnProfile)
-                            ElevatedButton(
-                              onPressed: () async {
-                                List f = List.from(userData['followers'] ?? []);
-                                if (f.contains(
-                                  FirebaseAuth.instance.currentUser!.uid,
-                                )) {
-                                  await FirebaseFirestore.instance
-                                      .collection('users')
-                                      .doc(widget.userId)
-                                      .update({
-                                        'followers': FieldValue.arrayRemove([
-                                          FirebaseAuth
-                                              .instance
-                                              .currentUser!
-                                              .uid,
-                                        ]),
-                                      });
-                                  await FirebaseFirestore.instance
-                                      .collection('users')
-                                      .doc(
-                                        FirebaseAuth.instance.currentUser!.uid,
-                                      )
-                                      .update({
-                                        'following': FieldValue.arrayRemove([
-                                          widget.userId,
-                                        ]),
-                                      });
-                                } else {
-                                  await FirebaseFirestore.instance
-                                      .collection('users')
-                                      .doc(widget.userId)
-                                      .update({
-                                        'followers': FieldValue.arrayUnion([
-                                          FirebaseAuth
-                                              .instance
-                                              .currentUser!
-                                              .uid,
-                                        ]),
-                                      });
-                                  await FirebaseFirestore.instance
-                                      .collection('users')
-                                      .doc(
-                                        FirebaseAuth.instance.currentUser!.uid,
-                                      )
-                                      .update({
-                                        'following': FieldValue.arrayUnion([
-                                          widget.userId,
-                                        ]),
-                                      });
-                                  // Send notification using service
-                                  final currentUser =
-                                      FirebaseAuth.instance.currentUser;
-                                  if (currentUser != null) {
-                                    final currentUserDoc =
-                                        await FirebaseFirestore.instance
-                                            .collection('users')
-                                            .doc(currentUser.uid)
-                                            .get();
-                                    final followerUsername =
-                                        currentUserDoc.data()?['username'] ??
-                                        'Someone';
-                                    await NotificationService()
-                                        .sendFollowNotification(
-                                          followedUserId: widget.userId,
-                                          followerUsername: followerUsername,
-                                        );
-                                  }
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primaryLavender,
-                              ),
-                              child: Text(
-                                List.from(userData['followers'] ?? []).contains(
-                                      FirebaseAuth.instance.currentUser!.uid,
-                                    )
-                                    ? 'Unfollow'
-                                    : 'Follow',
-                                style: const TextStyle(
-                                  color: AppColors.backgroundDeep,
-                                ),
-                              ),
-                            ),
+                            FemnFollowButton(targetUserId: widget.userId),
                         ],
                       ),
                     ),
@@ -2272,78 +2303,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
                           ),
                           // ProfileStatsWidget moved up
                           const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: () async {
-                              if (_isFollowing) {
-                                await FirebaseFirestore.instance
-                                    .collection('users')
-                                    .doc(widget.userId)
-                                    .update({
-                                      'followers': FieldValue.arrayRemove([
-                                        FirebaseAuth.instance.currentUser!.uid,
-                                      ]),
-                                    });
-                                await FirebaseFirestore.instance
-                                    .collection('users')
-                                    .doc(FirebaseAuth.instance.currentUser!.uid)
-                                    .update({
-                                      'following': FieldValue.arrayRemove([
-                                        widget.userId,
-                                      ]),
-                                    });
-                              } else {
-                                await FirebaseFirestore.instance
-                                    .collection('users')
-                                    .doc(widget.userId)
-                                    .update({
-                                      'followers': FieldValue.arrayUnion([
-                                        FirebaseAuth.instance.currentUser!.uid,
-                                      ]),
-                                    });
-                                await FirebaseFirestore.instance
-                                    .collection('users')
-                                    .doc(FirebaseAuth.instance.currentUser!.uid)
-                                    .update({
-                                      'following': FieldValue.arrayUnion([
-                                        widget.userId,
-                                      ]),
-                                    });
-
-                                // Send notification using service
-                                final currentUser =
-                                    FirebaseAuth.instance.currentUser;
-                                if (currentUser != null) {
-                                  final currentUserDoc = await FirebaseFirestore
-                                      .instance
-                                      .collection('users')
-                                      .doc(currentUser.uid)
-                                      .get();
-                                  final followerUsername =
-                                      currentUserDoc.data()?['username'] ??
-                                      'Someone';
-                                  await NotificationService()
-                                      .sendFollowNotification(
-                                        followedUserId: widget.userId,
-                                        followerUsername: followerUsername,
-                                      );
-                                }
-                              }
-                              setState(() => _isFollowing = !_isFollowing);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _isFollowing
-                                  ? AppColors.elevation
-                                  : AppColors.secondaryTeal,
-                            ),
-                            child: Text(
-                              _isFollowing ? 'Unfollow' : 'Follow',
-                              style: TextStyle(
-                                color: _isFollowing
-                                    ? AppColors.textHigh
-                                    : AppColors.backgroundDeep,
-                              ),
-                            ),
-                          ),
+                          FemnFollowButton(targetUserId: widget.userId),
                         ],
                       ),
                     ),

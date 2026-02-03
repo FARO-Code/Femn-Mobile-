@@ -11,6 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:flutter_vector_icons/flutter_vector_icons.dart';
 import 'package:femn/customization/layout.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // Enhanced Search Screen with multiple search types and smart features
 class SearchScreen extends StatefulWidget {
@@ -23,13 +24,11 @@ class _SearchScreenState extends State<SearchScreen> {
   final FocusNode _searchFocusNode = FocusNode();
   
   List<dynamic> _searchResults = [];
-  List<String> _searchSuggestions = [];
   List<Map<String, dynamic>> _recentSearches = [];
   List<String> _trendingHashtags = [];
   List<Map<String, dynamic>> _suggestedUsers = [];
   
   bool _isSearching = false;
-  bool _showSuggestions = false;
   SearchCategory _selectedCategory = SearchCategory.all;
   
   // Personalization data
@@ -38,43 +37,45 @@ class _SearchScreenState extends State<SearchScreen> {
   
   // Debouncing for search
   Timer? _debounceTimer;
+  StreamSubscription<DocumentSnapshot>? _followingSubscription;
 
   @override
   void initState() {
     super.initState();
-    _loadPersonalizationData();
+    _setupFollowingStream();
     _loadTrendingData();
     _loadRecentSearches();
     _loadSuggestedUsers();
   }
 
+  void _setupFollowingStream() {
+    final currentUserId = FirebaseAuth.instance.currentUser!.uid;
+    _followingSubscription = FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUserId)
+        .snapshots()
+        .listen((snapshot) {
+      if (snapshot.exists && mounted) {
+        final data = snapshot.data() as Map<String, dynamic>;
+        setState(() {
+          _followingIds = Set<String>.from((data['following'] as List?) ?? []);
+          _userInterests = Set<String>.from((data['interests'] as List?) ?? []);
+        });
+      }
+    });
+  }
+
   @override
   void dispose() {
     _debounceTimer?.cancel();
+    _followingSubscription?.cancel();
     _searchController.dispose();
     _searchFocusNode.dispose();
     super.dispose();
   }
 
-  // Load user preferences and network
-  Future<void> _loadPersonalizationData() async {
-    final currentUserId = FirebaseAuth.instance.currentUser!.uid;
-    try {
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(currentUserId)
-          .get();
-          
-      if (userDoc.exists) {
-        setState(() {
-          _userInterests = Set<String>.from(userDoc['interests'] ?? []);
-          _followingIds = Set<String>.from(userDoc['following'] ?? []);
-        });
-      }
-    } catch (e) {
-      print('Error loading personalization data: $e');
-    }
-  }
+  // Removed manual load in favor of setupFollowingStream
+  Future<void> _loadPersonalizationData() async {}
 
   // Load trending hashtags and content
   Future<void> _loadTrendingData() async {
@@ -148,6 +149,38 @@ class _SearchScreenState extends State<SearchScreen> {
     _saveRecentSearchToFirestore(searchItem);
   }
 
+  // Fetch thumbnails for hashtags to show in discovery
+  Future<List<Map<String, dynamic>>> _fetchThumbnailsForHashtag(String tag) async {
+    try {
+      final cleanTag = tag.replaceFirst('#', '').toLowerCase();
+      final postsSnapshot = await FirebaseFirestore.instance
+          .collection('posts')
+          .where('hashtags', arrayContains: cleanTag)
+          .limit(5)
+          .get();
+      
+      return postsSnapshot.docs.map((doc) => {...doc.data(), 'id': doc.id}).toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // Fetch thumbnails for suggested users
+  Future<List<Map<String, dynamic>>> _fetchThumbnailsForUser(String userId) async {
+    try {
+      final postsSnapshot = await FirebaseFirestore.instance
+          .collection('posts')
+          .where('userId', isEqualTo: userId)
+          .orderBy('timestamp', descending: true)
+          .limit(3)
+          .get();
+      
+      return postsSnapshot.docs.map((doc) => {...doc.data(), 'id': doc.id}).toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
   Future<void> _saveRecentSearchToFirestore(Map<String, dynamic> searchItem) async {
     final currentUserId = FirebaseAuth.instance.currentUser!.uid;
     try {
@@ -163,11 +196,23 @@ class _SearchScreenState extends State<SearchScreen> {
 
   // Smart search with debouncing and multiple data sources
   void _performSearch(String query) async {
-    if (query.isEmpty) {
+    final trimmedQuery = query.trim();
+    
+    // Contextual Suffixes: Auto-switch category if query starts with #
+    if (trimmedQuery.startsWith('#') && _selectedCategory != SearchCategory.hashtags) {
+      setState(() {
+        _selectedCategory = SearchCategory.hashtags;
+      });
+    } else if (trimmedQuery.startsWith('@') && _selectedCategory != SearchCategory.users) {
+      setState(() {
+        _selectedCategory = SearchCategory.users;
+      });
+    }
+
+    if (trimmedQuery.isEmpty) {
       setState(() {
         _searchResults = [];
         _isSearching = false;
-        _showSuggestions = true;
       });
       return;
     }
@@ -175,104 +220,41 @@ class _SearchScreenState extends State<SearchScreen> {
     // Cancel previous debounce timer
     _debounceTimer?.cancel();
     
-    // Show suggestions while typing
-    if (query.length > 1) {
-      _generateSearchSuggestions(query);
-    }
+    // Set up new debounce timer - made snappier (200ms)
+    _debounceTimer = Timer(const Duration(milliseconds: 200), () async {
+      if (trimmedQuery.isEmpty) return;
 
-    // Set up new debounce timer
-    _debounceTimer = Timer(const Duration(milliseconds: 300), () async {
-      if (query.isEmpty) return;
-
-      setState(() {
-        _isSearching = true;
-        _showSuggestions = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isSearching = true;
+        });
+      }
 
       try {
-        final results = await _searchAcrossAllCategories(query);
-        setState(() {
-          _searchResults = results;
-          _isSearching = false;
-        });
+        final results = await _searchAcrossAllCategories(trimmedQuery);
+        if (mounted) {
+          setState(() {
+            _searchResults = results;
+            _isSearching = false;
+          });
+        }
 
         // Save to recent searches
-        _saveToRecentSearches(query, 'search');
+        _saveToRecentSearches(trimmedQuery, 'search');
       } catch (e) {
         print('Search error: $e');
-        setState(() {
-          _isSearching = false;
-        });
+        if (mounted) {
+          setState(() {
+            _isSearching = false;
+          });
+        }
       }
     });
   }
 
-  // Generate smart search suggestions
-  void _generateSearchSuggestions(String query) async {
-    try {
-      // Get all users and posts for suggestions
-      final usersSnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .limit(20)
-          .get();
 
-      final postsSnapshot = await FirebaseFirestore.instance
-          .collection('posts')
-          .limit(20)
-          .get();
 
-      final suggestions = <String>[];
-      final queryLower = query.toLowerCase();
-      
-      // Add user suggestions
-      suggestions.addAll(usersSnapshot.docs
-          .where((doc) {
-            final user = doc.data();
-            final username = user['username']?.toString().toLowerCase() ?? '';
-            return username.contains(queryLower);
-          })
-          .map((doc) => '@${doc['username']}')
-          .toList());
 
-      // Extract hashtags and keywords from posts
-      for (final doc in postsSnapshot.docs) {
-        final post = doc.data();
-        final caption = post['caption']?.toString() ?? '';
-        
-        // Extract hashtags
-        final hashtags = _extractHashtags(caption);
-        suggestions.addAll(hashtags.where((tag) => 
-            tag.toLowerCase().contains(queryLower)));
-        
-        // Add caption keywords
-        final keywords = _extractKeywords(caption);
-        suggestions.addAll(keywords.where((keyword) =>
-            keyword.toLowerCase().contains(queryLower)));
-      }
-
-      // Remove duplicates and limit
-      final uniqueSuggestions = suggestions.toSet().toList();
-      setState(() {
-        _searchSuggestions = uniqueSuggestions.take(8).toList();
-        _showSuggestions = true;
-      });
-    } catch (e) {
-      print('Error generating suggestions: $e');
-    }
-  }
-
-  List<String> _extractHashtags(String text) {
-    final regex = RegExp(r'#(\w+)');
-    return regex.allMatches(text).map((match) => match.group(0)!).toList();
-  }
-
-  List<String> _extractKeywords(String text) {
-    return text.split(' ')
-        .where((word) => word.length > 2)
-        .map((word) => word.trim())
-        .where((word) => !word.startsWith('#'))
-        .toList();
-  }
 
   // Search across all categories with relevance scoring
   Future<List<dynamic>> _searchAcrossAllCategories(String query) async {
@@ -311,6 +293,7 @@ class _SearchScreenState extends State<SearchScreen> {
     try {
       final usersSnapshot = await FirebaseFirestore.instance
           .collection('users')
+          .limit(200) // Added safety limit
           .get();
 
       return usersSnapshot.docs
@@ -346,6 +329,7 @@ class _SearchScreenState extends State<SearchScreen> {
     try {
       final postsSnapshot = await FirebaseFirestore.instance
           .collection('posts')
+          .limit(200) // Added safety limit
           .get();
 
       return postsSnapshot.docs
@@ -360,6 +344,12 @@ class _SearchScreenState extends State<SearchScreen> {
             
             // Search in hashtags
             if (hashtags.any((tag) => tag.toLowerCase().contains(queryLower.replaceFirst('#', '')))) {
+              return true;
+            }
+
+            // Search in smartTags (AI Generated)
+            final smartTags = List<String>.from(post['smartTags'] ?? []);
+            if (smartTags.any((tag) => tag.toLowerCase().contains(queryLower))) {
               return true;
             }
             
@@ -489,7 +479,9 @@ class _SearchScreenState extends State<SearchScreen> {
 
     if (fullName.contains(queryLower)) score += 20;
     if (user['isVerified'] == true) score += 30;
-    if (_followingIds.contains(user['uid'])) score += 40;
+    
+    // HEAVY WEIGHT for followed users (Discover-first but following-prioritized)
+    if (_followingIds.contains(user['uid'])) score += 150; 
 
     final mutualCount = _calculateMutualConnections(user);
     score += mutualCount * 5;
@@ -502,13 +494,18 @@ class _SearchScreenState extends State<SearchScreen> {
     final caption = post['caption']?.toString().toLowerCase() ?? '';
     final queryLower = query.toLowerCase();
 
-    if (caption == queryLower) score += 60;
-    else if (caption.startsWith(queryLower)) score += 40;
-    else if (caption.contains(queryLower)) score += 20;
+    if (caption == queryLower) score += 160;
+    else if (caption.startsWith(queryLower)) score += 100;
+    else if (caption.contains(queryLower)) score += 60;
 
     final hashtags = List<String>.from(post['hashtags'] ?? []);
     if (hashtags.any((tag) => tag.toLowerCase().contains(queryLower.replaceFirst('#', '')))) {
-      score += 30;
+      score += 80;
+    }
+
+    final smartTags = List<String>.from(post['smartTags'] ?? []);
+    if (smartTags.any((tag) => tag.toLowerCase().contains(queryLower))) {
+      score += 70;
     }
 
     final likes = List<String>.from(post['likes'] ?? []).length;
@@ -614,11 +611,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       : null,
                 ),
                 onChanged: _performSearch,
-                onTap: () {
-                  setState(() {
-                    _showSuggestions = _searchController.text.isNotEmpty;
-                  });
-                },
+                onTap: () {},
                 style: const TextStyle(color: AppColors.textHigh), // Off-white text
               ),
             ),
@@ -635,9 +628,9 @@ class _SearchScreenState extends State<SearchScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 12),
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
-          itemCount: SearchCategory.values.length,
+          itemCount: SearchCategory.values.where((c) => c != SearchCategory.hashtags && c != SearchCategory.petitions).length,
           itemBuilder: (context, index) {
-            final category = SearchCategory.values[index];
+            final category = SearchCategory.values.where((c) => c != SearchCategory.hashtags && c != SearchCategory.petitions).elementAt(index);
             final isSelected = _selectedCategory == category;
 
             return GestureDetector(
@@ -686,11 +679,7 @@ class _SearchScreenState extends State<SearchScreen> {
       return const GridShimmerSkeleton();
     }
 
-    if (_searchController.text.isNotEmpty) {
-      if (_showSuggestions && _searchSuggestions.isNotEmpty) {
-        return _buildSuggestionsList();
-      }
-      
+    if (_searchController.text.trim().isNotEmpty) {
       final filteredResults = _getFilteredResults();
       if (filteredResults.isEmpty) {
         return _buildNoResults();
@@ -703,36 +692,131 @@ class _SearchScreenState extends State<SearchScreen> {
     return _buildDefaultContent();
   }
 
-  Widget _buildSuggestionsList() {
-    if (_searchSuggestions.isEmpty) {
-      return const SizedBox.shrink();
-    }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(8),
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: _searchSuggestions.length,
-      itemBuilder: (context, index) {
-        final suggestion = _searchSuggestions[index];
-        return ListTile(
-          leading: Icon(
-            suggestion.startsWith('@') ? Feather.user : Feather.hash,
-            color: AppColors.textMedium,
+
+  Widget _buildMagazineLayout(List<dynamic> results) {
+    if (results.isEmpty) return _buildNoResults();
+
+    final users = results.where((item) => item['type'] == 'user').toList();
+    final petitions = results.where((item) => item['type'] == 'petition').toList();
+    final posts = results.where((item) => item['type'] == 'post').toList();
+    final hashtags = results.where((item) => item['type'] == 'hashtag').toList();
+
+    // Determine the absolute top result and its type
+    final topResult = results.first;
+    final topType = topResult['type'];
+
+    // Define sections with their top scores to determine priority
+    final sectionScores = {
+      'users': users.isNotEmpty ? (users.first['relevanceScore'] ?? 0.0) : -1.0,
+      'petitions': petitions.isNotEmpty ? (petitions.first['relevanceScore'] ?? 0.0) : -1.0,
+      'posts': posts.isNotEmpty ? (posts.first['relevanceScore'] ?? 0.0) : -1.0,
+    };
+
+    // Sort categories by their top score
+    final sortedSections = sectionScores.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    return ListView(
+      padding: EdgeInsets.all(12),
+      children: [
+        // 1. Mandatory Top Result Card (Only for Users/Petitions as they look best as cards)
+        if (topType == 'user' || topType == 'petition') ...[
+          _buildSectionHeader('Top Result'),
+          topType == 'user' 
+            ? _buildUserResult(topResult['data']) 
+            : _buildPetitionResult(topResult['data']),
+          SizedBox(height: 24),
+        ],
+
+        // 2. Dynamic Sections based on relevance
+        ...sortedSections.take(3).map((entry) {
+          final type = entry.key;
+          if (entry.value < 0) return const SizedBox.shrink();
+
+          // Skip if already shown as Top Result (unless there are more items)
+          if (type == 'users') {
+            final displayUsers = topType == 'user' ? users.skip(1).toList() : users;
+            if (displayUsers.isEmpty) return const SizedBox.shrink();
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSectionHeader('People'),
+                ...displayUsers.take(5).map((u) => _buildUserResult(u['data'])),
+                if (displayUsers.length > 5) _buildViewMoreButton(SearchCategory.users),
+                SizedBox(height: 24),
+              ],
+            );
+          }
+
+          if (type == 'petitions') {
+            final displayPetitions = topType == 'petition' ? petitions.skip(1).toList() : petitions;
+            if (displayPetitions.isEmpty) return const SizedBox.shrink();
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSectionHeader('Petitions'),
+                ...displayPetitions.take(3).map((p) => _buildPetitionResult(p['data'])),
+                if (displayPetitions.length > 3) _buildViewMoreButton(SearchCategory.petitions),
+                SizedBox(height: 24),
+              ],
+            );
+          }
+
+          if (type == 'posts') {
+            // Posts are always displayed in grid, no special skip needed as they aren't "Top Result" cards
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSectionHeader(topType == 'post' ? 'Top Results' : 'Post Gallery'),
+                _buildPostGrid(posts.take(20).toList()),
+                if (posts.length > 20) _buildViewMoreButton(SearchCategory.posts),
+                SizedBox(height: 24),
+              ],
+            );
+          }
+
+          return const SizedBox.shrink();
+        }).toList(),
+        
+        // 5. Hashtags (Usually utility, so keep towards end)
+        if (hashtags.isNotEmpty) ...[
+          _buildSectionHeader('Explore Hashtags'),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: hashtags.take(15).map((h) => _buildTrendingTag(h['data']['tag'])).toList(),
           ),
-          title: Text(suggestion, style: TextStyle(color: AppColors.textHigh)),
-          onTap: () {
-            _searchController.text = suggestion;
-            _performSearch(suggestion);
-            FocusScope.of(context).unfocus();
-          },
-        );
-      },
+          SizedBox(height: 24),
+        ],
+      ],
     );
   }
 
+  Widget _buildViewMoreButton(SearchCategory category) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Center(
+        child: TextButton(
+          onPressed: () {
+            setState(() {
+              _selectedCategory = category;
+            });
+          },
+          child: Text('View all ${category.name}', style: TextStyle(color: AppColors.secondaryTeal, fontWeight: FontWeight.bold)),
+        ),
+      ),
+    );
+  }
+
+
+
   Widget _buildSearchResults(List<dynamic> results) {
-    // Separate posts from other types
+    if (_selectedCategory == SearchCategory.all) {
+      return _buildMagazineLayout(results);
+    }
+    
+    // Original category-specific view
     final posts = results.where((item) => item['type'] == 'post').toList();
     final nonPosts = results.where((item) => item['type'] != 'post').toList();
 
@@ -777,7 +861,8 @@ class _SearchScreenState extends State<SearchScreen> {
         final mediaType = post['mediaType'] ?? 'image';
         final caption = post['caption'] ?? '';
         final userId = post['userId'] ?? '';
-        // final likes = List<String>.from(post['likes'] ?? []);
+        final likesCount = (post['likes'] as List?)?.length ?? 0;
+        final commentsCount = post['comments'] ?? 0;
 
         final randomHeightFactor = ((postId.hashCode % 2) + 1.4);
         final double imageHeight = 120.0 * randomHeightFactor;
@@ -800,47 +885,73 @@ class _SearchScreenState extends State<SearchScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               // --- Media container ---
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(borderRadiusValue),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
-                      blurRadius: 8,
-                      spreadRadius: 0.5,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(borderRadiusValue),
-                  child: mediaType == 'image'
-                      ? CachedNetworkImage(
-                          imageUrl: mediaUrl,
-                          width: double.infinity,
-                          height: imageHeight,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
-                            height: imageHeight,
-                            color: AppColors.elevation,
-                            child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryLavender)),
-                          ),
-                          errorWidget: (context, url, error) => Container(
-                            height: imageHeight,
-                            color: AppColors.elevation,
-                            child: const Center(
-                              child: Icon(Feather.alert_circle, color: AppColors.error),
-                            ),
-                          ),
-                        )
-                      : Container(
-                          height: imageHeight,
-                          color: Colors.black,
-                          child: const Center(
-                            child: Icon(Feather.play, color: Colors.white, size: 36),
-                          ),
+              Stack(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(borderRadiusValue),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.3),
+                          blurRadius: 8,
+                          spreadRadius: 0.5,
+                          offset: const Offset(0, 3),
                         ),
-                ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(borderRadiusValue),
+                      child: mediaType == 'image'
+                          ? CachedNetworkImage(
+                              imageUrl: mediaUrl,
+                              width: double.infinity,
+                              height: imageHeight,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => Container(
+                                height: imageHeight,
+                                color: AppColors.elevation,
+                                child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryLavender)),
+                              ),
+                              errorWidget: (context, url, error) => Container(
+                                height: imageHeight,
+                                color: AppColors.elevation,
+                                child: const Center(
+                                  child: Icon(Feather.alert_circle, color: AppColors.error),
+                                ),
+                              ),
+                            )
+                          : Container(
+                              height: imageHeight,
+                              color: Colors.black,
+                              child: const Center(
+                                child: Icon(Feather.play, color: Colors.white, size: 36),
+                              ),
+                            ),
+                    ),
+                  ),
+                  // Engagement Overlay
+                  Positioned(
+                    bottom: 8,
+                    left: 8,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.6),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Feather.heart, size: 10, color: Colors.white),
+                          SizedBox(width: 4),
+                          Text(
+                            likesCount.toString(),
+                            style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
               if (caption.isNotEmpty)
                 Padding(
@@ -866,11 +977,7 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget _buildUserResult(Map<String, dynamic> user) {
     return GestureDetector(
       onTap: () {
-        if (user['uid'] == FirebaseAuth.instance.currentUser!.uid) {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileScreen(userId: user['uid'])));
-        } else {
-          // Navigator.push(context, MaterialPageRoute(builder: (context) => OtherUserProfileScreen(userId: user['uid'])));
-        }
+        Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileScreen(userId: user['uid'])));
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -1017,8 +1124,9 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Widget _buildPetitionResult(Map<String, dynamic> petition) {
     final title = petition['title'] ?? 'Untitled Petition';
+    final signers = petition['currentSignatures'] ?? 0;
     final progress = (petition['goal'] ?? 0) > 0 
-        ? (petition['currentSignatures'] ?? 0) / petition['goal'] 
+        ? signers / petition['goal'] 
         : 0.0;
 
     return Container(
@@ -1053,11 +1161,26 @@ class _SearchScreenState extends State<SearchScreen> {
                 : const Icon(Feather.flag, color: AppColors.primaryLavender),
           ),
         ),
-        title: Text(title, style: const TextStyle(color: AppColors.textHigh, fontWeight: FontWeight.bold, fontSize: 14)),
+        title: Row(
+          children: [
+            Expanded(child: Text(title, style: const TextStyle(color: AppColors.textHigh, fontWeight: FontWeight.bold, fontSize: 14))),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppColors.secondaryTeal.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                '$signers',
+                style: TextStyle(color: AppColors.secondaryTeal, fontSize: 10, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('${petition['currentSignatures'] ?? 0} signed', style: const TextStyle(color: AppColors.textMedium, fontSize: 12)),
+            Text('Trending Petition', style: const TextStyle(color: AppColors.textMedium, fontSize: 11)),
             const SizedBox(height: 4),
             ClipRRect(
               borderRadius: BorderRadius.circular(2),
@@ -1083,6 +1206,7 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildNoResults() {
+    final query = _searchController.text.trim();
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -1090,8 +1214,14 @@ class _SearchScreenState extends State<SearchScreen> {
           Icon(Feather.search, size: 64, color: AppColors.textDisabled),
           SizedBox(height: 16),
           Text(
-            'No results found',
-            style: TextStyle(fontSize: 18, color: AppColors.textMedium),
+            'No results found for "$query"',
+            style: TextStyle(fontSize: 16, color: AppColors.textMedium),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Try checking your spelling or use different keywords.',
+            style: TextStyle(fontSize: 12, color: AppColors.textDisabled),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -1102,35 +1232,157 @@ class _SearchScreenState extends State<SearchScreen> {
     return ListView(
       padding: EdgeInsets.all(12),
       children: [
+        // Support Card (Initial Blank)
+        _buildSupportCard(),
+        
         // Recent Searches
         if (_recentSearches.isNotEmpty) ...[
           _buildSectionHeader('Recent Searches'),
-          ..._recentSearches.map((search) => _buildRecentSearchItem(search)),
+          ..._recentSearches.take(3).map((search) => _buildRecentSearchItem(search)),
           SizedBox(height: 16),
         ],
         
-        // Trending Hashtags
+        // Visual Trending Hashtags
         if (_trendingHashtags.isNotEmpty) ...[
-          _buildSectionHeader('Trending Now'),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _trendingHashtags
-                .take(10)
-                .map((tag) => _buildTrendingTag(tag))
-                .toList(),
-          ),
+          _buildSectionHeader('Visual Trends'),
+          ..._trendingHashtags.take(5).map((tag) => _buildVisualTrendingHashtagSection(tag)),
           SizedBox(height: 16),
         ],
         
-        // Suggested Users
+        // Suggested Creators (Card Layout)
         if (_suggestedUsers.isNotEmpty) ...[
-          _buildSectionHeader('Suggested for You'),
-          ..._suggestedUsers
-              .take(5)
-              .map((user) => _buildUserResult(user)),
+          _buildSectionHeader('Rising Creators'),
+          Container(
+            height: 220,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: _suggestedUsers.length,
+              itemBuilder: (context, index) {
+                return _buildSuggestedCreatorCard(_suggestedUsers[index]);
+              },
+            ),
+          ),
         ],
       ],
+    );
+  }
+
+  Widget _buildVisualTrendingHashtagSection(String tag) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            children: [
+              Icon(Feather.trending_up, size: 14, color: AppColors.secondaryTeal),
+              SizedBox(width: 8),
+              Text(tag, style: TextStyle(color: AppColors.primaryLavender, fontWeight: FontWeight.bold)),
+              Spacer(),
+              Icon(Feather.chevron_right, size: 16, color: AppColors.textDisabled),
+            ],
+          ),
+        ),
+        FutureBuilder<List<Map<String, dynamic>>>(
+          future: _fetchThumbnailsForHashtag(tag),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData || snapshot.data!.isEmpty) return SizedBox(height: 80);
+            return Container(
+              height: 100,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: snapshot.data!.length,
+                itemBuilder: (context, index) {
+                  final post = snapshot.data![index];
+                  return Container(
+                    width: 75,
+                    margin: EdgeInsets.only(right: 8),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      image: DecorationImage(
+                        image: CachedNetworkImageProvider(post['mediaUrl'] ?? ''),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            );
+          },
+        ),
+        SizedBox(height: 12),
+      ],
+    );
+  }
+
+  Widget _buildSuggestedCreatorCard(Map<String, dynamic> user) {
+    return Container(
+      width: 160,
+      margin: EdgeInsets.only(right: 12),
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.elevation,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          CircleAvatar(
+            radius: 30,
+            backgroundImage: CachedNetworkImageProvider(user['profileImage'] ?? ''),
+          ),
+          SizedBox(height: 8),
+          Text(
+            user['username'] ?? 'User',
+            style: TextStyle(color: AppColors.textHigh, fontWeight: FontWeight.bold, fontSize: 13),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          SizedBox(height: 12),
+          FutureBuilder<List<Map<String, dynamic>>>(
+            future: _fetchThumbnailsForUser(user['uid']),
+            builder: (context, snapshot) {
+              final posts = snapshot.data ?? [];
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(3, (i) {
+                  return Container(
+                    width: 40,
+                    height: 40,
+                    margin: EdgeInsets.symmetric(horizontal: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(4),
+                      image: i < posts.length 
+                        ? DecorationImage(
+                            image: CachedNetworkImageProvider(posts[i]['mediaUrl'] ?? ''),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
+                    ),
+                  );
+                }),
+              );
+            },
+          ),
+          Spacer(),
+          GestureDetector(
+            onTap: () => _followUser(user['uid']),
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.primaryLavender,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                'Follow',
+                style: TextStyle(color: AppColors.backgroundDeep, fontSize: 11, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1184,20 +1436,92 @@ class _SearchScreenState extends State<SearchScreen> {
 
   void _followUser(String userId) async {
     final currentUserId = FirebaseAuth.instance.currentUser!.uid;
+    if (userId == currentUserId) return; // Can't follow self
+
+    final isFollowing = _followingIds.contains(userId);
+    
     try {
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(currentUserId)
-          .update({
-        'following': FieldValue.arrayUnion([userId])
-      });
+      final batch = FirebaseFirestore.instance.batch();
+      final currentUserRef = FirebaseFirestore.instance.collection('users').doc(currentUserId);
+      final targetUserRef = FirebaseFirestore.instance.collection('users').doc(userId);
+
+      if (isFollowing) {
+        // Unfollow
+        batch.update(currentUserRef, {'following': FieldValue.arrayRemove([userId])});
+        batch.update(targetUserRef, {'followers': FieldValue.arrayRemove([currentUserId])});
+      } else {
+        // Follow
+        batch.update(currentUserRef, {'following': FieldValue.arrayUnion([userId])});
+        batch.update(targetUserRef, {'followers': FieldValue.arrayUnion([currentUserId])});
+      }
+
+      await batch.commit();
       
-      setState(() {
-        _followingIds.add(userId);
-      });
+      if (mounted) {
+        setState(() {
+          if (isFollowing) {
+            _followingIds.remove(userId);
+          } else {
+            _followingIds.add(userId);
+          }
+        });
+      }
     } catch (e) {
-      print('Error following user: $e');
+      print('Error updating follow status: $e');
     }
+  }
+
+  Widget _buildSupportCard() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: AppColors.surface.withOpacity(0.7),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.elevation.withOpacity(0.5)),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppColors.error.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(
+            Feather.heart,
+            color: AppColors.error,
+            size: 20,
+          ),
+        ),
+        title: const Text(
+          "Support Femn",
+          style: TextStyle(
+            color: AppColors.textHigh,
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
+          ),
+        ),
+        subtitle: const Text(
+          "Show your love & help us grow",
+          style: TextStyle(color: AppColors.textDisabled, fontSize: 12),
+        ),
+        trailing: const Icon(
+          Feather.chevron_right,
+          color: AppColors.textDisabled,
+          size: 16,
+        ),
+        onTap: () async {
+           final Uri url = Uri.parse('https://selar.co/showlove/femn');
+           if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+             if (mounted) {
+               ScaffoldMessenger.of(context).showSnackBar(
+                 const SnackBar(content: Text('Could not launch support link')),
+               );
+             }
+           }
+        },
+      ),
+    );
   }
 }
 
